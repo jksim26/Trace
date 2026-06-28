@@ -10,10 +10,10 @@
 
 > **Say it precisely:** *"No Singapore counterpart exists."* Do **not** escalate to "Singapore rejected/prohibits a golden thread" — that's unsupported. It's an *absence* finding.
 
-**But Singapore has something that is arguably a sharper hook for us:** the **Qualified Person (QP) regime**, under which a *named individual architect or engineer* carries **personal, non-delegable, criminal** accountability for design decisions — yet the law gives them only **fragmented, structural-only, paper-era records** (Building Control Regulations reg 22) to defend themselves with. **That gap is Keystone's wedge, and it's a home-market one.** `[verified — Building Control Act s.9; reg 22]`
+**But Singapore has something that is arguably a sharper hook for us:** the **Qualified Person (QP) regime**, under which a *named individual architect or engineer* carries **personal, non-delegable, criminal** accountability for design decisions — yet the law gives them only **fragmented, structural-only, paper-era records** (Building Control Regulations reg 22) to defend themselves with. **That gap is Trace's wedge, and it's a home-market one.** `[verified — Building Control Act s.9; reg 22]`
 
 > **The one-line for APAC judges:**
-> *"The UK legislated a 'golden thread' after Grenfell. Singapore instead made* ***individuals*** *personally and criminally accountable through the QP regime — but gave them only fragmented, structural-only paper records to defend themselves. Keystone is the missing thread: the attributable, immutable decision memory that Singapore's accountability law assumes a QP can already produce."*
+> *"The UK legislated a 'golden thread' after Grenfell. Singapore instead made* ***individuals*** *personally and criminally accountable through the QP regime — but gave them only fragmented, structural-only paper records to defend themselves. Trace is the missing thread: the attributable, immutable decision memory that Singapore's accountability law assumes a QP can already produce."*
 
 ---
 
@@ -23,7 +23,7 @@
 
 **The personal duty — Building Control Act 1989, s.9.** `[verified — verbatim from the official 2022 Ed. PDF]`
 - **s.9(1):** every design QP must *"take all reasonable steps and exercise due diligence to ensure that the building works are designed in accordance with"* the Act + building regulations, and must *"notify the Commissioner of Building Control of any contravention… of which the qualified person knows or **ought reasonably to know**."*
-- **Alternative-solution clause:** where a non-standard design/material/method is used, the QP must exercise due diligence to show it meets the prescribed performance objectives **or obtain a specialist's certification** — i.e. the Act *already* contemplates **documented justification of design departures.** A natural Keystone hook.
+- **Alternative-solution clause:** where a non-standard design/material/method is used, the QP must exercise due diligence to show it meets the prescribed performance objectives **or obtain a specialist's certification** — i.e. the Act *already* contemplates **documented justification of design departures.** A natural Trace hook.
 - **s.9(4):** the supervising QP must *"(d) keep and maintain at the premises… such documents, books and records as may be prescribed"* and *"(e) submit to the Commissioner… such reports and certificates as may be prescribed."*
 
 **The only existing "decision log" — and why it's not enough.** Building Control Regulations 2003, **reg 22(e)** requires the QP to keep *"a record of all the departures or deviations relating to the structural elements of the building works."* `[verified — verbatim]` This is the closest Singapore analogue to a design-decision log, but it is:
@@ -32,14 +32,14 @@
 3. **site-based and paper-era**, and
 4. has **no falsification detection** — nothing flags when a *later* decision invalidates the premise an *earlier* one relied on.
 
-**That four-part gap is exactly what Keystone fills** — and reg 22(e) proves the *need* is already half-recognised in Singapore law. `[inference, anchored to verbatim reg text]`
+**That four-part gap is exactly what Trace fills** — and reg 22(e) proves the *need* is already half-recognised in Singapore law. `[inference, anchored to verbatim reg text]`
 
 **Why the demand is real: three parallel liability tracks** from one design failure: `[framework verified; figures secondary]`
 1. **Criminal/statutory** — Building Control Act s.9 + Workplace Safety & Health Act (designer's duty). *(Reported penalty ceilings ~S$200k+2 yrs design / ~S$100k+2 yrs supervision are secondary — verify before slideing the numbers.)*
 2. **Professional discipline** — BOA/PEB inquiry, suspension/cancellation of the practising certificate.
 3. **Civil negligence** — incl. **pure economic loss** for building defects (recoverable in Singapore); departure from accepted codes is treated as **prima facie evidence of negligence**, and a **"perfunctory" supervision log is itself prima facie negligence.** *(Case cite MCST Plan 1075 v RSP Architects is secondary — verify before quoting.)*
 
-**Keystone's grounded value proposition:** in a BCA investigation, MOM/WSHA prosecution, or PEB/BOA inquiry, the QP must prove *what they decided, why, on what assumptions, and when.* Keystone supplies an **attributable, timestamped, immutable** record per decision — directly rebutting the "perfunctory log = negligence" inference — and its **premise-falsification alerts operationalise the s.9 "ought reasonably to know" standard** by surfacing when a new decision undermines a safety-critical assumption *before* it becomes a defect.
+**Trace's grounded value proposition:** in a BCA investigation, MOM/WSHA prosecution, or PEB/BOA inquiry, the QP must prove *what they decided, why, on what assumptions, and when.* Trace supplies an **attributable, timestamped, immutable** record per decision — directly rebutting the "perfunctory log = negligence" inference — and its **premise-falsification alerts operationalise the s.9 "ought reasonably to know" standard** by surfacing when a new decision undermines a safety-critical assumption *before* it becomes a defect.
 
 ---
 
@@ -49,19 +49,19 @@ With a China-HQ'd Alibaba/Qwen judge panel, a UK-only frame reads as a foreign-c
 
 1. **Universal pain (30 s):** un-tracked decisions → silent premise-falsification → **abortive work**, rework, safety risk. Anchor on rework cost (global CII ~9% of cost + ~18% schedule slip; ~$1,080/RFI — *labelled industry-wide*, no SG-specific % is published).
 2. **Home market = Singapore (the demo):** a *named QP* is **personally, criminally** accountable but holds only fragmented structural paper. Tie to **BCA's Built Environment ITM** (IDD target **70% by 2025**; DfMA 70% by 2025) and **CORENET X**, whose whole mission is killing abortive work.
-3. **Scale + relevance = China/APAC:** the world's largest construction market (~US$4.8 tn, directional) with a national BIM mandate and — the killer analog — China's **"lifelong quality responsibility" system**, under which the five responsible parties bear *permanent personal liability* for quality. *A China judge already believes the principle; Keystone operationalises it.* `[web search — cite the principle confidently, the MOHURD order number cautiously/not at all]`
-4. **Global seriousness = UK golden thread (ONE line):** after Grenfell, a G7 government criminalised losing the attributable building record. Keystone is that — automated, with active falsification alerts. **UK = credibility multiplier, not core market.**
+3. **Scale + relevance = China/APAC:** the world's largest construction market (~US$4.8 tn, directional) with a national BIM mandate and — the killer analog — China's **"lifelong quality responsibility" system**, under which the five responsible parties bear *permanent personal liability* for quality. *A China judge already believes the principle; Trace operationalises it.* `[web search — cite the principle confidently, the MOHURD order number cautiously/not at all]`
+4. **Global seriousness = UK golden thread (ONE line):** after Grenfell, a G7 government criminalised losing the attributable building record. Trace is that — automated, with active falsification alerts. **UK = credibility multiplier, not core market.**
 
-> **Judge takeaway:** *Singapore's ITM wants 70% digital delivery and CORENET X exists to kill abortive work; China legally requires lifelong quality accountability; the UK criminalised losing the record after people died — Keystone is the memory agent that makes all three real.*
+> **Judge takeaway:** *Singapore's ITM wants 70% digital delivery and CORENET X exists to kill abortive work; China legally requires lifelong quality accountability; the UK criminalised losing the record after people died — Trace is the memory agent that makes all three real.*
 
 ---
 
 ## 3. The digital-integration story (credibility for a SG-built agent)
 
-Position Keystone as **complementary to** the regulatory backbone, not competing: `[verified facts]`
-- **CORENET X** — Singapore's BIM/OpenBIM (IFC) e-submission overhaul. Mandatory **1 Oct 2025** (new projects GFA ≥ 30,000 m²), **1 Oct 2026** (all new projects), **1 Oct 2027** (all ongoing projects onboard). `[verified — URA circular DC25-07]` *It de-conflicts geometry up-front; Keystone is the **decision layer** that remembers* ***why*** *and alerts when a new decision breaks an old premise.*
-- **IDD (Integrated Digital Delivery)** under the **Built Environment ITM** — links stakeholders across the lifecycle to improve decision-making and cut abortive work; target **34% → 70% of GFA by 2025.** `[verified target]` *Keystone is the decision-memory layer inside IDD.*
-- ⚠ **Competitive check (do this):** confirm whether CORENET X already provides a timestamped submission audit trail that overlaps Keystone. Position Keystone as the *rationale/decision* layer regardless. `[open question]`
+Position Trace as **complementary to** the regulatory backbone, not competing: `[verified facts]`
+- **CORENET X** — Singapore's BIM/OpenBIM (IFC) e-submission overhaul. Mandatory **1 Oct 2025** (new projects GFA ≥ 30,000 m²), **1 Oct 2026** (all new projects), **1 Oct 2027** (all ongoing projects onboard). `[verified — URA circular DC25-07]` *It de-conflicts geometry up-front; Trace is the **decision layer** that remembers* ***why*** *and alerts when a new decision breaks an old premise.*
+- **IDD (Integrated Digital Delivery)** under the **Built Environment ITM** — links stakeholders across the lifecycle to improve decision-making and cut abortive work; target **34% → 70% of GFA by 2025.** `[verified target]` *Trace is the decision-memory layer inside IDD.*
+- ⚠ **Competitive check (do this):** confirm whether CORENET X already provides a timestamped submission audit trail that overlaps Trace. Position Trace as the *rationale/decision* layer regardless. `[open question]`
 
 ---
 
@@ -69,10 +69,10 @@ Position Keystone as **complementary to** the regulatory backbone, not competing
 
 *Swap the UK "Maple Wharf" storyline for a Singapore one, and keep the UK golden thread as a one-line close. Fictional 95 m residential condominium (~28 storeys).* `[demo design — grounded in verified SCDF/BCA facts]`
 
-- **SCENE 1 — CAPTURE:** Architect (the design **QP**) specifies a **non-combustible façade**, because **SCDF Fire Code 2023 Cl 3.5** requires external walls exceeding **15 m** in height to be **wholly non-combustible** (composite-panel outer layers non-combustible / Class 0 per Cl 3.15). `[verified — use 15 m, not 18 m]` Keystone captures: decision + rationale (*"non-combustible mandated > 15 m"*) + assumption + the **QP's name** (who is personally liable under Building Control Act s.9).
-- **SCENE 2 — ACTIVE INVALIDATION:** weeks later, a VE workshop proposes swapping to a cheaper **polyethylene-core ACP** to save cost. Keystone fires the red alert: this **contradicts the live premise of the façade decision**, is **non-compliant over 15 m**, and — the SG sharpener — would expose the **named QP to personal criminal liability under s.9**, fail the **Periodic Façade Inspection**, and echo the **Toh Guan Road fire (4 May 2017, 1 fatality)** where a distributor mixed compliant and non-compliant Alubond panels and SCDF later found **40 buildings** with potentially non-compliant cladding. `[verified — 40 buildings; note Toh Guan preceded Grenfell on 14 Jun 2017]`
-- **SCENE 3 — RECALL UNDER BUDGET + ABSTENTION:** same as the UK version — a new team member asks "why this façade, and can we change it?"; Keystone returns only the three relevant currently-valid decisions within a visible token budget, and abstains on an undecided item.
-- **CLOSE (one line):** *"The UK criminalised losing this record after Grenfell; in Singapore the QP is already personally liable — Keystone is the defensible decision memory the law assumes they can produce."*
+- **SCENE 1 — CAPTURE:** Architect (the design **QP**) specifies a **non-combustible façade**, because **SCDF Fire Code 2023 Cl 3.5** requires external walls exceeding **15 m** in height to be **wholly non-combustible** (composite-panel outer layers non-combustible / Class 0 per Cl 3.15). `[verified — use 15 m, not 18 m]` Trace captures: decision + rationale (*"non-combustible mandated > 15 m"*) + assumption + the **QP's name** (who is personally liable under Building Control Act s.9).
+- **SCENE 2 — ACTIVE INVALIDATION:** weeks later, a VE workshop proposes swapping to a cheaper **polyethylene-core ACP** to save cost. Trace fires the red alert: this **contradicts the live premise of the façade decision**, is **non-compliant over 15 m**, and — the SG sharpener — would expose the **named QP to personal criminal liability under s.9**, fail the **Periodic Façade Inspection**, and echo the **Toh Guan Road fire (4 May 2017, 1 fatality)** where a distributor mixed compliant and non-compliant Alubond panels and SCDF later found **40 buildings** with potentially non-compliant cladding. `[verified — 40 buildings; note Toh Guan preceded Grenfell on 14 Jun 2017]`
+- **SCENE 3 — RECALL UNDER BUDGET + ABSTENTION:** same as the UK version — a new team member asks "why this façade, and can we change it?"; Trace returns only the three relevant currently-valid decisions within a visible token budget, and abstains on an undecided item.
+- **CLOSE (one line):** *"The UK criminalised losing this record after Grenfell; in Singapore the QP is already personally liable — Trace is the defensible decision memory the law assumes they can produce."*
 
 **Regulatory hooks that make it credible:** SCDF Fire Code 2023 Cl 3.5/3.15 (non-combustible > 15 m); **Periodic Façade Inspection** (Building Control (Amendment) Act passed 6 Mar 2020; effective **1 Jan 2022**; buildings **> 13 m once over 20 years old**; every 7 years; ~30,000 buildings first cycle); **Fire Safety (Amendment) Act 2019** supply-chain accountability for non-compliant cladding (in force 14 Sep 2020). `[verified]`
 

@@ -43,13 +43,13 @@ The capability we need is **split across four groups, owned whole by none:**
 - **Horizontal AI memory** → has typed decisions + generic contradiction handling, but no AEC model, no dependency graph.
 - **Decision logs** → capture who/when/why, but static manual tables, no invalidation engine.
 
-> **The empty square Keystone fills:** an AEC-aware system where decisions are first-class nodes carrying **rationale + assumptions + timestamp**, edges encode **"assumes / depends-on"**, and the system **actively fires an alert** the instant a new decision falsifies the premise an earlier one relied on. *No reviewed competitor ships this combination.*
+> **The empty square Trace fills:** an AEC-aware system where decisions are first-class nodes carrying **rationale + assumptions + timestamp**, edges encode **"assumes / depends-on"**, and the system **actively fires an alert** the instant a new decision falsifies the premise an earlier one relied on. *No reviewed competitor ships this combination.*
 
 ---
 
 ## 4. The framing line (and the honesty guardrail)
 
-**Use:** *"Clash detection answers: do two objects occupy the same space right now? — geometric, single point in time, intent-blind. Keystone answers: does this new decision contradict the assumptions a prior decision relied on? — semantic, across time, rationale-aware. We're the temporal/semantic analogue of clash detection."*
+**Use:** *"Clash detection answers: do two objects occupy the same space right now? — geometric, single point in time, intent-blind. Trace answers: does this new decision contradict the assumptions a prior decision relied on? — semantic, across time, rationale-aware. We're the temporal/semantic analogue of clash detection."*
 
 **Guardrail (say this on stage to stay credible):** generic contradiction detection already exists (Alhena/Fini), and ADRs already have manual "superseded." The novelty is **NOT** "detecting conflicts" in the abstract — it is the **AEC decision-dependency graph + automatic premise-invalidation + rationale capture + golden-thread-native record**, which no reviewed competitor ships together.
 

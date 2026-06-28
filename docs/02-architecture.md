@@ -1,4 +1,4 @@
-# 02 · Architecture & Framework — Keystone
+# 02 · Architecture & Framework — Trace
 
 *How it's built. Grounded in 2024–2026 memory-systems research (Graphiti, Letta/MemGPT, Mem0, Generative Agents) and the required Qwen Cloud stack.*
 *Confidence tags: `[verified]` (primary paper/doc read) · `[web search]` · `[inference]`.*
@@ -137,7 +137,7 @@ question ("why terracotta, and can we still change it?")
 | Agent framework / tools | **Qwen-Agent** (`QwenLM/Qwen-Agent`, install `[mcp]`) | Function-calling + **MCP client** + custom tools via `@register_tool` → banks the "custom skills / MCP" judging hook `[web search]` |
 | API surface | OpenAI-compatible endpoint, **Singapore**: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` | Reuse OpenAI SDK; Singapore is where the free quota lives `[verified — doc]` |
 
-> **Avoid `qwen-long` (10M context).** It is Beijing-region-only and the Singapore free quota / $40 coupon likely won't cover it. We don't need 10M — the whole point of Keystone is *not* dumping everything into context. `[verified — region caveat; inference on need]`
+> **Avoid `qwen-long` (10M context).** It is Beijing-region-only and the Singapore free quota / $40 coupon likely won't cover it. We don't need 10M — the whole point of Trace is *not* dumping everything into context. `[verified — region caveat; inference on need]`
 
 > **Opt into the big window.** 1M-context models default to ~129K usable input unless you set `max_input_tokens`. Set it explicitly if you ever need it. `[web search]`
 
@@ -162,7 +162,7 @@ When a new decision (ACM cladding) violates a constraint a prior decision (D-047
 
 ## 7. Memory taxonomy mapping (shows we understand memory systems) `[inference, grounded]`
 
-| Memory type | In Keystone |
+| Memory type | In Trace |
 |---|---|
 | **Working** (context window) | the bounded core block: live brief summary + currently-valid decisions + house rules |
 | **Episodic** (events) | the append-only transcript log ("on 2026-03-03 the contractor proposed ACM") |

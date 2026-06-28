@@ -35,7 +35,7 @@ The **free hackathon quota lives on the Singapore endpoint** — keep all calls 
 | `qwen-long` | **10,000,000** (via file-id upload) | 32,768 | Bulk doc ingestion. **Beijing-only — avoid for us.** | med `[verified region]` |
 | `qwen3-coder-plus` | 1,000,000 | 65,536 | Coding/agentic. | med |
 
-**Gotcha:** 1M-context models default to ~129K usable input. Opt into the big window with `max_input_tokens` only if you actually need it — Keystone deliberately keeps context small.
+**Gotcha:** 1M-context models default to ~129K usable input. Opt into the big window with `max_input_tokens` only if you actually need it — Trace deliberately keeps context small.
 
 ---
 

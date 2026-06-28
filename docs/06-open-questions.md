@@ -8,21 +8,17 @@ You asked me to use my best judgment and not block on questions. So this is the 
 
 | # | Decision | Why | How to reverse |
 |---|---|---|---|
-| A1 | **Working name "Keystone."** | AEC-resonant (the load-bearing stone), captures "the decision everything depends on," demo-memorable. | See naming options below; rename across `/docs` is mechanical. |
+| A1 | **Name = "Trace"** (chosen by the team, 28 Jun; was provisionally "Keystone"). | Speaks to traceability / the audit trail / provenance — *a trace of every decision and why it was made*; aligns with the golden-thread theme; short + demo-memorable. | Settled. Repo + all docs renamed to Trace. |
 | A2 | **Lead with the UK golden thread / BSA-2022 wedge.** | Highest-confidence + highest-impact claim; converts a memory demo into legally-mandated infrastructure; maximises the 25% Problem-Value criterion. | If your region/judges aren't UK-oriented, demote it to "professional-liability defence (globally)" and lead with the rework numbers + the Hackitt quote. |
 | A3 | **SQLite + vector index, not Neo4j**, for the build. | Zero-ops, trivially open-sourced, fast enough for one project's decisions; Neo4j+DashVector cited as the production path. | If you want graph cred, swap in Neo4j/Graphiti — but only after the MVP loop is filmable. |
 | A4 | **qwen3.7-max for reasoning, qwen-plus/flash for routine extraction.** | Cost control; reserve the flagship for the hard contradiction reasoning. | Use qwen3.7-max throughout if the free quota covers it. |
 | A5 | **Demo storyline = "Maple Wharf" facade (terracotta → ACM) golden-thread thread.** | Highest blast-radius, photogenic red alert, maps 1:1 to the golden thread. The other 3 worked examples (parking, floor-to-floor, core) are backups. | Swap to parking/floor-to-floor/core if you prefer (all in [01](01-aec-direction.md) §4). |
-| A6 | **Scope = one project, one deterministic storyline, done well.** No BIM/IFC integration, no multi-tenant, no firm-wide memory. | ~12 days to deadline; a working four-part loop beats an unfinished elegant system. | Add stretch features only after C1–C6 pass (see [00](00-brief.md) §7). |
+| A6 | **Scope = one project, one deterministic storyline, done well.** No BIM/IFC integration, no multi-tenant, no firm-wide memory. | ~9 days to our 7 Jul target; a working four-part loop beats an unfinished elegant system. | Add stretch features only after C1–C6 pass (see [00](00-brief.md) §7). |
 | A7 | **Deterministic AEC rule-pack gates the demo alert.** | So the centrepiece never misfires on stage; doubles as proof of domain depth. | Pure-LLM detection if you're confident — but I'd keep the rule gate for the recording. |
 | A8 | **Build to BOTH 30% judging descriptions.** | Sources conflict on which 30% bucket owns "Qwen API/MCP use" vs "architecture/code quality." | N/A — this is the safe play; keep it. |
 
-### Naming options (A1)
-- **Keystone** *(current)* — load-bearing stone; "the decision everything depends on."
-- **Goldthread / Golden Thread Agent** — directly the wedge; risk: sounds like you're *claiming to be* the statutory record (which is good positioning, but verify trademark sensibilities).
-- **Cornerstone** — foundational; similar metaphor.
-- **Provenance** — the "why/origin" trail; abstract but accurate.
-- **Lodestar / Datum / Plumbline** — reference-point metaphors (note: "Datum Notes" is an existing blog).
+### Naming (A1 — settled)
+**Trace** is the chosen name (28 Jun). It speaks to traceability / the audit trail / provenance — *a trace of every decision and why it was made* — and aligns directly with the golden-thread / decision-memory theme. Also considered: *Keystone* (the provisional placeholder), *Goldthread / Golden Thread Agent* (directly the wedge, but verify trademark sensibilities), *Cornerstone*, *Provenance*, *Lodestar / Datum / Plumbline*.
 
 ---
 
@@ -42,7 +38,7 @@ You asked me to use my best judgment and not block on questions. So this is the 
 
 ## C. Decisions only you can make (when you're back)
 
-1. **Team & division of labour** — who's building (1–5 allowed)? The 12-day plan in [03](03-hackathon-strategy.md) §6 assumes a small team; tell me the size and I'll split it into parallel workstreams.
+1. **Team & division of labour** — ✅ *2-person team.* The build plan in [03](03-hackathon-strategy.md) §6 targets a 7 Jul submission; when you're ready I'll split it into two parallel workstreams along the function-contract interface (memory core ↔ agent/demo).
 2. **Region/jurisdiction focus** — ✅ *Resolved: you're in Singapore.* See **[07-singapore-angle.md](07-singapore-angle.md)** — Singapore has no golden thread, but the **QP personal-liability** regime is a stronger home-market wedge. Recommended framing: Singapore → China → UK (one line). **Still to decide together:** do you fully localize the demo to Singapore ("Tanglin Rise"), or keep UK + SG variants? And do you want me to execute the doc rewrites in 07 §6 now or after you align?
 3. **Should I scaffold the code now?** I can stand up the repo: schema + SQLite store + the `capture_decision` / `check_invalidation` Qwen-Agent tools + the Maple Wharf transcripts + a thin CLI, so you have a running spine on day one. Say the word.
 4. **Keep Idea B (Agent Society, Track 3) as a documented fallback?** I parked it; I can write a one-pager so it's not lost, but Track 1 is clearly the stronger fit and I recommend full focus there.

@@ -9,7 +9,7 @@ attendees:
   - S. Malik (SM) — Quantity Surveyor / Cost
   - K. Brandt (KB) — Design Manager (contractor side)
   - R. Wells (RW) — Project Architect (joined late)
-note: Fictional transcript for the Keystone demo. Note that the Fire Engineer (P. Desai) is NOT in this meeting — a key driver of the problem.
+note: Fictional transcript for the Trace demo. Note that the Fire Engineer (P. Desai) is NOT in this meeting — a key driver of the problem.
 ---
 
 # Maple Wharf — Value Engineering Workshop
@@ -34,4 +34,4 @@ note: Fictional transcript for the Keystone demo. Note that the Fire Engineer (P
 
 **RW:** Wait —
 
-*[This is the moment Keystone fires the invalidation alert against D-047. See demo-script.md, Scene 2.]*
+*[This is the moment Trace fires the invalidation alert against D-047. See demo-script.md, Scene 2.]*

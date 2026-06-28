@@ -1,4 +1,4 @@
-# 03 · Hackathon Strategy — How Keystone Wins Track 1
+# 03 · Hackathon Strategy — How Trace Wins Track 1
 
 *Confidence tags: `[verified]` (read across ≥2 sources / primary) · `[web search]` · `[inference]`. The official Devpost rules page renders empty to automated fetch — items marked **VERIFY LIVE** must be confirmed on the page before the deadline.*
 
@@ -12,7 +12,8 @@
 | Format | 100% online, global; 5 tracks ("arenas") | `[verified]` |
 | Our track | **Track 1 — MemoryAgent** | `[verified]` |
 | Launch | ~26 May 2026 | `[web search]` |
-| **Submission deadline** | **9 July 2026, 14:00 PDT** (= 10 July 02:30 IST; Alibaba's tweet rounds to "8 July") | `[verified — timezone-checked]` |
+| **Hard submission deadline** | **9 July 2026, 14:00 PDT** (= 10 July 02:30 IST; Alibaba's tweet rounds to "8 July") | `[verified — timezone-checked]` |
+| **★ Our internal submission target** | **7 July 2026** — submit 2 days early; keep 8–9 Jul as contingency buffer | team decision |
 | Judging | ~10–30 July 2026 | `[web search — single source]` |
 | Winners | ~7 August 2026 | `[web search — single source]` |
 | Prize / track | **$10,000** = $7,000 cash + $3,000 cloud credits, ×5 track winners | `[verified]` |
@@ -20,7 +21,7 @@
 | Team size | **1–5 members** | `[verified]` |
 | Build budget | **$40 coupon/participant** + Model Studio new-user free quota (~1M free tokens/model, Singapore, ~90 days) | `[web search]` |
 
-**Today is 2026-06-27 → ~12 days to the deadline.** Plan accordingly (§6).
+**Today is 2026-06-28. We're targeting submission by 7 July (≈9 days of build), leaving 8–9 July as buffer before the hard 9 Jul 14:00 PDT deadline.** Plan accordingly (§6).
 
 ## 2. The five tracks (for context; we are Track 1)
 
@@ -34,7 +35,7 @@
 
 > **🇸🇬 Singapore note (added 2026-06-28):** The Problem-Value row below leads on the UK golden thread. For your Singapore team + Alibaba/Qwen judges, the recommended re-lead is **Singapore QP personal liability → China lifelong quality responsibility → UK golden thread (one line)**, tied to **CORENET X / IDD 70%-by-2025**. This protects you from the "UK isn't your market" reaction. See **[07-singapore-angle.md](07-singapore-angle.md) §2**.
 
-| Criterion | Weight | How Keystone scores |
+| Criterion | Weight | How Trace scores |
 |---|---|---|
 | **Technical Depth & Engineering** | **30%** | Bi-temporal decision graph with explicit edge-invalidation (valid_from/valid_to/recorded_at/superseded_by, never delete); LLM contradiction pass narrowed by semantic similarity; hybrid retrieval (text-embedding-v4 + BM25 + qwen3-rerank) with retrieve-to-budget; clean modular code + architecture diagram. |
 | **Innovation & AI Creativity** | **30%** | The **AEC decision-dependency graph + active premise-invalidation** as a category-defining idea; PLUS sophisticated Qwen use — native function-calling, **MCP custom tools/skills via Qwen-Agent**, qwen3.7-max 1M context, context caching. |
@@ -59,18 +60,21 @@ No competitor closes the four-part loop of **decision + rationale + timestamp + 
 
 > **Good news from the fact-check:** pre-existing projects are allowed *if significantly updated after the submission period starts* — so starting to build now and iterating is fine; it does not have to be a from-scratch-during-the-window build. `[verified — Devpost rules snippet]` Originality still required (no direct copying of OSS projects); teams retain IP, grant the sponsor a non-exclusive license for judging/promo. `[verified]`
 
-## 6. The ~12-day plan (today = 27 Jun; deadline = 9 Jul 14:00 PDT)
+## 6. The build plan (today = 28 Jun · internal submit = **7 Jul** · hard deadline = 9 Jul 14:00 PDT)
+
+*Compressed to land submission on 7 July, leaving 8–9 Jul as pure contingency. Repo + OSS license are already ✅ done.*
 
 | Days | Goal | Verify |
 |---|---|---|
-| **27–29 Jun** | Repo + OSS license; Qwen Cloud account, $40 coupon, Singapore endpoint smoke-test; decision schema + SQLite store + never-delete supersede. **Confirm live Devpost rules** (video length, deployment clause, video host). | First qwen3.7-max call returns; a Decision row round-trips. |
-| **30 Jun–2 Jul** | `capture_decision` (extraction) + `check_invalidation` (rule-pack + LLM) → the **push alert** works on the Maple Wharf transcripts. | C1 + C2 fire reliably on the storyline. |
-| **3–4 Jul** | Hybrid retrieve + composite re-score + retrieve-to-budget + abstention + **context-budget meter**; audit/history view. | C3 + C4 demonstrable on camera. |
-| **5–6 Jul** | Wrap as **Qwen-Agent MCP tools**; thin UI/CLI for filming; (insurance) deploy to Alibaba Cloud. | C5 works; app runs on the cloud instance. |
-| **7–8 Jul** | Record + edit ≤3-min video; architecture diagram; deck; README; written description. Buffer for the inevitable. | All §5 boxes ticked. |
-| **9 Jul (early)** | Submit on Devpost with margin before 14:00 PDT. | Submission confirmed; links public. |
+| **28–29 Jun** | Qwen Cloud account, $40 coupon, Singapore endpoint smoke-test; decision schema + SQLite store + never-delete supersede. **Confirm live Devpost rules** (video length, deployment clause, video host). | First qwen3.7-max call returns; a Decision row round-trips. |
+| **30 Jun–1 Jul** | `capture_decision` (extraction) + `check_invalidation` (rule-pack + LLM) → the **push alert** works on the demo transcripts. | C1 + C2 fire reliably on the storyline. |
+| **2–3 Jul** | Hybrid retrieve + composite re-score + retrieve-to-budget + abstention + **context-budget meter**; audit/history view. | C3 + C4 demonstrable on camera. |
+| **4 Jul** | Wrap as **Qwen-Agent MCP tools**; thin UI/CLI for filming; (insurance) deploy to Alibaba Cloud. | C5 works; app runs on the cloud instance. |
+| **5–6 Jul** | Record + edit ≤3-min video; architecture diagram; deck; README; written description. | All §5 boxes ticked. |
+| **★ 7 Jul** | **SUBMIT on Devpost (internal target).** Flip repo to public. | Submission confirmed; links public; repo public + OSS-licensed. |
+| **8–9 Jul** | **Buffer** — fixes, re-record, polish if needed; final check before the hard 9 Jul 14:00 PDT deadline. | Nothing left to chance. |
 
-**Risk-driven sequencing:** the invalidation alert (C2) is the demo's spine — build it *second*, right after the store, so if time runs short everything after it is polish, not core.
+**Risk-driven sequencing:** the invalidation alert (C2) is the demo's spine — build it *second*, right after the store, so if time runs short everything after it is polish, not core. With only ~9 build days for 2 people, protect C1–C3 ruthlessly and treat every stretch item as optional.
 
 ## 7. Top risks & mitigations `[from synthesis]`
 

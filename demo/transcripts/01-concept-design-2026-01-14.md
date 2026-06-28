@@ -10,7 +10,7 @@ attendees:
   - S. Malik (SM) — Quantity Surveyor / Cost
   - J. Owusu (JO) — Structural Engineer
   - C. Lin (CL) — Client representative
-note: Fictional transcript for the Keystone demo. Any resemblance to real projects is coincidental.
+note: Fictional transcript for the Trace demo. Any resemblance to real projects is coincidental.
 ---
 
 # Maple Wharf — Concept Design Review

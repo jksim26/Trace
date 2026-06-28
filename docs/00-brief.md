@@ -1,4 +1,4 @@
-# 00 · Project Brief — Keystone
+# 00 · Project Brief — Trace
 
 *Design-Decision Memory Agent for AEC · Qwen Cloud Hackathon, Track 1 (MemoryAgent)*
 *Written 2026-06-27. Confidence tags: `[verified]` / `[web search]` / `[inference]`.*
@@ -17,7 +17,7 @@ So three failures happen on every project:
 
 This is not a niche annoyance. It is the **information-management failure that every architecture and engineering firm actually faces**, and — uniquely for our wedge — the UK government has already **legislated** that it must be fixed (see §4).
 
-## 2. What Keystone is
+## 2. What Trace is
 
 A **memory agent that sits alongside the design conversation** and does four things no existing tool does together:
 
@@ -26,7 +26,7 @@ A **memory agent that sits alongside the design conversation** and does four thi
 3. **Recalls** the right currently-valid critical constraints on demand, fitting them into a tight context budget, and correctly **abstains** ("no decision on record") instead of inventing answers.
 4. **Preserves** history immutably: a superseded decision is invalidated, not deleted, leaving a queryable "changed by whom, when, why" chain.
 
-**The sharpest way to say it:** *Clash detection finds geometric conflicts — two objects in the same space, right now. Keystone finds **decision conflicts** — a new choice that breaks the assumptions of an old one, across time. It is the temporal/semantic analogue of clash detection.* `[inference, validated against competitor research]`
+**The sharpest way to say it:** *Clash detection finds geometric conflicts — two objects in the same space, right now. Trace finds **decision conflicts** — a new choice that breaks the assumptions of an old one, across time. It is the temporal/semantic analogue of clash detection.* `[inference, validated against competitor research]`
 
 ## 3. Who it's for
 
@@ -43,11 +43,11 @@ After the Grenfell Tower fire (2017, 72 deaths), Dame Judith Hackitt's review *B
 
 That finding became law. The **Building Safety Act 2022** mandates a **"golden thread of information"** for **higher-risk buildings** (≥ 18 m or ≥ 7 storeys with ≥ 2 dwellings). The golden thread must show **who did what, when, and why**, and every entry must be **attributable to a named user, timestamped, and immutable** (historical states preserved, not overwritten). `[web search — ICE, Construction Leadership Council guidance]`
 
-**Read that data model again — *named user, timestamped, immutable, with the why* — it is Keystone's schema, line for line.** This is what turns the project from "a cool memory demo" into infrastructure a whole class of buildings is now *legally required* to maintain, and it generalises beyond the UK as a professional-liability defence everywhere. This is the highest-confidence, highest-impact claim we have, and it should lead every judge-facing surface.
+**Read that data model again — *named user, timestamped, immutable, with the why* — it is Trace's schema, line for line.** This is what turns the project from "a cool memory demo" into infrastructure a whole class of buildings is now *legally required* to maintain, and it generalises beyond the UK as a professional-liability defence everywhere. This is the highest-confidence, highest-impact claim we have, and it should lead every judge-facing surface.
 
 ## 5. Why this is the *right* Track-1 entry (not a stretch)
 
-The Track 1 brief asks for an agent with "persistent memory… efficient memory storage and retrieval, timely forgetting of outdated information, and recalling critical memories within limited context windows." `[verified — qwencloud.com challenge page]` Keystone's three pillars are a **one-to-one map** onto that wording (see README table). Most Track-1 entrants will build a generic personal-assistant memory ("remembers your coffee order"). Keystone takes the same core mechanics — store, forget-the-obsolete, recall-under-budget — and points them at a **real, expensive, legally-backed industry problem**. That is precisely how you win the 25% "Problem Value & Impact" criterion that generic entries leave on the table. `[inference]`
+The Track 1 brief asks for an agent with "persistent memory… efficient memory storage and retrieval, timely forgetting of outdated information, and recalling critical memories within limited context windows." `[verified — qwencloud.com challenge page]` Trace's three pillars are a **one-to-one map** onto that wording (see README table). Most Track-1 entrants will build a generic personal-assistant memory ("remembers your coffee order"). Trace takes the same core mechanics — store, forget-the-obsolete, recall-under-budget — and points them at a **real, expensive, legally-backed industry problem**. That is precisely how you win the 25% "Problem Value & Impact" criterion that generic entries leave on the table. `[inference]`
 
 ## 6. Feasibility — why this is buildable in the time we have
 
@@ -66,7 +66,7 @@ The submission is "done" when the demo can show, end-to-end, on the authored tra
 
 ## 8. What this is NOT (scope guardrails)
 
-To stay buildable in ~12 days, Keystone is explicitly **not**: a live BIM/IFC integration, a multi-project firm-wide knowledge base, a multi-tenant SaaS with auth, or a general-purpose contradiction detector. It is one project's decision memory, demonstrated on one deterministic storyline, done well. `[inference — see scope in docs/03]`
+To stay buildable in our ~9-day window (submit 7 Jul), Trace is explicitly **not**: a live BIM/IFC integration, a multi-project firm-wide knowledge base, a multi-tenant SaaS with auth, or a general-purpose contradiction detector. It is one project's decision memory, demonstrated on one deterministic storyline, done well. `[inference — see scope in docs/03]`
 
 ---
 

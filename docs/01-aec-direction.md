@@ -17,7 +17,7 @@ The AEC industry **records what was designed, but not why** — so design intent
 
 The academic framing is clean. A 2025 paper in *ITcon* (Wyke et al., "Understanding Design Rationale and Intent") argues a project "must have both explicit design rationale and intent available to be successful," and that current practice **"captures what was designed but neglects why it was designed that way,"** so teams "repeat rejected alternatives and lose the reasoning behind decisions." `[web search — itcon.org/paper/2025/26]`
 
-Worse, intent is not just forgotten — it is **actively reversed** during delivery. Architects flag the contractual **"or equivalent"** clause that lets a contractor swap a specified product for a cheaper one *even when the original was chosen for fire, thermal, or longevity performance* — the rationale evaporates because no decision trail travels with the spec. `[web search — Architects' Journal roundtable]` **This is the exact mechanism of Keystone's centrepiece demo.**
+Worse, intent is not just forgotten — it is **actively reversed** during delivery. Architects flag the contractual **"or equivalent"** clause that lets a contractor swap a specified product for a cheaper one *even when the original was chosen for fire, thermal, or longevity performance* — the rationale evaporates because no decision trail travels with the spec. `[web search — Architects' Journal roundtable]` **This is the exact mechanism of Trace's centrepiece demo.**
 
 ### Pain 2 — The cost of rework, error, and change
 
@@ -58,7 +58,7 @@ Design errors and omissions are a leading driver of architect/engineer professio
 
 ---
 
-## 2. The golden thread — the wedge that makes Keystone matter
+## 2. The golden thread — the wedge that makes Trace matter
 
 > **🇸🇬 Singapore note (added 2026-06-28):** The golden thread is a **UK** regime — Singapore has **no** equivalent. For a Singapore team, the home-market wedge is the **Qualified Person (QP) regime** (Building Control Act s.9: a named designer is personally + criminally liable; the only existing decision-record, reg 22(e), is structural-only with no falsification detection). Treat the UK golden thread below as a **global precedent / credibility multiplier**, not the core market. See **[07-singapore-angle.md](07-singapore-angle.md)** for the Singapore subsection to slot in here.
 
@@ -69,7 +69,7 @@ Grenfell Tower fire (June 2017, 72 deaths) → Hackitt's independent review *Bui
 
 **What the golden thread legally requires** (and how it maps to our schema):
 
-| Golden-thread requirement `[web search]` | Keystone field |
+| Golden-thread requirement `[web search]` | Trace field |
 |---|---|
 | Attributable to a **named user** | `author` |
 | **Timestamped** | `recorded_at`, `valid_from` |
@@ -78,7 +78,7 @@ Grenfell Tower fire (June 2017, 72 deaths) → Hackitt's independent review *Bui
 | All fire-safety design decisions recorded (e.g. master design risk register) | the decision graph itself |
 | **Gateways** hard-stop the project if information is incomplete (notably **Gateway 2**, before construction) | the "Gateway-2 dossier" recall scenario in the demo |
 
-**Why this is gold for the hackathon (the 25% Problem-Value criterion):** most Track-1 entries will pitch a *nice-to-have*. Keystone pitches a capability a whole class of buildings is **legally required** to maintain — and whose statutory data model is *identical* to the agent's. No other likely Track-1 entrant has a regulator mandating their product. `[inference]`
+**Why this is gold for the hackathon (the 25% Problem-Value criterion):** most Track-1 entries will pitch a *nice-to-have*. Trace pitches a capability a whole class of buildings is **legally required** to maintain — and whose statutory data model is *identical* to the agent's. No other likely Track-1 entrant has a regulator mandating their product. `[inference]`
 
 > **Honesty guardrail for the pitch:** the golden thread is a UK regime. Say so. Then make the global generalisation explicitly: *the same immutable, attributable, reasoned decision record is a professional-liability defence in any jurisdiction*. Don't imply it's a worldwide law.
 
@@ -103,7 +103,7 @@ The agent must speak the industry's language. The essentials:
 
 **Critical gap = there is no AEC-standard "design decision log."** Software has the formalised **Architecture Decision Record (ADR)**; AEC has only the *generic* PM "decision log/register," applied inconsistently, with rationale routinely vaporising into email and verbal agreement. **That missing standard is the product opportunity.** `[web search + inference]`
 
-**The information backbone is standardised** (position Keystone as *complementary*, not competing): **ISO 19650** governs information management (EIR → BEP → MIDP/TIDP, all in a **Common Data Environment** with WIP → Shared → Published → Archived states). Note: ISO 19650 centres on information *requirements and exchanges*, **not decisions per se** — which is exactly the layer Keystone adds on top. `[web search — ISO 19650]`
+**The information backbone is standardised** (position Trace as *complementary*, not competing): **ISO 19650** governs information management (EIR → BEP → MIDP/TIDP, all in a **Common Data Environment** with WIP → Shared → Published → Archived states). Note: ISO 19650 centres on information *requirements and exchanges*, **not decisions per se** — which is exactly the layer Trace adds on top. `[web search — ISO 19650]`
 
 ---
 
