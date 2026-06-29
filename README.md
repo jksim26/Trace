@@ -37,6 +37,7 @@ In a construction project, the design brief evolves across dozens of meetings, b
 | 05 | [docs/05-competitive-landscape.md](docs/05-competitive-landscape.md) | **Why we win the room** — competitor table and the precise unoccupied gap |
 | 06 | [docs/06-open-questions.md](docs/06-open-questions.md) | **Assumptions & decisions for you** — what I decided on your behalf and what to verify |
 | 07 | [docs/07-singapore-angle.md](docs/07-singapore-angle.md) | **The Singapore angle** — no golden thread, but QP personal criminal liability is the home-market wedge; recommended framing + localized demo |
+| 08 | [docs/08-tech-implementation.md](docs/08-tech-implementation.md) | **Tech implementation** — What technologies are needed to build each part of TRACE, with multiple implementation options per module |
 | — | [demo/demo-script.md](demo/demo-script.md) | The 3-scene "Maple Wharf" demo storyline + on-screen beats |
 | — | [demo/transcripts/](demo/transcripts/) | The fictional meeting transcripts the agent ingests in the demo |
 | — | [.research/](.research/) | Raw deep-research appendix (6 dimensions + adversarial verification + synthesis) |
