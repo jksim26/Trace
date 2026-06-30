@@ -1,4 +1,4 @@
-# 07 · Technology Implementation Guide — TRACE
+# 08 · Technology Implementation Guide — TRACE
 
 *What technologies are needed to build each part of TRACE, with multiple implementation options per module.*
 *Written for a 2–3 person team new to AI development. Difficulty ratings and time estimates are calibrated for this team profile.*
