@@ -1,21 +1,21 @@
-# 08 · Technology Implementation Guide — TRACE
+# 08 · Technology Implementation Guide — Trace
 
-*What technologies are needed to build each part of TRACE, with multiple implementation options per module.*
-*Written for a 2–3 person team new to AI development. Difficulty ratings and time estimates are calibrated for this team profile.*
+*What technologies are needed to build each part of Trace, with multiple implementation options per module.*
+*Written for a 2-person team new to AI development. Difficulty ratings and time estimates are calibrated for this team profile.*
 *Confidence tags: `[verified]` · `[web search]` · `[inference]`*
 
 ---
 
 ## How to Read This Document
 
-Each section covers **one functional module** of TRACE. For every module, you will find:
+Each section covers **one functional module** of Trace. For every module, you will find:
 
 - **What it needs to do** — the job this module performs
 - **Option A · Recommended** — the fastest, safest path for a hackathon
 - **Option B · Alternative** — a different approach with different trade-offs
 - **Option C · Stretch / Production** — what this would look like if you had more time or were building for real
 - **Difficulty rating** — ★☆☆☆☆ (beginner) to ★★★★★ (expert)
-- **Time estimate** — for a 2–3 person team, AI-newcomer profile, working ~8–10 hours/day
+- **Time estimate** — for a 2-person team, AI-newcomer profile, working ~8–10 hours/day
 
 ### Difficulty Scale
 | Rating | Meaning |
@@ -27,7 +27,21 @@ Each section covers **one functional module** of TRACE. For every module, you wi
 | ★★★★★ | Expert-level; not recommended for hackathon timeline |
 
 ### Team Assumption
-All estimates assume **2–3 people**, splitting work in parallel where possible, working ~8–10 hours/day. Where a task is labelled `[parallel]`, two people can work on it simultaneously to cut clock time.
+All estimates assume **2 people**, splitting work in parallel where possible, working ~8–10 hours/day. Where a task is labelled `[parallel]`, two people can work on it simultaneously to cut clock time.
+
+### How the Modules Map to Trace's Five-Part Memory
+
+Trace is a memory system, not a search tool, so the modules below line up with a five-part memory architecture. Reading them this way keeps the build honest about which part is table stakes and which part is the moat. `[inference]`
+
+| Memory part | What it is | Module(s) |
+|---|---|---|
+| **Short-term** | Live conversation buffer + a MemGPT-style always-in-context "core block" | Module 7 (agent loop) |
+| **Long-term** | Vector store + structured metadata — the decision graph, the episodic log, and the vector index | Modules 1, 3, 6 |
+| **Write logic** | `capture_decision` — *compile, not retrieve*: compress a meeting into one structured record | Module 2 |
+| **Retrieval logic** | Retrieve-to-budget — pack only the currently-valid decisions that fit a token budget | Module 5 |
+| **Forgetting logic** | Two tiers — (1) passive decay / dedup, and (2) **active premise-invalidation** | Module 4 |
+
+Tier 2 of forgetting — actively flagging a still-"valid" decision the moment a new one falsifies a premise it relied on — is the box most memory systems skip, and it is Trace's single differentiator. Everything above it is necessary plumbing. `[inference]`
 
 ---
 
@@ -73,6 +87,19 @@ Same as Option A but uses `poetry` instead of `pip`. Cleaner dependency locking,
 Wrap everything in a Docker container so judges can run it with one command (`docker run trace`). Impressive for the submission, but only worth doing after the core demo works.
 
 **Time estimate:** 4–6 hours (after the app is working)
+
+### Option D · Roadmap — On-prem / air-gapped open-weight Qwen ★★★★☆
+
+*Not part of the hackathon build — this is the production security story for the deck.*
+
+The hackathon **requires** hosted Qwen Cloud (the Singapore DashScope endpoint), so during the demo, transcript data leaves the firm and is processed on Alibaba Cloud. That is acceptable for a demo, but it is exactly the objection a security-conscious AEC firm will raise about a knowledge product.
+
+The roadmap answer: Trace's engine — the SQLite decision graph, the vector index, and the tool layer — is model-agnostic, so the same product can run against an **open-weight Qwen model hosted on-prem or fully air-gapped**, with nothing leaving the firm's own server. This is a structural moat that cloud-only SaaS incumbents (Glean, Microsoft 365 Copilot) cannot match. `[web search / general knowledge — not independently verified]`
+
+**Caveat to state honestly:** the flagship `qwen3.7-max` is API-only, so an on-prem deployment would run a *smaller* open-weight Qwen checkpoint you can self-host — trading some reasoning quality for full data sovereignty. `[web search / general knowledge — not independently verified]`
+
+**Time estimate:** out of scope for the hackathon build window; cite as the production deployment path.
+**Difficulty:** ★★★★☆
 
 ---
 
@@ -163,7 +190,7 @@ RETURN downstream
 
 ## Module 2 · Decision Extraction — Turning Transcripts into Records
 
-**What it needs to do:** Take raw meeting transcript text as input, and output one or more structured Decision records — correctly identifying the statement, rationale, assumptions, author, and discipline. This is the `capture_decision` tool.
+**What it needs to do:** Take raw meeting transcript text as input, and output one or more structured Decision records — correctly identifying the statement, rationale, assumptions, author, and discipline. This is the `capture_decision` tool — Trace's **write logic**. The governing rule is *compile, not retrieve*: the model compresses an entire meeting into one compact structured record, rather than storing the raw transcript to search later. `[inference]`
 
 ### Option A · Recommended — Qwen function-calling with a strict JSON schema ★★★☆☆
 
@@ -198,7 +225,7 @@ EXTRACT_TOOL = {
 **System prompt approach:**
 ```python
 SYSTEM_PROMPT = """
-You are TRACE, a design-decision memory agent for AEC projects.
+You are Trace, a design-decision memory agent for AEC projects.
 When given a meeting transcript chunk, identify all design decisions made.
 For each decision, call capture_decision() with the exact fields requested.
 A 'decision' is a choice that: (a) was explicitly agreed by the team,
@@ -317,7 +344,9 @@ Alibaba's managed vector database service, designed to pair with DashScope/Qwen.
 
 ## Module 4 · The Contradiction / Invalidation Engine
 
-**What it needs to do:** When a new decision arrives, determine whether it breaks the assumptions of any existing valid decision, and if so, fire an alert. This is the heart of TRACE — the `check_invalidation` tool. It has two parts working together: a deterministic rule-pack and an LLM premise checker.
+**What it needs to do:** When a new decision arrives, determine whether it breaks the assumptions of any existing valid decision, and if so, fire an alert. This is the heart of Trace — the `check_invalidation` tool. It has two parts working together: a deterministic rule-pack and an LLM premise checker.
+
+In memory-architecture terms this is the **active tier of Trace's forgetting logic**. Forgetting runs in two tiers: *passive* (recency decay and de-duplication — the recency term in Module 5 covers most of this), and *active premise-invalidation* — proactively flagging a still-"valid" decision the instant a new decision falsifies a premise it relied on. The active tier is the component most memory systems skip, and it is the one thing no competitor ships. `[inference]`
 
 ### Option A · Recommended — YAML rule-pack + LLM premise check ★★★☆☆
 
@@ -382,7 +411,7 @@ Answer JSON only: {{"conflict": true/false, "reason": "..."}}
 
 **Alert output format (what judges see on screen):**
 ```
-⚠️  TRACE INVALIDATION ALERT
+⚠️  Trace INVALIDATION ALERT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NEW:   "Facade changed to ACM aluminium composite cladding" (D-089)
        Proposed by: J. Park (contractor value engineer), 2026-03-15
@@ -434,7 +463,7 @@ Instead of manually writing `DEPENDS_ON` edges or relying solely on keyword matc
 
 ## Module 5 · Recall Pipeline — Answering Questions Within a Token Budget
 
-**What it needs to do:** Given a question ("Why did we choose terracotta, and can we still change it?"), retrieve the most relevant, currently-valid decisions, rank them, and pack only what fits a token budget — then answer. Show a visible context-budget meter. This is the `recall_decisions` tool.
+**What it needs to do:** Given a question ("Why did we choose terracotta, and can we still change it?"), retrieve the most relevant, currently-valid decisions, rank them, and pack only what fits a token budget — then answer. Show a visible context-budget meter. This is the `recall_decisions` tool — Trace's **retrieval logic**, built as *retrieve-to-budget* rather than retrieve-everything. `[inference]`
 
 ### Option A · Recommended — Hybrid retrieval + composite scoring + greedy packing ★★★☆☆
 
@@ -506,7 +535,7 @@ def show_budget_meter(used: int, total: int = TOKEN_BUDGET):
 **Abstention (honest "no record" response):**
 ```python
 if not packed:
-    print("TRACE: No decision on record for this query. "
+    print("Trace: No decision on record for this query. "
           "Either it was never decided, or it predates this project's memory.")
 ```
 
@@ -526,7 +555,7 @@ Skip BM25 and reranking. Just use cosine similarity from the vector index, take 
 
 ### Option C · Stretch — LongMemEval-style evaluation harness ★★★★☆
 
-Build an automated test harness that scores TRACE's recall quality on a set of gold-standard question-answer pairs from the Maple Wharf transcripts. Measures: knowledge-update accuracy, temporal reasoning, abstention rate.
+Build an automated test harness that scores Trace's recall quality on a set of gold-standard question-answer pairs from the Maple Wharf transcripts. Measures: knowledge-update accuracy, temporal reasoning, abstention rate.
 
 **Why not for the hackathon core:** The demo is manually verified against a controlled storyline — a formal eval harness is impressive but not required to win. Park this as a post-hackathon credibility builder.
 
@@ -611,7 +640,7 @@ Use `networkx` + `pyvis` (Python) or a JavaScript library (D3.js, Cytoscape.js) 
 
 ## Module 7 · Qwen-Agent MCP Tool Wrapping
 
-**What it needs to do:** Expose TRACE's four core functions as callable tools within the Qwen-Agent framework, so the agent visibly calls them as tools during the demo. This directly banks the "custom skills / MCP integrations" judging criterion (worth up to 30% of the score).
+**What it needs to do:** Expose Trace's four core functions as callable tools within the Qwen-Agent framework, so the agent visibly calls them as tools during the demo. This directly banks the "custom skills / MCP integrations" judging criterion (worth up to 30% of the score). In memory terms, the agent loop also holds Trace's **short-term memory** — the live conversation buffer plus a small, always-in-context MemGPT-style "core block" that keeps the agent oriented across successive tool calls. `[inference]`
 
 ### Option A · Recommended — Qwen-Agent `@register_tool` decorator ★★★☆☆
 
@@ -711,10 +740,10 @@ if response.choices[0].message.tool_calls:
 
 ### Option C · Stretch — MCP server (Model Context Protocol) ★★★★☆
 
-Expose TRACE's tools as a true MCP server that any MCP-compatible client (not just Qwen-Agent) can connect to. This is the "real" MCP integration the judging rubric references.
+Expose Trace's tools as a true MCP server that any MCP-compatible client (not just Qwen-Agent) can connect to. This is the "real" MCP integration the judging rubric references.
 
 ```python
-# TRACE as an MCP server
+# Trace as an MCP server
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 
@@ -754,7 +783,7 @@ console = Console()
 
 # Scene 2: The red alert (the money shot)
 console.print(Panel(
-    "[bold red]⚠️  TRACE INVALIDATION ALERT[/bold red]\n\n"
+    "[bold red]⚠️  Trace INVALIDATION ALERT[/bold red]\n\n"
     "[white]NEW:[/white]  Facade changed to ACM cladding (D-089)\n"
     "        [dim]J. Park (contractor), 2026-03-15[/dim]\n\n"
     "[white]BREAKS:[/white] D-047 — Facade = terracotta on A2 mineral wool\n"
@@ -802,7 +831,7 @@ Streamlit lets you build a web UI in pure Python — no HTML/JavaScript required
 ```python
 import streamlit as st
 
-st.title("TRACE — Design Decision Memory Agent")
+st.title("Trace — Design Decision Memory Agent")
 transcript = st.text_area("Paste meeting transcript:")
 if st.button("Process"):
     with st.spinner("Analysing..."):
@@ -817,6 +846,28 @@ if st.button("Process"):
 
 **Time estimate:** 4–8 hours (on top of CLI logic)
 **Difficulty:** ★★★☆☆
+
+### Option D · The Ambient "Hero" Moment — staged, not a full daemon ★★☆☆☆
+
+Trace's north star is *automation, not a tool*: it should be **there**, surfacing the right decision in context, rather than waiting to be queried — active push, the single sharpest differentiator (see [05 · Competitive Landscape](05-competitive-landscape.md)). For the demo, stage **one** ambient moment that shows this, without building a screen-watching daemon.
+
+**The shot:** the user opens the 2nd-storey facade drawing and Trace proactively pops a small panel before anyone asks:
+
+```
+┌─ Trace ─────────────────────────────────────┐
+│ 2nd-storey facade · 3 decisions here         │
+│   • 1 pending confirmation                   │
+│   • facade spec superseded 3 weeks ago       │
+│   [ view decisions ]        [ dismiss ]      │
+└──────────────────────────────────────────────┘
+```
+
+**How to stage it honestly:** fire the panel from a single "open drawing X" event — a button, a hotkey, or a file-open watcher on one named file — not a general computer-vision daemon. The counts, the "pending confirmation", and "superseded 3 weeks ago" are read live from the real SQLite store (Modules 1, 4, 6), so the *content* is genuine even though the *trigger* is scripted. `[inference]`
+
+**Build-vs-stage line (7-July submission):** build the four-part loop for real — capture → invalidate (+alert) → recall-to-budget → audit (Modules 2, 4, 5, 6). *Stage* only this ambient trigger. That puts the differentiator — Trace speaking first — on camera without committing to a production surveillance layer.
+
+**Time estimate:** 2–4 hours (on top of the Option A CLI)
+**Difficulty:** ★★☆☆☆
 
 ---
 
@@ -883,7 +934,7 @@ Use an LLM to draft the transcripts, then review and edit them for AEC accuracy.
 ### GitHub Repo ★★☆☆☆
 - Set to **public** before submission
 - Include `LICENSE` file (MIT is fine, simple, well-recognised)
-- `README.md` should cover: what TRACE is, how to install, how to run the demo, architecture overview
+- `README.md` should cover: what Trace is, how to install, how to run the demo, architecture overview
 
 **Time estimate:** 2–4 hours (README + license + cleanup)
 **Difficulty:** ★★☆☆☆
@@ -898,9 +949,9 @@ Use an LLM to draft the transcripts, then review and edit them for AEC accuracy.
 
 ### Demo Video (≤3 minutes) ★★☆☆☆
 Three scenes, scripted in advance:
-1. **Scene 1 (45 sec):** "A decision is made" — paste Scene 1 transcript → TRACE extracts D-047 → shows the structured record
-2. **Scene 2 (75 sec):** "A conflict is detected" — paste Scene 3 transcript → TRACE fires the red alert → explain the blast radius
-3. **Scene 3 (45 sec):** "The audit trail" — query "why terracotta?" → TRACE recalls with budget meter → show the superseded chain
+1. **Scene 1 (45 sec):** "A decision is made" — paste Scene 1 transcript → Trace extracts D-047 → shows the structured record
+2. **Scene 2 (75 sec):** "A conflict is detected" — paste Scene 3 transcript → Trace fires the red alert → explain the blast radius
+3. **Scene 3 (45 sec):** "The audit trail" — query "why terracotta?" → Trace recalls with budget meter → show the superseded chain
 
 **Tools:** OBS Studio (free screen recorder) + DaVinci Resolve (free video editor).
 
@@ -910,7 +961,7 @@ Three scenes, scripted in advance:
 ### Presentation Deck ★★☆☆☆
 Six slides maximum:
 1. The problem (Hackitt quote + BSA 2022)
-2. What TRACE does (the four-part loop)
+2. What Trace does (the four-part loop)
 3. The demo (screenshot of the red alert)
 4. Architecture diagram
 5. Competitive position (the unoccupied square)
@@ -921,7 +972,7 @@ Six slides maximum:
 
 ---
 
-## Master Timeline — 2–3 Person Team, 12 Days
+## Master Timeline — 2-Person Team (build to the 7 Jul internal submit; 8–9 Jul buffer)
 
 *Assumes ~8–10 hours/day. `[P]` = can be done in parallel by a second person.*
 
@@ -936,9 +987,9 @@ Six slides maximum:
 | **Day 7** (Jul 3) | 10h | Qwen-Agent tool wrapping (C5) — `@register_tool` for all 4 tools + agent loop test | 7 |
 | **Day 8** (Jul 4) | 8h | `rich` CLI demo interface + three-scene scripted run-through `[P]` README draft | 8, 10 |
 | **Day 9** (Jul 5) | 8h | Full end-to-end rehearsal of three demo scenes — fix any failures `[P]` Presentation deck | All |
-| **Day 10** (Jul 6) | 8h | Deploy to Alibaba Cloud (insurance) `[P]` Architecture diagram finalise | 0, 10 |
-| **Day 11** (Jul 7–8) | 10h | Record demo video + edit to ≤3 min + upload + written Devpost description | 10 |
-| **Day 12** (Jul 9) | 4h | Final checks: repo public + license present + all links working → **SUBMIT before 14:00 PDT** | 10 |
+| **Day 10** (Jul 6) | 10h | Record demo video + edit to ≤3 min + upload + written Devpost description `[P]` Deploy to Alibaba Cloud (insurance) + Architecture diagram finalise | 10, 0 |
+| **Day 11** (Jul 7) | 6h | Final checks: repo public + license present + all links working → **★ SUBMIT on Devpost (internal target)** | 10 |
+| **Day 12** (Jul 8–9) | — | **Buffer** — fixes, re-record, polish if needed; final check before the hard **9 Jul 14:00 PDT** deadline | — |
 
 **Critical path:** Day 4 (invalidation alert) is the spine. If Day 4 slips, push Day 5–6 tasks to parallel and protect the alert above all else.
 
@@ -960,7 +1011,7 @@ Six slides maximum:
 | **Demo interface** | `rich` CLI | Streamlit | FastAPI web app |
 | **Architecture diagram** | Excalidraw | draw.io | — |
 | **Video** | OBS + DaVinci Resolve | Loom | — |
-| **Deployment** | Alibaba Cloud ECS (insurance) | — | Alibaba Cloud |
+| **Deployment** | Alibaba Cloud ECS (insurance) | — | Alibaba Cloud · on-prem open-weight Qwen, air-gapped (roadmap) |
 
 ---
 

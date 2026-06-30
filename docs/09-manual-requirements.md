@@ -1,0 +1,61 @@
+# 09 · Manual Requirements — What Only the Human Team Can Do
+
+*Everything on this page is **human/manual** work — it is **not** part of the AI code build. Source items: [03-hackathon-strategy.md](03-hackathon-strategy.md) §5–6 and [06-open-questions.md](06-open-questions.md) §B (verify items) + §C (human-only decisions). Confidence tags: `[verified]` · `[web search]` · `[inference]` · `[team decision]`. Items marked **VERIFY LIVE** must be confirmed on the live Devpost rules page (it renders empty to automated fetch) before the deadline.*
+
+> **Why this doc exists:** Trace is "automation, not a tool," but the *build* still has a handful of things the agent cannot do for the team — register a billing identity, claim a coupon, read a live rules page, point a camera, and confirm the storyline. They are collected here so none of them silently gate the 7-July submission. Dates: internal submit target **7 Jul 2026**; hard deadline **9 Jul 2026, 14:00 PDT** `[verified — timezone-checked]`.
+
+---
+
+## A. BLOCKERS — these gate the entire code build
+
+**Nothing in the LLM loop (capture · invalidate · recall) can run *or be tested* against a real model until A1–A4 are done.** Until then the build only runs against stubs/mocks. This is the single most time-critical human task — do it first. `[verified — per 06 §C7]`
+
+- [ ] **A1 · Create the Alibaba Cloud / Model Studio (Qwen Cloud) account.** Only the human team can do this — it is tied to your **billing identity**, not the agent. `[verified — per 06 §C7]`
+- [ ] **A2 · Claim the $40 build coupon + Model Studio new-user free quota** (~1M free tokens/model, Singapore region, ~90-day window). Stack the per-model free quota to stretch the budget. `[web search — per 03 §1]`
+- [ ] **A3 · Generate `DASHSCOPE_API_KEY` and put it in `Trace/.env`** (repo-root `.env`, already protected by `.gitignore`). This is the key the existing smoke-test `Trace/test_connection.py` loads via `load_dotenv()`. `[verified — read in repo]`
+- [ ] **A4 · Smoke-test the Singapore endpoint** — run `Trace/test_connection.py` (base URL `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`, model `qwen-plus`) and confirm it returns. Then confirm a `qwen3.7-max` call returns too. *Verify: "TRACE connection successful." prints; a real model reply comes back.* `[verified — script in repo]`
+
+> **Note (not a blocker, but tied to A):** the hackathon **requires hosted Qwen Cloud** (Singapore **DashScope** endpoint), so for the 7-July demo, data **does leave** to Alibaba Cloud. The on-prem / open-weight-Qwen security moat is **roadmap only** — keep it off the demo (see §D5). `[web search — not independently verified]`
+
+---
+
+## B. VERIFY LIVE before the deadline
+
+*All of B rests on mirrors/snippets, **not** a direct read — the rules page renders empty to automated fetch. Do a live human read and lock each item.* `[web search — unverified until live read]`
+
+- [ ] **B1 · Demo-video length** — sources conflict: "< 3 min" (Devpost snippet) vs "max 5 min" (qwencloud.com). **Edit to ≤ 3 min** to satisfy either; confirm the exact cap before upload. **VERIFY LIVE** `[web search — source conflict]`
+- [ ] **B2 · Mandatory Alibaba Cloud deployment?** — a web-search summary says projects must be "deployed on Alibaba Cloud infrastructure." Unconfirmed. **Deploy to an Alibaba Cloud instance as insurance regardless.** **VERIFY LIVE** `[web search — unverified]`
+- [ ] **B3 · Video host** — must be public on **YouTube / Vimeo / Youku**; the public link goes on the submission form. **VERIFY LIVE** `[web search]`
+- [ ] **B4 · Repo public + OSS-license — exact requirement.** Repo must be **public AND carry an open-source license file** (a `LICENSE` is already in the repo root). Double-check the *exact* license requirement (whether any specific license / OSI approval is named). **VERIFY LIVE** `[verified — snippet; exact terms unconfirmed]`
+- [ ] **B5 · Which 30% bucket owns "sophisticated Qwen API / MCP use" vs "architecture / code quality."** Mitigated by building to **both** descriptions (see [03](03-hackathon-strategy.md) §3 ⚠ and 06 §A8), but confirm the pairing if the live page makes it clear. `[verified — direct source conflict]`
+- [ ] **B6 · Coupon / quota scope** — whether the $40 coupon + free quota cover **embeddings, rerank, and context-caching**, and **qwen3.7-max's Singapore availability/price** (unannounced at launch). Affects model routing (qwen-plus/flash for routine extraction, qwen3.7-max reserved for contradiction reasoning). **VERIFY LIVE** `[web search — unconfirmed]`
+- [ ] **B7 · Re-confirm dates on the live page** — the **9 Jul 14:00 PDT** hard deadline is multiply corroborated `[verified]`; the tail-end dates (judging ~10–30 Jul, winners ~7 Aug) rest on a **single source** — re-check. `[web search — single source]`
+- [ ] **B8 · One full live human read of the rules page before submit** — confirm deadline, video length (B1), deployment clause (B2), OSS-license requirement (B4), eligibility/registration steps. This is the umbrella check that retires the "unverified" tag on B1–B7. **VERIFY LIVE** `[web search — pending live read]`
+
+---
+
+## C. Human deliverables (build by hand; the agent can draft, the team owns)
+
+*These are the [03](03-hackathon-strategy.md) §5 submission boxes that are human work, plus the §6 "5–6 Jul" record-and-package row.*
+
+- [ ] **C1 · Record the demo video, ≤ 3 min** — the 3-scene storyline with the on-screen **red invalidation alert** + **context-budget meter**, plus the staged ambient "hero" moment (user opens the 2nd-storey drawing → Trace pops "3 decisions here · 1 pending confirmation · facade spec superseded 3 weeks ago"). Public on YouTube/Vimeo/Youku (per B3). `[team decision — demo scope per 03 §6]`
+- [ ] **C2 · Presentation deck.** `[verified — §5 box]`
+- [ ] **C3 · Written project description on Devpost.** `[verified — §5 box]`
+- [ ] **C4 · Architecture diagram** — turn the §8 text diagram in [02-architecture.md](02-architecture.md) into a clean visual (human design pass, even if agent-drafted). `[verified — §5 box]`
+- [ ] **C5 · Flip the repo to public at submit time** — keep it private during the build, make it public **with the OSS license present** at the moment of submission (per B4). `[team decision]`
+- [ ] **C6 · (Optional) Provide a sanitised real design-meeting transcript** — would add authenticity over the fictional transcripts, **but mind confidentiality / IP**. Optional; the deterministic fictional storyline is the safe default. `[team decision — per 06 §C6]`
+
+---
+
+## D. Decisions to confirm (only the human team can settle these)
+
+- [ ] **D1 · Final demo storyline = "Tanglin Rise" (Singapore)** — locked 30 Jun (SCDF Fire Code 2023 Cl 3.5 non-combustible **> 15 m**; **Building Control Act s.9** QP personal criminal liability; **Toh Guan Road** fire precedent; UK golden thread as a one-line close). Confirm it stays locked; the legacy "Maple Wharf" UK framing is being migrated out. `[team decision — per 06 §A5/§C2, anchors per 07]`
+- [ ] **D2 · Jurisdiction doc-rewrites timing** — execute the [07-singapore-angle.md](07-singapore-angle.md) §6 rewrites now, or after the team aligns? `[open — per 06 §C2]`
+- [ ] **D3 · Division of labour (2-person team)** — confirm the split of [03](03-hackathon-strategy.md) §6 into two parallel workstreams along the function-contract interface (memory core ↔ agent/demo). `[open — per 06 §C1]`
+- [ ] **D4 · Demo medium** — CLI + TUI panel (fast, films fine) vs thin web UI (prettier, costs time). Recommend starting CLI, upgrade only if time allows. `[open — per 06 §C5]`
+- [ ] **D5 · On-prem / open-weight Qwen — roadmap only, keep OFF the 7-Jul demo.** Confirm this is a post-hackathon decision, not a demo claim. Caveat: flagship **qwen3.7-max is API-only**, so an on-prem build runs a smaller open-weight Qwen. `[web search / general knowledge — not independently verified]`
+- [ ] **D6 · Keep Idea B (Agent Society, Track 3) as a documented fallback?** Track 1 is the stronger fit; decide whether to park a one-pager so it isn't lost. `[open — per 06 §C4]`
+
+---
+
+*Back to sources:* [03 · Hackathon Strategy](03-hackathon-strategy.md) §5–6 · [06 · Open Questions](06-open-questions.md) §B–C · [07 · Singapore Angle](07-singapore-angle.md)

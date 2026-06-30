@@ -109,4 +109,12 @@ emb = client.embeddings.create(
 
 ---
 
+## 8. Data residency & on-prem option
+
+- **The hosted demo runs on Qwen Cloud (required), so data leaves the firm.** All calls hit the Singapore DashScope endpoint (§1, `[verified]`), so for the 7-Jul build **payloads go to Alibaba Cloud (Singapore region)** — fine for the staged demo dataset, *not* a customer-data guarantee. `[inference — from §1]`
+- **On-prem / open-weight Qwen as the security moat — roadmap, not a 7-Jul claim.** The engine is local (SQLite + vector index) and Qwen publishes open-weight checkpoints, so Trace can in principle run **fully on-prem / air-gapped — nothing leaves the firm's server**, which pull-based SaaS incumbents (see [05](05-competitive-landscape.md)) structurally can't match. We do **not** build or demo this for submission. `[web search / general knowledge — not independently verified]`
+- **Caveat — the flagship is API-only.** `qwen3.7-max` (§2) is served via DashScope only; there is no open-weight checkpoint to self-host. An on-prem build would swap in a **smaller open-weight Qwen** (e.g. a Qwen3 open-weight model), trading some reasoning headroom for residency control. `[web search / general knowledge — not independently verified]`
+
+---
+
 *Sources: alibabacloud.com Model Studio docs (endpoints, embeddings, qwen-long, rerank, free-quota); marktechpost / datastudios / juheapi (model context windows); github.com/QwenLM/Qwen-Agent. Full list in [.research/research-qwen-tech.md](../.research/research-qwen-tech.md) and verification in [.research/verification.md](../.research/verification.md).*

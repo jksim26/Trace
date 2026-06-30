@@ -41,6 +41,8 @@
 
 **Trace's grounded value proposition:** in a BCA investigation, MOM/WSHA prosecution, or PEB/BOA inquiry, the QP must prove *what they decided, why, on what assumptions, and when.* Trace supplies an **attributable, timestamped, immutable** record per decision — directly rebutting the "perfunctory log = negligence" inference — and its **premise-falsification alerts operationalise the s.9 "ought reasonably to know" standard** by surfacing when a new decision undermines a safety-critical assumption *before* it becomes a defect.
 
+**QP continuity / handover.** Because the s.9 duty attaches to a *named* individual, a senior QP leaving mid-project today walks the decision rationale out the door; continuous, attributable capture-as-you-go makes handover automatic — the successor QP inherits a live, defensible decision record instead of reconstructing it from fragmented paper. `[inference]`
+
 ---
 
 ## 2. Recommended framing — Home + Scale + Precedent (do NOT lead UK-only)

@@ -8,7 +8,7 @@
 
 **Camp A — AEC tools** are excellent at geometric clash detection, spatially-anchored issues, and audit trails, but they track **what is wrong in the model**, not **why a choice was made** or **whether a past choice still holds.**
 
-**Camp B — horizontal AI memory / KB tools** increasingly do typed "decisions" memory and even generic contradiction detection, but **none target AEC**, understand disciplines/systems/model elements, or model **design-decision dependencies.**
+**Camp B — horizontal AI memory / KB tools** increasingly do typed "decisions" memory and even generic contradiction detection, but **none target AEC**, understand disciplines/systems/model elements, or model **design-decision dependencies.** The commodity end of this camp — **"ingest everything, answer anything"** enterprise search — is already owned by **Glean**, **Microsoft 365 Copilot**, and, in AEC, Workorb / Knowledge Architecture `[web search — not verified]`. Trace deliberately does **not** compete there on corpus size or search recall; it competes on **reasoning about which decisions still hold**, delivered by **active push** rather than a box you stop to query.
 
 The closest *conceptual* analogue isn't in AEC at all — it's the software **Architecture Decision Record (ADR)**: decision + rationale + superseded-by link. But ADR supersession is a **manual** human status flip, software-only, with **no automatic detection.**
 
@@ -30,6 +30,7 @@ The closest *conceptual* analogue isn't in AEC at all — it's the software **Ar
 | **ADRs** (adr-tools) | SW decision records | decision + context + rationale + **superseded** link | **Manual** supersession; software-only; **no automatic invalidation detection** |
 | **Decision logs** (monday/Loqbooq/Jira) | Generic PM log | Manual what/who/when/why; some construction use | Static manual tables; no dependency graph; no invalidation; not AEC-aware |
 | **Supermemory / Second Brain / Mem0 / Zep** | Horizontal AI memory | Persistent memory, RAG, typed "decisions", generic contradiction/update handling | No AEC domain model; no design-decision dependency graph; contradiction is fact-level, not downstream-decision invalidation |
+| **Glean / Microsoft 365 Copilot** | Enterprise RAG search / KB (horizontal) | Index + answer over *all* firm content — the commodity "ingest-everything, answer-anything" enterprise-search space | Per-decision dependency graph; active premise-invalidation; AEC decision semantics (retrieval, not a reasoning engine) |
 | **Alhena / Fini** | AI KB contradiction detection | Auto-flag contradictory FAQ/support articles | Operate on FAQ text, not a graph of design decisions + assumptions; no AEC; no downstream invalidation |
 
 ---
@@ -40,7 +41,7 @@ The capability we need is **split across four groups, owned whole by none:**
 
 - **AEC issue/CDE tools** → have timestamp + audit, but track issues/clashes/docs, no rationale, no dependency model.
 - **ADRs** → have rationale + supersede-link, but manual, software-only, no auto-detection.
-- **Horizontal AI memory** → has typed decisions + generic contradiction handling, but no AEC model, no dependency graph.
+- **Horizontal AI memory** → has typed decisions + generic contradiction handling, but no AEC model, no dependency graph, and **no active-forgetting / premise-invalidation layer** — the one box in the standard memory stack (capture → store → retrieve → *forget*) that almost every memory agent leaves empty.
 - **Decision logs** → capture who/when/why, but static manual tables, no invalidation engine.
 
 > **The empty square Trace fills:** an AEC-aware system where decisions are first-class nodes carrying **rationale + assumptions + timestamp**, edges encode **"assumes / depends-on"**, and the system **actively fires an alert** the instant a new decision falsifies the premise an earlier one relied on. *No reviewed competitor ships this combination.*
@@ -58,10 +59,11 @@ The capability we need is **split across four groups, owned whole by none:**
 ## 5. Defensibility (for the judge / for a future business)
 
 1. **Decision-dependency graph** as the core data model — a *reasoning* graph of decisions, not a flat log or an issue tracker.
-2. **Active invalidation vs passive retrieval** — every incumbent is pull-based search; we *push* the alert the moment a premise is falsified. **The single sharpest differentiator.**
+2. **Automation, not a tool — active invalidation vs passive retrieval** — every incumbent is a *tool you pick up and query* (pull-based search); Trace is *automation that runs alongside the work* and **pushes** the alert the moment a premise is falsified. **The single sharpest differentiator.**
 3. **Rationale + assumptions captured at the point of decision** — the "why" AEC tools systematically drop.
 4. **AEC domain semantics** (disciplines, systems, phases) — the edge over horizontal memory.
 5. **Compounding data moat** — the graph grows per project/firm; more decisions captured → more invalidations catchable. Frame defensibility *here*, not on the AI technique.
+6. **On-prem / air-gapped deployment** *(roadmap, not the 7-July demo)* — because the engine is a local SQLite decision-graph + vector index driven by an **open-weight Qwen**, the whole product can run on the firm's own server with **no decision data leaving the building**. SaaS incumbents (Glean, Microsoft 365 Copilot) are structurally cloud-only and cannot match this on security-sensitive or air-gapped projects. *Caveat: the hackathon demo calls hosted **Qwen Cloud** (Singapore DashScope), so demo data does leave to Alibaba Cloud; and the flagship `qwen3.7-max` is API-only, so an on-prem build would run a smaller open-weight Qwen.* `[web search / general knowledge — not independently verified]`
 
 ---
 

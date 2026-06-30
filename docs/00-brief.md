@@ -15,9 +15,13 @@ So three failures happen on every project:
 2. **The "why" evaporates.** Six months later someone asks *"why did we choose terracotta?"* and the answer — *"because it's a higher-risk building and combustible cladding is illegal over 18 m"* — is gone. The team re-litigates a settled decision, or worse, reverses it without knowing what it was protecting.
 3. **There is no defensible record.** When a dispute or a safety review comes, there is no immutable, attributable trail of who decided what, when, and why.
 
+These compound at **handover.** When a senior leaves, the rationale walks out the door with them — a clean one-to-two-month handover is rarely possible, and the incoming lead inherits live decisions with no idea what they were protecting. Because Trace captures decisions *as they are made* — consensual capture-as-you-go, never surveillance — the handover record builds itself continuously instead of being reconstructed under pressure at the end. `[inference]`
+
 This is not a niche annoyance. It is the **information-management failure that every architecture and engineering firm actually faces**, and — uniquely for our wedge — the UK government has already **legislated** that it must be fixed (see §4).
 
 ## 2. What Trace is
+
+**Automation, not a tool.** You don't *pick Trace up and query it* — it runs ambiently alongside the design conversation, capturing and reconciling decisions as they are made, and it **pushes** the relevant knowledge to you in context instead of waiting to be asked. Active push, not passive pull, is *the single sharpest differentiator* (see [05-competitive-landscape.md](05-competitive-landscape.md)).
 
 A **memory agent that sits alongside the design conversation** and does four things no existing tool does together:
 
@@ -25,6 +29,8 @@ A **memory agent that sits alongside the design conversation** and does four thi
 2. **Detects** — actively, unprompted — when a *new* decision falsifies the **premise** an *earlier* decision relied on, and fires a conflict alert *in the meeting*, before the contradiction propagates into rework.
 3. **Recalls** the right currently-valid critical constraints on demand, fitting them into a tight context budget, and correctly **abstains** ("no decision on record") instead of inventing answers.
 4. **Preserves** history immutably: a superseded decision is invalidated, not deleted, leaving a queryable "changed by whom, when, why" chain.
+
+Under the hood that is a **five-part memory architecture** — a short-term conversation buffer, a long-term decision graph + vector index, write logic, retrieval-to-budget, and a *two-tier* forgetting logic whose active **premise-invalidation** tier (item 2 above) is the box almost every memory system leaves empty (full treatment in [02-architecture.md](02-architecture.md)). `[inference]`
 
 **The sharpest way to say it:** *Clash detection finds geometric conflicts — two objects in the same space, right now. Trace finds **decision conflicts** — a new choice that breaks the assumptions of an old one, across time. It is the temporal/semantic analogue of clash detection.* `[inference, validated against competitor research]`
 
@@ -63,6 +69,7 @@ The submission is "done" when the demo can show, end-to-end, on the authored tra
 - **C4 — Immutable trail:** show that the superseded decision is preserved with a `superseded_by` link, not erased. *Verify: the audit/history view walks the chain.*
 - **C5 — Qwen-native:** `capture_decision` and `check_invalidation` are exposed as **MCP tools / custom skills** via Qwen-Agent. *Verify: the agent calls them as tools.*
 - **C6 — Submittable:** public, **open-source-licensed** repo + architecture diagram + ≤ 3-minute demo video + deck + written description on Devpost. *Verify: against the live Devpost rules checklist.*
+- **C7 — Ambient surfacing (staged hero beat):** the user opens the 2nd-storey drawing and Trace *proactively* pops a context card — "3 decisions here, 1 pending confirmation, facade spec superseded 3 weeks ago" — with no prompt. *Verify: the card fires on the demo storyline; staged real enough to film, without building a full screen-watching daemon.* `[inference — staged for demo, see scope in docs/03]`
 
 ## 8. What this is NOT (scope guardrails)
 

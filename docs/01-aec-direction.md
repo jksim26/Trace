@@ -48,6 +48,8 @@ This is the emotional core, and it is exceptionally well-evidenced *from the gov
 
 This is the user's "why did we decide X?" problem, stated almost verbatim — *and a government review already validated it.*
 
+**The headline use case — automatic handover.** When a senior architect or engineer leaves, the *why* walks out of the door with them. The textbook fix is a 1–2 month handover that, in practice, rarely happens — the departing person is already on the next job, and the receiving team inherits drawings without the reasoning. Trace attacks this at the root: because it is **there in the room** capturing every decision *and its rationale as the work happens* — ambiently, across meetings, RFIs and MOMs — the handover record is *already written* the day someone leaves. This is **consensual capture-as-you-go, not surveillance**: it records the decisions a team is already making out loud in its own forums; it does not infer or extract what an individual chose to keep private. Continuous decision-capture is what turns an impossible 1–2 month handover into an automatic one. `[inference]`
+
 ### Pain 5 — RFIs, coordination, and undocumented decisions as root cause
 
 The Navigant Construction Forum RFI study (1,362 projects, >1 M RFIs): **~$1,080 to process a single RFI**, **~9.9 RFIs per $1 M** of project value, ~9.7 days to close, and **nearly 1 in 4 RFIs never get a reply.** `[web search]` Industry analyses attribute a large share of RFIs to design errors, incomplete drawings, or missing specs. `[web search — low confidence]` Many RFIs are **re-asks of questions that *were* answered in an earlier meeting but never written into a durable, queryable record** — exactly the loop a decision-memory layer attacks. `[inference]`
@@ -109,7 +111,7 @@ The agent must speak the industry's language. The essentials:
 
 ## 4. Four worked examples — a decision changes, and what it makes obsolete
 
-These are the demo fuel. In each, the model eventually updates — but the *decision + rationale + the list of now-invalid downstream items* is what no current tool reliably holds. `[inference from sourced cascade material; an AEC reader will recognise these as realistic]`
+These are the demo fuel. In each, the model eventually updates — but the *decision + rationale + the list of now-invalid downstream items* is what no current tool reliably holds. And holding it is only half the job: the differentiator is that Trace **pushes** the invalidation the moment the triggering decision lands — *automation, not a tool you have to remember to query*. `[inference from sourced cascade material; an AEC reader will recognise these as realistic]`
 
 ### A — Parking count 200 → 150 (budget / revised transport statement) · *RIBA 2–3*
 Invalidates: basement parking layout (possibly deletes a whole basement level); ramp geometry, cycle store (planning often demands *more* cycle spaces in exchange); **structural** foundations/retaining walls if a level goes; **MEP** car-park ventilation & EV-charging counts; **fire** smoke-extract strategy; **QS** GIA → area schedule → cost plan → appraisal; **planning** transport-statement condition → *re-approval risk*.

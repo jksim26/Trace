@@ -9,9 +9,11 @@
 
 ## The one-paragraph pitch
 
-In a construction project, the design brief evolves across dozens of meetings, but nobody records *which decision changed, when, and why*. By the time the drawings are issued, the design intent is blurred — and a budget decision made in March silently contradicts a fire-safety decision made in January. **Trace** is a memory agent that ingests design-meeting conversations, stores every decision as a structured record (**decision + timestamp + author + rationale + the assumptions it rests on**), and — the part nobody else does — *actively fires an alert the instant a new decision falsifies the premise an earlier decision relied on*. It recalls the right critical constraints under a tight context budget, and it never deletes: superseded decisions are invalidated, not erased, producing exactly the immutable, attributable audit trail the UK Building Safety Act's "golden thread" now makes **legally mandatory** for higher-risk buildings.
+In a construction project, the design brief evolves across dozens of meetings, but nobody records *which decision changed, when, and why*. By the time the drawings are issued, the design intent is blurred — and a budget decision made in March silently contradicts a fire-safety decision made in January. **Trace is automation, not a tool** — an *ambient* decision-memory agent that sits in the room and does the job rather than a search box someone must remember to open. It captures every design decision and its rationale as it is made (meetings, RFIs, minutes-of-meeting) and stores each as a structured record (**decision + timestamp + author + rationale + the assumptions it rests on**); it always knows which decisions are currently valid versus superseded; and — the part nobody else does — it *actively pushes an alert the instant a new decision falsifies the premise an earlier decision relied on*. It surfaces the right critical constraints proactively and in-context under a tight budget, and it never deletes: superseded decisions are invalidated, not erased, producing exactly the immutable, attributable audit trail the UK Building Safety Act's "golden thread" now makes **legally mandatory** for higher-risk buildings.
 
 > *"Clash detection catches two ducts hitting a beam. We catch the moment a cost decision quietly breaks a fire decision someone made seven weeks ago — before it becomes an RFI, a Gateway failure, or a tragedy."*
+
+**Headline use case — handover.** When a senior engineer leaves, decades of design rationale walk out the door and the standard one-to-two-month handover can't transfer it. Because Trace has been capturing every decision and its *why* as the work happened — consensual capture-as-you-go, **not** surveillance — handover becomes automatic: the institutional memory is already on the record. `[inference]`
 
 ---
 
@@ -20,7 +22,7 @@ In a construction project, the design brief evolves across dozens of meetings, b
 | Track 1 official wording | Trace feature |
 |---|---|
 | "efficient memory storage and retrieval" | Bi-temporal **decision graph** — decisions as first-class nodes with rationale + assumptions; hybrid retrieval |
-| "timely forgetting of outdated information" | **Active premise-invalidation** — supersede (not delete) a decision the moment a new one contradicts its premise |
+| "timely forgetting of outdated information" | **Active premise-invalidation** *(the differentiator — the one thing no competitor ships)* — supersede (not delete) a decision the moment a new one contradicts its premise |
 | "recalling critical memories within limited context windows" | **Retrieve-to-budget** recall of only the currently-valid critical constraints, with correct abstention |
 
 ---
@@ -37,7 +39,8 @@ In a construction project, the design brief evolves across dozens of meetings, b
 | 05 | [docs/05-competitive-landscape.md](docs/05-competitive-landscape.md) | **Why we win the room** — competitor table and the precise unoccupied gap |
 | 06 | [docs/06-open-questions.md](docs/06-open-questions.md) | **Assumptions & decisions for you** — what I decided on your behalf and what to verify |
 | 07 | [docs/07-singapore-angle.md](docs/07-singapore-angle.md) | **The Singapore angle** — no golden thread, but QP personal criminal liability is the home-market wedge; recommended framing + localized demo |
-| 08 | [docs/08-tech-implementation.md](docs/08-tech-implementation.md) | **Tech implementation** — What technologies are needed to build each part of TRACE, with multiple implementation options per module |
+| 08 | [docs/08-tech-implementation.md](docs/08-tech-implementation.md) | **Tech implementation** — What technologies are needed to build each part of Trace, with multiple implementation options per module |
+| 09 | [docs/09-manual-requirements.md](docs/09-manual-requirements.md) | **Manual requirements** — the human-only tasks (Qwen Cloud account, coupon, API key, live Devpost checks, deliverables) the AI build can't do |
 | — | [demo/demo-script.md](demo/demo-script.md) | The 3-scene "Maple Wharf" demo storyline + on-screen beats |
 | — | [demo/transcripts/](demo/transcripts/) | The fictional meeting transcripts the agent ingests in the demo |
 | — | [.research/](.research/) | Raw deep-research appendix (6 dimensions + adversarial verification + synthesis) |

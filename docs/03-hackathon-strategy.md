@@ -21,7 +21,7 @@
 | Team size | **1–5 members** | `[verified]` |
 | Build budget | **$40 coupon/participant** + Model Studio new-user free quota (~1M free tokens/model, Singapore, ~90 days) | `[web search]` |
 
-**Today is 2026-06-28. We're targeting submission by 7 July (≈9 days of build), leaving 8–9 July as buffer before the hard 9 Jul 14:00 PDT deadline.** Plan accordingly (§6).
+**Today is 2026-06-30. We're targeting submission by 7 July (≈7 days of build), leaving 8–9 July as buffer before the hard 9 Jul 14:00 PDT deadline.** Plan accordingly (§6).
 
 ## 2. The five tracks (for context; we are Track 1)
 
@@ -46,7 +46,9 @@
 
 ## 4. The differentiation (one paragraph, memorise it)
 
-No competitor closes the four-part loop of **decision + rationale + timestamp + active downstream invalidation.** AEC incumbents (Revizto, Newforma Konekt, BIMcollab, Autodesk Construction Cloud, Aconex, Procore) track issues/clashes/documents with audit trails but store *what* is wrong in the model, never *why* a choice was made or whether it still holds. AEC AI startups (Helonic, Drawer AI, Togal) do forward, point-in-time error detection on a drawing set, not longitudinal decision memory. The closest analogue — software **ADRs** — captures decision + rationale + a superseded-by link, but supersession is a *manual* status flip, software-only, with no automatic detection. Horizontal AI memory (Supermemory, Mem0/Zep) and KB contradiction-detectors (Alhena, Fini) already handle abstract contradictions — *so "we detect conflicts" is NOT itself novel; say so on stage to stay credible.* The defensible wedge is the combination nobody ships: an **AEC-domain decision-dependency graph** that performs **active premise-invalidation** and is **golden-thread native** (attributable, timestamped, immutable). Full table: [05-competitive-landscape.md](05-competitive-landscape.md).
+No competitor closes the four-part loop of **decision + rationale + timestamp + active downstream invalidation.** AEC incumbents (Revizto, Newforma Konekt, BIMcollab, Autodesk Construction Cloud, Aconex, Procore) track issues/clashes/documents with audit trails but store *what* is wrong in the model, never *why* a choice was made or whether it still holds. AEC AI startups (Helonic, Drawer AI, Togal) do forward, point-in-time error detection on a drawing set, not longitudinal decision memory. The closest analogue — software **ADRs** — captures decision + rationale + a superseded-by link, but supersession is a *manual* status flip, software-only, with no automatic detection. Horizontal AI memory (Supermemory, Mem0/Zep) and KB contradiction-detectors (Alhena, Fini) already handle abstract contradictions — *so "we detect conflicts" is NOT itself novel; say so on stage to stay credible.* The defensible wedge is the combination nobody ships: an **AEC-domain decision-dependency graph** that performs **active premise-invalidation** and is **golden-thread native** (attributable, timestamped, immutable). And the *delivery* is part of the wedge: Trace is **automation, not a tool** — it runs ambiently and **pushes** the alert into context the moment a premise breaks, instead of waiting to be opened and queried; this **active push, not passive pull** is what doc 05 calls the single sharpest differentiator. Full table: [05-competitive-landscape.md](05-competitive-landscape.md).
+
+> **On-prem = the security moat (roadmap, not a demo claim):** the hackathon **requires hosted Qwen Cloud** (Singapore DashScope endpoint), so for the 7-July demo, data does leave to Alibaba Cloud. But the product can run on **open-weight Qwen on-prem / air-gapped** — nothing leaves the firm's server — which SaaS incumbents (Glean, Microsoft 365 Copilot) structurally cannot match. Caveat: the flagship **qwen3.7-max is API-only**, so an on-prem build would run a smaller open-weight Qwen. `[web search / general knowledge — not independently verified]`
 
 ## 5. Submission deliverables checklist `[verified unless noted]`
 
@@ -60,9 +62,11 @@ No competitor closes the four-part loop of **decision + rationale + timestamp + 
 
 > **Good news from the fact-check:** pre-existing projects are allowed *if significantly updated after the submission period starts* — so starting to build now and iterating is fine; it does not have to be a from-scratch-during-the-window build. `[verified — Devpost rules snippet]` Originality still required (no direct copying of OSS projects); teams retain IP, grant the sponsor a non-exclusive license for judging/promo. `[verified]`
 
-## 6. The build plan (today = 28 Jun · internal submit = **7 Jul** · hard deadline = 9 Jul 14:00 PDT)
+## 6. The build plan (drafted 28 Jun · internal submit = **7 Jul** · hard deadline = 9 Jul 14:00 PDT)
 
 *Compressed to land submission on 7 July, leaving 8–9 Jul as pure contingency. Repo + OSS license are already ✅ done.*
+
+> **⏱ Status update (2026-06-30):** today is now **30 Jun**, not 28 Jun — the table's "28 Jun" anchor below is kept as-is for reference. We're on the **foundation spine** (decision schema + SQLite never-delete store, the 28–29 Jun row), which is the **current step**; the 30 Jun–1 Jul capture + invalidation-alert row is next. `[team status]`
 
 | Days | Goal | Verify |
 |---|---|---|
@@ -75,6 +79,8 @@ No competitor closes the four-part loop of **decision + rationale + timestamp + 
 | **8–9 Jul** | **Buffer** — fixes, re-record, polish if needed; final check before the hard 9 Jul 14:00 PDT deadline. | Nothing left to chance. |
 
 **Risk-driven sequencing:** the invalidation alert (C2) is the demo's spine — build it *second*, right after the store, so if time runs short everything after it is polish, not core. With only ~9 build days for 2 people, protect C1–C3 ruthlessly and treat every stretch item as optional.
+
+> **Demo scope — build for real vs. stage (the 7-July cut):** **BUILD FOR REAL** the full four-part loop end to end (**C1–C4**) — **capture → invalidate (+ push alert) → recall-to-budget → audit** — on the one deterministic storyline. **STAGE one ambient "hero" moment:** the user opens the 2nd-storey drawing and Trace pops *"3 decisions here · 1 pending confirmation · facade spec superseded 3 weeks ago"* — real enough to film without building a full screen-watching daemon. The staged moment sells **"automation, not a tool"**; the real four-part loop proves it. `[team decision]`
 
 ## 7. Top risks & mitigations `[from synthesis]`
 

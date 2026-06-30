@@ -44,7 +44,7 @@ Decision {
   rationale:     "HRB >18m; non-combustible cladding mandated by Approved Doc B (B4)."
   assumptions:   ["building remains an HRB (>18m)", "combustible cladding prohibited"]
   brief_ref:     "Facade specification / RDS-external-envelope"
-  importance:    5                      # 1-5; deterministic by decision type, see §6
+  importance:    5                      # 1-5; deterministic by decision type, see §7
   # --- bi-temporal validity ---
   valid_from:    2026-01-14T11:42Z      # when true in the world
   valid_to:      null                   # null = currently valid
@@ -124,6 +124,26 @@ question ("why terracotta, and can we still change it?")
               ABSTAIN ("no decision on record") if nothing valid is retrieved
 ```
 
+### The five-part memory architecture (and the ambient delivery layer) `[inference, grounded in verified papers]`
+
+The two pipelines and three stores above are one concrete instance of the canonical agent-memory stack (MemGPT/Letta, Mem0), which has **five functional parts**. Trace implements all five — and the part most teams leave empty, *forgetting*, is exactly where the differentiator sits.
+
+| Part | What it is | In Trace | Maps to |
+|---|---|---|---|
+| **Short-term** | live buffer + always-in-context core block | the live transcript buffer + the bounded MemGPT-style core block (brief summary + currently-valid decisions + house rules) | core block, §2 |
+| **Long-term** | vector store + structured metadata | the three stores together — semantic **decision graph** + **episodic log** + **vector index** | §3 |
+| **Write logic** | how new information enters long-term memory | `capture_decision`: **compile, don't retrieve** — compress a whole meeting into one structured `Decision` record (statement + rationale + assumptions), not a saved chat log | Pipeline A, above |
+| **Retrieval logic** | how memory is selected back into context | hybrid retrieve → composite re-score → **retrieve-to-budget** (filter to currently-valid, pack top-k to a token budget) | Pipeline B, above |
+| **Forgetting logic** | how memory is kept *current* | **two tiers** (below); the second is the moat | Pipeline A step 3 · forgetting policy, §7 |
+
+**Forgetting is two tiers, and the second is the one no competitor ships:**
+1. **Passive** — decay/eviction + dedup of low-importance episodic chatter (composite-score demotion; optional sleep-time consolidation). Standard; most stacks stop here. (Detail in §7.)
+2. **Active premise-invalidation** — on every new decision, test whether it *falsifies a premise an earlier valid decision relied on*; if so, demote that decision from active recall (set `valid_to`, link `superseded_by`) **and fire an alert**. This is the box most agent-memory designs leave empty. `[inference]`
+
+> **"Compile, not retrieve" is the hinge.** Commodity memory tools store raw turns and search them later — a retrieval problem. Trace's *write* step reasons at capture time and emits a validity-bearing record, so the forgetting tier can reason about **validity**, not just recency — which is what makes active premise-invalidation possible at all.
+
+**Delivery layer — ambient surfacing (context-triggered push).** The five parts decide *what* is in memory and *what is still valid*; a thin delivery layer on top decides *when to surface it unasked*. Trace watches the working context (the drawing, RFI, or brief item in view) and proactively pushes the relevant valid decisions and any pending invalidation — design principle 3's *active push* (§1), realised as in-context surfacing rather than a query box. This is the *automation, not a tool* north star: Trace is **there** doing the job, not a panel someone remembers to open. `[inference]`
+
 ---
 
 ## 5. The Qwen stack (full reference in [04-qwen-tech-reference.md](04-qwen-tech-reference.md))
@@ -140,6 +160,8 @@ question ("why terracotta, and can we still change it?")
 > **Avoid `qwen-long` (10M context).** It is Beijing-region-only and the Singapore free quota / $40 coupon likely won't cover it. We don't need 10M — the whole point of Trace is *not* dumping everything into context. `[verified — region caveat; inference on need]`
 
 > **Opt into the big window.** 1M-context models default to ~129K usable input unless you set `max_input_tokens`. Set it explicitly if you ever need it. `[web search]`
+
+> **On-prem / open-weight Qwen — the security ROADMAP (not a demo claim).** The hackathon runs on **hosted Qwen Cloud** (required; Singapore DashScope endpoint), so for the demo, data does leave to Alibaba Cloud. Because Trace is Qwen-native, though, the same design can run on **open-weight Qwen, on-prem / air-gapped** — nothing leaves the firm's own server — which SaaS incumbents (Glean, Microsoft 365 Copilot) structurally cannot match, and which is the real security moat for AEC clients. Caveat: the flagship **qwen3.7-max is API-only**, so an on-prem build would swap the heavy reasoning step to a smaller **open-weight Qwen** checkpoint, trading some headroom for data residency. `[web search / general knowledge — not independently verified]`
 
 ---
 
@@ -177,7 +199,7 @@ When a new decision (ACM cladding) violates a constraint a prior decision (D-047
 
 ```
                         ┌─────────────────────────────────────────────┐
-   meeting transcript ──▶                 TRACE AGENT                  │
+   meeting transcript ──▶                 Trace Agent                  │
    (or live chat)        │   (Qwen-Agent runtime, MCP tools)           │
                         │                                              │
                         │  MCP TOOLS / CUSTOM SKILLS:                  │
