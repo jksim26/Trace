@@ -177,7 +177,7 @@ When a new decision (ACM cladding) violates a constraint a prior decision (D-047
 
 ```
                         ┌─────────────────────────────────────────────┐
-   meeting transcript ──▶                KEYSTONE AGENT                 │
+   meeting transcript ──▶                 TRACE AGENT                  │
    (or live chat)        │   (Qwen-Agent runtime, MCP tools)           │
                         │                                              │
                         │  MCP TOOLS / CUSTOM SKILLS:                  │

@@ -15,7 +15,7 @@ Localize the demo to a 95m Singapore condo and keep the UK as a one-line close. 
 - SCDF non-combustible over 15m, use 15m not 18m
 - Toh Guan Road fire 2017, 40 buildings, pre-Grenfell
 - PFI facade inspection from 2022, over 13m and 20 years
-- CORENET X mandatory 2025 to 2027, Keystone complements
+- CORENET X mandatory 2025 to 2027, Trace complements
 - IDD target 70 percent by 2025, not the 58 to 67 progress figure
 - China lifelong quality responsibility, medium confidence
 - MCST 1075 case, the penalty ceilings, and PE Act s18 are unverified
@@ -37,8 +37,8 @@ Localize the demo to a 95m Singapore condo and keep the UK as a one-line close. 
   - mitigation: Hard-code 15m, 40 buildings, and Toh Guan preceding Grenfell
 - **risk:** Leading UK-only with a China and Alibaba panel reads as a foreign-compliance niche
   - mitigation: Sequence Singapore then China then a UK one-liner and anchor on rework
-- **risk:** CORENET X may already provide a timestamped submission audit trail that overlaps Keystone
-  - mitigation: Position Keystone as the decision layer that complements CORENET X and verify its audit scope
+- **risk:** CORENET X may already provide a timestamped submission audit trail that overlaps Trace
+  - mitigation: Position Trace as the decision layer that complements CORENET X and verify its audit scope
 
 ## gaps
 - The section 9 penalty ceilings are secondary; verify on SSO
