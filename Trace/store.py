@@ -121,6 +121,24 @@ def get_all_decisions(conn: sqlite3.Connection) -> list[Decision]:
     return [_row_to_decision(r) for r in rows]
 
 
+def get_valid_asof(conn: sqlite3.Connection, as_of: str) -> list[Decision]:
+    """Bi-temporal time-travel: decisions that were on record AND valid as of `as_of`.
+
+    recorded_at <= as_of (the system knew it by then) AND valid_from <= as_of (true in
+    the world by then) AND not-yet-invalidated by then (valid_to IS NULL OR > as_of).
+    Excludes proposals (never valid). `as_of` is an ISO-8601 timestamp string.
+    """
+    rows = conn.execute(
+        """SELECT * FROM decisions
+              WHERE status != 'proposed'
+                AND recorded_at <= ? AND valid_from <= ?
+                AND (valid_to IS NULL OR valid_to > ?)
+           ORDER BY recorded_at, id""",
+        (as_of, as_of, as_of),
+    ).fetchall()
+    return [_row_to_decision(r) for r in rows]
+
+
 def supersede_decision(
     conn: sqlite3.Connection,
     old_id: str,
