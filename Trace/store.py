@@ -116,6 +116,11 @@ def get_valid_decisions(conn: sqlite3.Connection) -> list[Decision]:
     return [_row_to_decision(r) for r in rows]
 
 
+def get_all_decisions(conn: sqlite3.Connection) -> list[Decision]:
+    rows = conn.execute("SELECT * FROM decisions ORDER BY recorded_at, id").fetchall()
+    return [_row_to_decision(r) for r in rows]
+
+
 def supersede_decision(
     conn: sqlite3.Connection,
     old_id: str,
