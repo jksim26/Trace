@@ -111,7 +111,7 @@ def get_decision(conn: sqlite3.Connection, decision_id: str) -> Optional[Decisio
 
 def get_valid_decisions(conn: sqlite3.Connection) -> list[Decision]:
     rows = conn.execute(
-        "SELECT * FROM decisions WHERE valid_to IS NULL ORDER BY recorded_at"
+        "SELECT * FROM decisions WHERE valid_to IS NULL AND status = 'valid' ORDER BY recorded_at"
     ).fetchall()
     return [_row_to_decision(r) for r in rows]
 
