@@ -1,0 +1,23 @@
+# Trace rule-pack — SCDF fire-safety constraints (Singapore).
+#
+# The deterministic gate for check_invalidation: a proposed decision whose
+# structured context violates a rule here fires the invalidation alert with
+# CERTAINTY, so the demo's centrepiece never mis-fires. The LLM premise check
+# (added later, needs the API key) is the general, probabilistic second half.
+# See docs/02-architecture.md §6.
+#
+# A rule fires a violation when ALL `when` conditions hold AND any `require`
+# condition fails. Conditions are {operator: value}: gt gte lt lte eq ne in not_in.
+
+- id: SCDF-Cl3.5-noncombustible
+  citation: "SCDF Fire Code 2023 Cl 3.5"
+  rationale: "External walls of a building exceeding 15 m in height must be wholly non-combustible."
+  when:
+    building.height_m: {gt: 15}
+  require:
+    facade.cladding.combustible: {eq: false}
+  blast_radius:
+    - facade.support_and_fixings
+    - fire.strategy
+    - qp.s9_personal_liability
+    - periodic_facade_inspection
