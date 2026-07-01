@@ -1,9 +1,10 @@
 """C3 — recall_decisions: answer from currently-valid decisions, packed to a
-token budget, with honest abstention. See docs/02-architecture.md §4 Pipeline B.
+token budget, with honest abstention. Directly-relevant rejected/superseded
+decisions are added as history, so an answer to "can we change it?" can cite what
+was already tried and rejected. See docs/02-architecture.md §4 Pipeline B.
 
-Retrieval + abstention are deterministic (keyword overlap on content words), so
-the demo behaves the same every take; the final answer is synthesised by
-qwen-plus, grounded ONLY in the packed decisions.
+Retrieval + abstention are deterministic (keyword overlap on content words); the
+final answer is synthesised by qwen-plus, grounded ONLY in the packed decisions.
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from dataclasses import dataclass, field
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from store import Decision, get_valid_decisions
+from store import Decision, get_all_decisions, get_valid_decisions
 
 load_dotenv()
 
@@ -45,6 +46,7 @@ class RecallResult:
     used: int = 0
     budget: int = TOKEN_BUDGET
     abstained: bool = False
+    candidates: int = 0  # how many decisions matched the query (for the budget meter)
 
 
 def _score(d: Decision, qwords: set) -> int:
@@ -52,13 +54,9 @@ def _score(d: Decision, qwords: set) -> int:
     return len(qwords & dw)
 
 
-def retrieve(conn, question: str, budget: int = TOKEN_BUDGET):
-    qwords = _content_words(question)
-    scored = sorted(
-        ((d, _score(d, qwords)) for d in get_valid_decisions(conn)),
-        key=lambda x: -x[1],
-    )
-    packed, used = [], 0
+def _pack(decisions, qwords, budget, used):
+    scored = sorted(((d, _score(d, qwords)) for d in decisions), key=lambda x: -x[1])
+    packed = []
     for d, s in scored:
         if s <= 0:
             continue
@@ -70,9 +68,16 @@ def retrieve(conn, question: str, budget: int = TOKEN_BUDGET):
     return packed, used
 
 
+def retrieve(conn, question: str, budget: int = TOKEN_BUDGET):
+    return _pack(get_valid_decisions(conn), _content_words(question), budget, 0)
+
+
 _ANSWER_SYS = (
     "You are Trace. Answer the question using ONLY the design decisions provided. "
-    "Be concise (at most 2 sentences). Cite decision IDs inline like (D-001). "
+    "Decisions marked [valid] are current; decisions marked [proposed] or [superseded] "
+    "were considered but are NOT in force. Be concise (at most 2 sentences), and cite "
+    "decision IDs inline like (D-001). If asked whether something can change, answer it "
+    "directly and name any [proposed]/[superseded] attempt that was already rejected. "
     'If the decisions do not answer the question, reply exactly: "No decision on record."'
 )
 
@@ -82,11 +87,19 @@ def _fmt(d: Decision) -> str:
 
 
 def recall_decisions(conn, question: str, budget: int = TOKEN_BUDGET, client=None, model: str = MODEL) -> RecallResult:
-    packed, used = retrieve(conn, question, budget)
-    if not packed:
-        return RecallResult("No decision on record; not yet decided.", [], used, budget, True)
+    qwords = _content_words(question)
+    valid = get_valid_decisions(conn)
+    others = [d for d in get_all_decisions(conn) if d.status != "valid"]
+    candidates = sum(1 for d in valid + others if _score(d, qwords) > 0)
+
+    packed, used = _pack(valid, qwords, budget, 0)      # currently-valid first
+    extra, used = _pack(others, qwords, budget, used)   # then relevant history (rejected/superseded)
+    chosen = packed + extra
+    if not chosen:
+        return RecallResult("No decision on record; not yet decided.", [], used, budget, True, 0)
+
     client = client or OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
-    context = "\n".join(_fmt(d) for d in packed)
+    context = "\n".join(_fmt(d) for d in chosen)
     resp = client.chat.completions.create(
         model=model,
         temperature=0,
@@ -95,4 +108,4 @@ def recall_decisions(conn, question: str, budget: int = TOKEN_BUDGET, client=Non
             {"role": "user", "content": f"Decisions:\n{context}\n\nQuestion: {question}"},
         ],
     )
-    return RecallResult(resp.choices[0].message.content.strip(), [d.id for d in packed], used, budget, False)
+    return RecallResult(resp.choices[0].message.content.strip(), [d.id for d in chosen], used, budget, False, candidates)

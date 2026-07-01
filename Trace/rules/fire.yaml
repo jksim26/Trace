@@ -17,7 +17,7 @@
   require:
     facade.cladding.combustible: {eq: false}
   blast_radius:
-    - facade.support_and_fixings
-    - fire.strategy
-    - qp.s9_personal_liability
-    - periodic_facade_inspection
+    - "facade support steel & fixings"
+    - "fire-safety strategy re-approval"
+    - "the QP's personal criminal liability (Building Control Act s.9)"
+    - "the periodic facade inspection"

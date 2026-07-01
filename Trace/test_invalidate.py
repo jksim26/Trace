@@ -28,7 +28,7 @@ def test_combustible_facade_fires_alert_naming_prior():
     a = alerts[0]
     assert a.rule_id == "SCDF-Cl3.5-noncombustible"
     assert a.breaks is not None and a.breaks.id == "D-001"
-    assert "qp.s9_personal_liability" in a.blast_radius
+    assert any("s.9" in b for b in a.blast_radius)
 
 
 def test_compliant_change_fires_no_alert():

@@ -12,7 +12,7 @@ def test_combustible_cladding_over_15m_violates():
     assert [v.rule_id for v in violations] == ["SCDF-Cl3.5-noncombustible"]
     assert "15 m" in violations[0].rationale
     assert "SCDF" in violations[0].citation
-    assert "qp.s9_personal_liability" in violations[0].blast_radius
+    assert any("s.9" in b for b in violations[0].blast_radius)
 
 
 def test_noncombustible_cladding_over_15m_ok():

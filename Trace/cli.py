@@ -26,6 +26,10 @@ except Exception:  # rich not installed -> plain text still films fine
 
 TRANSCRIPTS = Path(__file__).resolve().parent.parent / "demo" / "transcripts"
 
+# A deliberately tight "critical-context" budget so the meter visibly bites in the
+# demo — the whole point of retrieve-to-budget is injecting only what matters.
+DEMO_BUDGET = 600
+
 
 def _panel(text: str, title: str = "", style: str = "white") -> None:
     if RICH:
@@ -49,8 +53,28 @@ def _pause(on: bool) -> None:
             pass
 
 
-def _log(conn) -> str:
-    return "\n".join(f"  {d.id} [{d.status}] {d.statement[:58]}" for d in get_all_decisions(conn))
+def _budget_bar(used: int, budget: int, width: int = 24) -> str:
+    filled = min(width, round(width * used / budget)) if budget else 0
+    return "█" * filled + "░" * (width - filled) + f"   {used} / {budget} tokens"
+
+
+_STATUS = {"valid": "IN FORCE", "proposed": "PROPOSED · REJECTED", "superseded": "SUPERSEDED"}
+
+
+def _trail(conn) -> str:
+    lines = ["Nothing is deleted — every version stays on the record:", ""]
+    for d in get_all_decisions(conn):
+        if d.status == "proposed":
+            when = f"proposed {(d.valid_from or '')[:10]} · not adopted"
+        elif d.valid_to:
+            when = f"{(d.valid_from or '')[:10]} → {d.valid_to[:10]}  (superseded)"
+        else:
+            when = f"{(d.valid_from or '')[:10]} → current"
+        lines.append(f"  {d.id}  [{_STATUS.get(d.status, d.status)}]   {when}")
+        lines.append(f"        {d.statement}")
+        if d.superseded_by:
+            lines.append(f"        superseded_by → {d.superseded_by}")
+    return "\n".join(lines)
 
 
 def ambient_card(conn) -> str:
@@ -59,9 +83,9 @@ def ambient_card(conn) -> str:
     pending = [d for d in everything if d.status == "proposed"]
     return (
         f"2nd-storey facade  ·  {len(everything)} decision(s) on record\n"
-        f"  - {len(valid)} currently valid\n"
-        f"  - {len(pending)} pending / rejected proposal(s)\n"
-        f"  - live constraint: D-001 non-combustible facade (> 15 m, SCDF Cl 3.5)"
+        f"  • {len(valid)} currently valid\n"
+        f"  • {len(pending)} pending / rejected proposal(s)\n"
+        f"  • live constraint: D-001 non-combustible facade (> 15 m, SCDF Cl 3.5)"
     )
 
 
@@ -89,13 +113,10 @@ def run(pause: bool = False) -> None:
                               recorded_at="2026-03-03T14:00Z", valid_from="2026-03-03T14:00Z"):
         alerts = check_invalidation(conn, c)
         c.decision.status = "proposed"
-        prop = add_decision(conn, c.decision)  # never delete — preserve the rejected proposal
+        add_decision(conn, c.decision)  # never delete — preserve the rejected proposal
         for a in alerts:
             _panel(render_alert(a), title="!! INVALIDATION ALERT", style="red")
-        _panel(
-            f"Proposal {prop.id} recorded as [proposed] and preserved — D-001 stays valid.\n\n" + _log(conn),
-            title="Immutable trail (never delete)", style="yellow",
-        )
+        _panel(_trail(conn), title="Immutable trail (C4) — never delete", style="yellow")
     _pause(pause)
 
     _rule("SCENE 3 - RECALL UNDER BUDGET  (Handover, 12 May 2026)")
@@ -103,10 +124,11 @@ def run(pause: bool = False) -> None:
         "Why the non-combustible facade cladding, and can we still change it?",
         "Did we ever decide the sky-terrace planter or balustrade material?",
     ]:
-        r = recall_decisions(conn, q)
-        cited = ("cited: " + ", ".join(r.cited)) if r.cited else "cited: (none - abstained)"
+        r = recall_decisions(conn, q, budget=DEMO_BUDGET)
+        cited = ("cited: " + ", ".join(r.cited)) if r.cited else "cited: (none — abstained)"
+        selected = f"scanned {r.candidates} relevant decision(s) → packed {len(r.cited)} within budget"
         _panel(
-            f"Q: {q}\n\nA: {r.answer}\n\n{cited}\ncontext budget: {r.used} / {r.budget} tokens",
+            f"Q: {q}\n\nA: {r.answer}\n\n{cited}\n{selected}\nbudget  {_budget_bar(r.used, r.budget)}",
             title="Recall", style=("blue" if r.abstained else "magenta"),
         )
     _pause(pause)

@@ -37,3 +37,19 @@ def test_get_all_decisions_returns_everything_incl_nonvalid():
     conn = _store_facade()
     add_decision(conn, Decision(statement="Proposed cheaper panel", discipline="facade", status="proposed"))
     assert [d.id for d in get_all_decisions(conn)] == ["D-001", "D-002"]
+
+
+def _fake_client(answer="answer"):
+    from types import SimpleNamespace
+    create = lambda **kw: SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=answer))])
+    return SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+
+
+def test_recall_surfaces_rejected_proposal_as_context():
+    conn = _store_facade()
+    add_decision(conn, Decision(statement="Switch facade cladding to combustible PE-core ACP",
+                                discipline="facade", status="proposed", rationale="cost saving"))
+    r = recall_decisions(conn, "why the facade cladding and can we change it",
+                         client=_fake_client("You cannot (D-001); the PE-core swap was rejected (D-002)."))
+    assert r.abstained is False
+    assert r.cited == ["D-001", "D-002"]
