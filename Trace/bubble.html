@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Trace</title>
+<style>
+  :root{
+    --emerald:#10b981; --emerald-d:#059669; --ink:#0f172a; --muted:#64748b;
+    --line:#e2e8f0; --amber:#f59e0b; --red:#ef4444; --green:#10b981;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:transparent;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink);height:100%;overflow:hidden;-webkit-user-select:none;user-select:none}
+  .stage{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+
+  .bubble{width:58px;height:58px;border-radius:50%;cursor:pointer;position:relative;
+    background:radial-gradient(circle at 35% 30%,#34d399,var(--emerald-d));
+    display:flex;align-items:center;justify-content:center;
+    animation:breathe 3.4s ease-in-out infinite;box-shadow:0 10px 26px rgba(2,6,23,.28)}
+  @keyframes breathe{
+    0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(16,185,129,.45),0 10px 26px rgba(2,6,23,.28)}
+    50%{transform:scale(1.05);box-shadow:0 0 0 15px rgba(16,185,129,0),0 12px 30px rgba(2,6,23,.32)}}
+  .bubble svg{width:28px;height:28px}
+  .badge{position:absolute;top:-3px;right:-3px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;
+    background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #f1f5f9}
+
+  .card{width:330px;background:#fff;border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 22px 55px rgba(2,6,23,.28);overflow:hidden;transition:.2s cubic-bezier(.2,.9,.3,1)}
+  .hidden{opacity:0;transform:scale(.92) translateY(8px);pointer-events:none;position:absolute;bottom:70px;right:0}
+
+  .chead{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .live{width:9px;height:9px;border-radius:50%;background:var(--emerald);animation:breathe 2.6s ease-in-out infinite}
+  .chead .t{font-weight:700;font-size:14px}.chead .s{font-size:11.5px;color:var(--muted)}
+  .chead .x{margin-left:auto;color:#94a3b8;cursor:pointer;font-size:16px}
+
+  .ntitle{padding:13px 15px 3px;font-size:13px;color:var(--muted)}.ntitle b{color:var(--ink)}
+  .rows{padding:7px 15px 3px;display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.35}
+  .rdot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:none}
+  .g{background:var(--green)}.r{background:var(--red)}.a{background:var(--amber)}
+  .row b{font-weight:600}.row .k{color:var(--muted)}
+  .actions{display:flex;gap:8px;padding:13px 15px 15px}
+  .btn{flex:1;font:inherit;font-size:12.5px;font-weight:600;padding:8px;border-radius:10px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .btn.primary{background:var(--emerald);border-color:var(--emerald);color:#fff}
+
+  .msgs{padding:13px 14px;display:flex;flex-direction:column;gap:9px;max-height:300px;overflow:auto;background:#fbfcfd}
+  .msg{max-width:84%;font-size:13px;line-height:1.45;padding:9px 12px;border-radius:13px}
+  .from-t{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+  .from-u{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:4px}
+  .cite{color:var(--emerald);font-weight:600}.from-u .cite{color:#6ee7b7}
+  .inbar{display:flex;gap:7px;padding:10px 12px;border-top:1px solid var(--line)}
+  .inbar input{flex:1;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:9px;padding:8px 11px;outline:none}
+  .inbar input:focus{border-color:var(--emerald)}
+  .send{width:36px;border:none;border-radius:9px;background:var(--emerald);color:#fff;cursor:pointer;font-size:15px}
+  .allow{font-size:10.5px;color:var(--muted);padding:8px 15px;border-top:1px solid var(--line);background:#fbfcfd}.allow b{color:#334155}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="card hidden" id="nudge">
+      <div class="chead"><span class="live"></span><span class="t">Trace</span><span class="s">· watching Revit</span><span class="x" onclick="setState('idle')">&times;</span></div>
+      <div class="ntitle">On <b id="ctx">this view</b> — <span id="ncount">…</span></div>
+      <div class="rows" id="nrows"></div>
+      <div class="actions"><button class="btn" onclick="setState('chat')">Ask Trace</button><button class="btn primary" onclick="setState('idle')">Got it</button></div>
+      <div class="allow">🔒 monitoring only: <b>Revit · SketchUp · Office</b> — personal apps ignored</div>
+    </div>
+
+    <div class="card hidden" id="chat">
+      <div class="chead"><span class="live"></span><span class="t">Trace</span><span class="s">· ask anything</span><span class="x" onclick="setState('idle')">&times;</span></div>
+      <div class="msgs" id="msgs"><div class="msg from-t">Ask me anything about this project's decisions.</div></div>
+      <div class="inbar"><input id="q" placeholder="Ask about this project…" onkeydown="if(event.key==='Enter')send()"/><button class="send" onclick="send()">↑</button></div>
+    </div>
+
+    <div class="bubble" onclick="toggleChat()" title="Trace">
+      <span class="badge" id="badge">1</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 C 8 8, 16 8, 20 18"/><circle cx="4" cy="18" r="1.6" fill="#fff"/><circle cx="20" cy="18" r="1.6" fill="#fff"/></svg>
+    </div>
+  </div>
+
+<script>
+  const DOT={valid:"g",proposed:"r",superseded:"a"};
+  const LABEL={valid:"locked",proposed:"proposed · rejected",superseded:"superseded"};
+  function setState(s){
+    document.getElementById('nudge').classList.toggle('hidden', s!=='nudge');
+    document.getElementById('chat').classList.toggle('hidden', s!=='chat');
+    document.getElementById('badge').style.display=(s==='nudge')?'flex':'none';
+  }
+  function toggleChat(){setState(document.getElementById('chat').classList.contains('hidden')?'chat':'idle');}
+  function renderNudge(d){
+    document.getElementById('ctx').textContent=d.context||'this view';
+    document.getElementById('ncount').textContent=(d.decisions.length)+' decision(s) on record:';
+    document.getElementById('nrows').innerHTML=d.decisions.map(x=>
+      `<div class="row"><span class="rdot ${DOT[x.status]||'a'}"></span><div><b>${x.id}</b> ${x.statement} <span class="k">— ${LABEL[x.status]||x.status}</span></div></div>`).join('');
+    setState('nudge');
+  }
+  function append(cls,html){const m=document.getElementById('msgs');const e=document.createElement('div');e.className='msg '+cls;e.innerHTML=html;m.appendChild(e);m.scrollTop=m.scrollHeight;return e;}
+  function cite(t){return (t||'').replace(/\((D-\d+)\)/g,'(<span class="cite">$1</span>)');}
+  function send(){
+    const i=document.getElementById('q'),q=i.value.trim();if(!q)return;i.value='';
+    append('from-u',q); const pend=append('from-t','…');
+    fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})})
+      .then(r=>r.json()).then(d=>{pend.innerHTML=cite(d.answer);})
+      .catch(()=>{pend.innerHTML="(couldn't reach Trace — is the app running?)";});
+  }
+  // Live from the engine when served by bubble.py; static demo if opened as a bare file.
+  fetch('/state').then(r=>r.json()).then(renderNudge).catch(()=>renderNudge({context:"Level 0 · facade",decisions:[
+    {id:"D-001",status:"valid",statement:"Facade cladding = non-combustible mineral rainscreen"},
+    {id:"D-002",status:"proposed",statement:"Swap to PE-core ACP (combustible)"}]}));
+</script>
+</body>
+</html>
