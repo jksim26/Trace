@@ -11,9 +11,10 @@ import sys
 from pathlib import Path
 
 from capture import capture_decision
+from court import convene, render_verdict
 from invalidate import check_invalidation, render_alert
 from recall import recall_decisions
-from store import add_decision, connect, get_all_decisions, init_db
+from store import add_decision, connect, get_all_decisions, get_valid_asof, init_db
 
 try:
     from rich.console import Console
@@ -89,6 +90,12 @@ def ambient_card(conn) -> str:
     )
 
 
+def _asof(conn, as_of: str) -> str:
+    ds = get_valid_asof(conn, as_of)
+    body = ", ".join(f"{d.id} {d.statement[:44]}" for d in ds) if ds else "(nothing on record yet)"
+    return f"as of {as_of[:10]}:  {body}"
+
+
 def run(pause: bool = False) -> None:
     conn = connect(":memory:")
     init_db(conn)
@@ -116,6 +123,9 @@ def run(pause: bool = False) -> None:
         add_decision(conn, c.decision)  # never delete — preserve the rejected proposal
         for a in alerts:
             _panel(render_alert(a), title="!! INVALIDATION ALERT", style="red")
+        if alerts:
+            _panel(render_verdict(convene(conn, c)),
+                   title="The decision court — 3 Qwen roles deliberate", style="red")
         _panel(_trail(conn), title="Immutable trail (C4) — never delete", style="yellow")
     _pause(pause)
 
@@ -131,6 +141,18 @@ def run(pause: bool = False) -> None:
             f"Q: {q}\n\nA: {r.answer}\n\n{cited}\n{selected}\nbudget  {_budget_bar(r.used, r.budget)}",
             title="Recall", style=("blue" if r.abstained else "magenta"),
         )
+    _pause(pause)
+
+    _rule("SCENE 4 - TIME-TRAVEL  (bi-temporal memory)")
+    _panel(
+        "Rewind Trace's memory to any date — reconstruct what was valid and known:\n\n"
+        f"  {_asof(conn, '2026-01-01T00:00Z')}\n"
+        f"  {_asof(conn, '2026-02-01T00:00Z')}\n"
+        f"  {_asof(conn, '2026-03-03T14:00Z')}\n\n"
+        "When the ACM swap was floated on 3 Mar, D-001's non-combustible premise was already\n"
+        "valid — the QP was on notice. 'What did you know, and when' is what s.9 liability turns on.",
+        title="Bi-temporal time-travel", style="cyan",
+    )
     _pause(pause)
 
     _rule("AMBIENT (staged) - 'you opened the 2nd-storey facade drawing'")
