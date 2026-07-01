@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trace — ambient bubble mockup</title>
+<style>
+  :root{
+    --emerald:#10b981; --emerald-d:#059669;
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --amber:#f59e0b; --red:#ef4444; --green:#10b981;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink); height:100vh; overflow:hidden;
+    /* faux CAD / Revit canvas */
+    background:
+      linear-gradient(#f4f7fa,#eaeef3),
+      repeating-linear-gradient(0deg, rgba(100,116,139,.06) 0 1px, transparent 1px 32px),
+      repeating-linear-gradient(90deg, rgba(100,116,139,.06) 0 1px, transparent 1px 32px);
+  }
+  /* faux app title bar (evokes the Revit window) */
+  .titlebar{
+    height:34px; background:#fff; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:10px; padding:0 14px;
+    font-size:12.5px; color:var(--muted);
+  }
+  .titlebar b{color:var(--ink); font-weight:600}
+  .dot-rgb{display:flex; gap:6px} .dot-rgb i{width:11px;height:11px;border-radius:50%}
+  .dot-rgb i:nth-child(1){background:#ff5f57}.dot-rgb i:nth-child(2){background:#febc2e}.dot-rgb i:nth-child(3){background:#28c840}
+
+  /* demo state switcher */
+  .demo{position:fixed; top:52px; left:20px; display:flex; gap:8px; align-items:center}
+  .demo span{font-size:11px;color:var(--muted);margin-right:4px;letter-spacing:.04em;text-transform:uppercase}
+  .demo button{
+    font:inherit;font-size:12.5px;border:1px solid var(--line);background:#fff;color:var(--muted);
+    padding:6px 13px;border-radius:999px;cursor:pointer;transition:.15s
+  }
+  .demo button:hover{border-color:#cbd5e1}
+  .demo button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .stage{position:fixed;right:26px;bottom:26px;display:flex;flex-direction:column;align-items:flex-end;gap:14px}
+
+  /* the breathing bubble */
+  .bubble{
+    width:60px;height:60px;border-radius:50%;cursor:pointer;position:relative;
+    background:radial-gradient(circle at 35% 30%,#34d399,var(--emerald-d));
+    display:flex;align-items:center;justify-content:center;
+    animation:breathe 3.4s ease-in-out infinite;
+    box-shadow:0 10px 26px rgba(2,6,23,.28);
+  }
+  @keyframes breathe{
+    0%,100%{transform:scale(1);   box-shadow:0 0 0 0 rgba(16,185,129,.45),0 10px 26px rgba(2,6,23,.28)}
+    50%    {transform:scale(1.05);box-shadow:0 0 0 16px rgba(16,185,129,0),0 12px 30px rgba(2,6,23,.32)}
+  }
+  .bubble svg{width:30px;height:30px}
+  .badge{position:absolute;top:-3px;right:-3px;width:20px;height:20px;border-radius:50%;
+    background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    border:2px solid #eef1f4}
+
+  .card{width:340px;background:#fff;border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 22px 55px rgba(2,6,23,.22);overflow:hidden;
+    transform-origin:bottom right;transition:.22s cubic-bezier(.2,.9,.3,1)}
+  .hidden{opacity:0;transform:scale(.9) translateY(10px);pointer-events:none;position:absolute;bottom:74px;right:0}
+
+  .chead{display:flex;align-items:center;gap:9px;padding:13px 15px;border-bottom:1px solid var(--line)}
+  .live{width:9px;height:9px;border-radius:50%;background:var(--emerald);
+    box-shadow:0 0 0 0 rgba(16,185,129,.5);animation:breathe 2.6s ease-in-out infinite}
+  .chead .t{font-weight:700;font-size:14px}
+  .chead .s{font-size:11.5px;color:var(--muted)}
+  .chead .x{margin-left:auto;color:#94a3b8;cursor:pointer;font-size:16px;line-height:1}
+
+  /* nudge card body */
+  .ntitle{padding:14px 16px 4px;font-size:13.5px;color:var(--muted)}
+  .ntitle b{color:var(--ink)}
+  .rows{padding:8px 16px 4px;display:flex;flex-direction:column;gap:11px}
+  .row{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.35}
+  .rdot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
+  .g{background:var(--green)} .r{background:var(--red)} .a{background:var(--amber)}
+  .row .k{color:var(--muted)} .row b{font-weight:600}
+  .actions{display:flex;gap:9px;padding:14px 16px 16px}
+  .btn{flex:1;font:inherit;font-size:13px;font-weight:600;padding:9px;border-radius:11px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .btn.primary{background:var(--emerald);border-color:var(--emerald);color:#fff}
+  .btn.primary:hover{background:var(--emerald-d)}
+
+  /* chat */
+  .msgs{padding:14px 15px;display:flex;flex-direction:column;gap:10px;max-height:320px;overflow:auto;background:#fbfcfd}
+  .msg{max-width:82%;font-size:13.5px;line-height:1.45;padding:10px 13px;border-radius:14px}
+  .from-t{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:5px}
+  .from-u{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:5px}
+  .msg .cite{color:var(--emerald);font-weight:600}
+  .from-u .cite{color:#6ee7b7}
+  .inbar{display:flex;gap:8px;padding:11px 13px;border-top:1px solid var(--line)}
+  .inbar input{flex:1;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;outline:none}
+  .inbar input:focus{border-color:var(--emerald)}
+  .send{width:38px;border:none;border-radius:10px;background:var(--emerald);color:#fff;cursor:pointer;font-size:15px}
+
+  .allow{font-size:11px;color:var(--muted);padding:9px 15px;border-top:1px solid var(--line);background:#fbfcfd;display:flex;gap:6px;align-items:center}
+  .allow b{color:#334155}
+</style>
+</head>
+<body>
+  <div class="titlebar">
+    <div class="dot-rgb"><i></i><i></i><i></i></div>
+    <span>Autodesk Revit 2025.4 — Project1 &nbsp;·&nbsp; <b>Floor Plan: Level 0</b></span>
+  </div>
+
+  <div class="demo">
+    <span>mockup</span>
+    <button id="b-idle" onclick="setState('idle')">Idle</button>
+    <button id="b-nudge" class="on" onclick="setState('nudge')">Nudge</button>
+    <button id="b-chat" onclick="setState('chat')">Chat</button>
+  </div>
+
+  <div class="stage">
+
+    <!-- NUDGE (ambient) card -->
+    <div class="card" id="nudge">
+      <div class="chead">
+        <span class="live"></span>
+        <span class="t">Trace</span>
+        <span class="s">· watching Revit</span>
+        <span class="x" onclick="setState('idle')">&times;</span>
+      </div>
+      <div class="ntitle">You opened <b>Level 0 · façade</b> — 3 things to know:</div>
+      <div class="rows">
+        <div class="row"><span class="rdot g"></span><div><b>D-001 · non-combustible façade</b> — locked <span class="k">(building &gt; 15 m · SCDF Cl 3.5)</span></div></div>
+        <div class="row"><span class="rdot r"></span><div><b>ACM swap (D-002)</b> <span class="k">— proposed 3 Mar, rejected: combustible, breaches Cl 3.5</span></div></div>
+        <div class="row"><span class="rdot a"></span><div><b>1 item pending</b> <span class="k">— corridor layout awaiting confirmation</span></div></div>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="setState('idle')">View decisions</button>
+        <button class="btn primary" onclick="setState('chat')">Ask Trace</button>
+      </div>
+      <div class="allow">🔒 monitoring only: <b>Revit · SketchUp · Office</b> &nbsp;— personal apps ignored</div>
+    </div>
+
+    <!-- CHAT card -->
+    <div class="card hidden" id="chat">
+      <div class="chead">
+        <span class="live"></span>
+        <span class="t">Trace</span>
+        <span class="s">· ask anything</span>
+        <span class="x" onclick="setState('idle')">&times;</span>
+      </div>
+      <div class="msgs">
+        <div class="msg from-t">Hi — I'm watching your open Revit views. Ask me anything about this project's decisions.</div>
+        <div class="msg from-u">Why the non-combustible façade, and can we still change it?</div>
+        <div class="msg from-t">It's locked <span class="cite">(D-001)</span>: the building is 95 m, so SCDF Fire Code Cl 3.5 mandates a wholly non-combustible external wall. You can't switch to combustible ACM — that swap <span class="cite">(D-002)</span> was proposed on 3 Mar and <b>rejected</b>.</div>
+      </div>
+      <div class="inbar">
+        <input placeholder="Ask about this project…" />
+        <button class="send">↑</button>
+      </div>
+      <div class="allow">🔒 monitoring only: <b>Revit · SketchUp · Office</b> &nbsp;— personal apps ignored</div>
+    </div>
+
+    <!-- the bubble -->
+    <div class="bubble" onclick="toggleChat()" title="Trace — click to chat">
+      <span class="badge" id="badge">1</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 18 C 8 8, 16 8, 20 18"/><circle cx="4" cy="18" r="1.6" fill="#fff"/><circle cx="20" cy="18" r="1.6" fill="#fff"/>
+      </svg>
+    </div>
+  </div>
+
+<script>
+  const ids=['idle','nudge','chat'];
+  function setState(s){
+    document.getElementById('nudge').classList.toggle('hidden', s!=='nudge');
+    document.getElementById('chat').classList.toggle('hidden', s!=='chat');
+    document.getElementById('badge').style.display = (s==='nudge') ? 'flex' : 'none';
+    ids.forEach(i=>document.getElementById('b-'+i).classList.toggle('on', i===s));
+  }
+  function toggleChat(){
+    const chatOpen = !document.getElementById('chat').classList.contains('hidden');
+    setState(chatOpen ? 'idle' : 'chat');
+  }
+  setState('nudge');
+</script>
+</body>
+</html>
