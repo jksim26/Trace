@@ -1,3 +1,13 @@
+# Runtime
 openai>=1.0
 python-dotenv>=1.0
+rich>=13.0
+qwen-agent
+
+# Windows TLS: if API calls fail with CERTIFICATE_VERIFY_FAILED, this bridges the
+# Windows certificate store into Python (see docs/09-manual-requirements.md).
+# Harmless / skipped on non-Windows.
+pip-system-certs; platform_system == "Windows"
+
+# Dev
 pytest>=8.0
