@@ -30,3 +30,9 @@ def test_operators_via_inline_rule():
     assert check({"a": 5, "b": "z"}, rules)[0].rule_id == "r"   # applies, require fails
     assert check({"a": 5, "b": "x"}, rules) == []               # require satisfied
     assert check({"a": 4, "b": "z"}, rules) == []               # does not apply
+
+
+def test_missing_require_field_does_not_violate():
+    # The require attribute is absent (the decision doesn't set cladding at all),
+    # so the rule must NOT fire — only a present-and-combustible value does.
+    assert check({"building": {"height_m": 95}}, load_rules()) == []

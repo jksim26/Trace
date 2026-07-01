@@ -89,7 +89,9 @@ def _applies(rule: Rule, context) -> bool:
 def _satisfied(rule: Rule, context) -> bool:
     for path, cond in rule.require.items():
         value = _get(context, path)
-        if value is None or not _match(value, cond):
+        if value is None:
+            continue  # attribute not set by this decision -> rule not engaged on it
+        if not _match(value, cond):
             return False
     return True
 
