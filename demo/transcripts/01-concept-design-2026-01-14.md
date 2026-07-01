@@ -1,38 +1,38 @@
 ---
-project: Maple Wharf
-meeting: Concept Design review (RIBA Stage 2)
+project: Tanglin Rise
+meeting: Concept Design review
 date: 2026-01-14
 time: 11:30–12:15
 location: Studio / Teams
 attendees:
-  - R. Wells (RW) — Project Architect, lead designer
-  - P. Desai (PD) — Fire Engineer
-  - S. Malik (SM) — Quantity Surveyor / Cost
-  - J. Owusu (JO) — Structural Engineer
-  - C. Lin (CL) — Client representative
+  - K. Lim (KL) — Project Architect, design QP (registered Architect, BOA)
+  - M. Ong (MO) — Fire Safety Engineer
+  - P. Nair (PN) — Quantity Surveyor / Cost
+  - J. Koh (JK) — Structural Engineer (PE)
+  - R. Chua (RC) — Client / Developer representative
 note: Fictional transcript for the Trace demo. Any resemblance to real projects is coincidental.
 ---
 
-# Maple Wharf — Concept Design Review
+# Tanglin Rise — Concept Design Review
 
-**CL (Client):** Quick recap — we're holding at 21 storeys, ground plus 20, residential throughout. The appraisal needs every unit we can get.
+**RC (Client):** Quick recap — we're holding at 28 storeys, residential throughout. The sales appraisal needs every unit we can get.
 
-**RW (Architect):** Understood. On the envelope — we're 21 storeys, 64 metres, which makes this a Higher-Risk Building. So the external wall has to be A2-s1,d0 or better. I'm proposing a terracotta rainscreen on mineral wool insulation.
+**KL (Architect / QP):** Understood. On the envelope — we're 28 storeys, 95 metres to the main roof. Above 15 metres, SCDF Fire Code 2023 requires the external wall to be wholly non-combustible. So I'm specifying a non-combustible mineral rainscreen — A1 mineral-core panels, Class 0 outer layers — on non-combustible insulation.
 
-**PD (Fire):** Agreed, and I want this minuted clearly. Anything combustible on the external wall above 18 metres is non-compliant under Approved Document B — B4. Terracotta is A1, the stone-wool insulation is A2. That combination is compliant. Lock it in.
+**MO (Fire):** Agreed, and I want this minuted clearly. Clause 3.5 — anything combustible on the external wall above 15 metres is non-compliant. Full stop. The mineral-core system is non-combustible; the outer layers meet Class 0 under Clause 3.15. That combination is compliant. Lock it in.
 
-**SM (QS):** I'll flag that terracotta rainscreen is around £190 per square metre installed. It's not the cheap option.
+**PN (QS):** For the record, the mineral rainscreen is the single biggest premium on the envelope. It is not the cheap option.
 
-**RW:** It's a compliance requirement, not a preference. We don't have a choice on combustibility at this height. The cost is what it is.
+**KL:** It's a compliance requirement, not a preference. At 95 metres we don't have a choice on combustibility. And to be blunt — I'm the design QP on this project. It's my name on the submission and my due-diligence duty under the Building Control Act. I'm not certifying a combustible external wall at this height.
 
-**CL:** Fine. As long as the unit count holds, the facade spec is yours to call.
+**RC:** Understood. As long as the unit count holds, the façade spec is your call.
 
-**PD:** Then for the record: external wall system is non-combustible — terracotta rainscreen on A2 mineral wool — *because* the building is an HRB over 18 metres and ADB B4 prohibits combustible cladding. That rationale needs to travel with the spec.
+**MO:** Then for the record: the external wall is non-combustible — mineral rainscreen on non-combustible insulation — *because* the building exceeds 15 metres and SCDF Fire Code Clause 3.5 requires it. That rationale has to travel with the spec, not just the spec.
 
-**RW:** Noted. I'll get it into the facade section of the RDS and the outline spec. Moving on — core position…
+**KL:** Noted. I'll get it into the façade section of the spec and the fire-safety basis. Moving on — core position…
 
-**JO (Structural):** Before we move on — if the facade's a rainscreen on a stick system, I'll size the slab edge and brackets for that dead load. If anyone changes the cladding later, tell me, because the support steel is sized to it.
+**JK (Structural / PE):** Before we move on — if the façade's a rainscreen on a stick system, I'll size the slab edge and brackets for that dead load. If anyone changes the cladding later, tell me, because the support steel is sized to it.
 
-**RW:** Logged. Right, the core…
+**KL:** Logged. Right, the core…
 
 *[meeting continues — out of scope for this excerpt]*

@@ -1,37 +1,37 @@
 ---
-project: Maple Wharf
-meeting: Value Engineering workshop (RIBA Stage 4 — Technical Design)
+project: Tanglin Rise
+meeting: Value Engineering workshop (Detailed Design)
 date: 2026-03-03
 time: 14:00–15:30
 location: Contractor office
 attendees:
-  - J. Thorne (JT) — Main Contractor, preconstruction lead
-  - S. Malik (SM) — Quantity Surveyor / Cost
-  - K. Brandt (KB) — Design Manager (contractor side)
-  - R. Wells (RW) — Project Architect (joined late)
-note: Fictional transcript for the Trace demo. Note that the Fire Engineer (P. Desai) is NOT in this meeting — a key driver of the problem.
+  - B. Tan (BT) — Main Contractor, preconstruction lead
+  - P. Nair (PN) — Quantity Surveyor / Cost
+  - H. Goh (HG) — Design Manager (contractor side)
+  - K. Lim (KL) — Project Architect / design QP (joined late)
+note: Fictional transcript for the Trace demo. Note that the Fire Safety Engineer (M. Ong) is NOT in this meeting — a key driver of the problem.
 ---
 
-# Maple Wharf — Value Engineering Workshop
+# Tanglin Rise — Value Engineering Workshop
 
-**JT (Contractor):** Right, the cost plan's come back £400k over budget. We need to find savings before tender. Let's go through the soft targets.
+**BT (Contractor):** Right, the cost plan's come back over budget and we need savings before we let the trade packages. Let's go through the soft targets.
 
-**SM (QS):** Biggest single line on the envelope is the facade. The terracotta rainscreen is carrying a premium.
+**PN (QS):** Biggest single line on the envelope is the façade. The non-combustible mineral rainscreen is carrying a heavy premium.
 
-**JT:** That's where I'd look. We can swap the terracotta for an equivalent aluminium composite rainscreen — same sightlines, same module, visually identical from the street. It saves us roughly £180k on the package.
+**BT:** That's where I'd look. We can swap it for an equivalent aluminium composite panel — same sightlines, same module, visually identical from the street. The polyethylene-core ACP is a fraction of the cost. It's the biggest single saving on the package.
 
-**KB (Design Manager):** And the spec has an "or equivalent" clause on the cladding, so we don't have to reopen the design — we substitute like-for-like on appearance and move on.
+**HG (Design Manager):** And the spec has an "or equivalent" clause on the cladding, so we don't have to reopen the design — we substitute like-for-like on appearance and move on.
 
-**SM:** The client will like the number. £180k is nearly half the overrun.
+**PN:** The developer will like it. It's the biggest saving available on the envelope.
 
-**JT:** Good. Let's mark the facade as ACM rainscreen, substitution under the equivalence clause, and carry the £180k saving in the next cost plan. Anyone object?
+**BT:** Good. Let's mark the façade as PE-core ACP, substitution under the equivalence clause, and carry the saving into the next cost plan. Anyone object?
 
-**KB:** No objection from design management. It's a finish-level change as far as I'm concerned.
+**HG:** No objection from design management. It's a finish-level change as far as I'm concerned.
 
-**RW (Architect, joining):** Sorry I'm late — what did I just walk into?
+**KL (Architect / QP, joining):** Sorry I'm late — what did I just walk into?
 
-**JT:** Facade VE. Terracotta to an equivalent ACM rainscreen, saves £180k. Already agreed in principle.
+**BT:** Façade VE. Mineral rainscreen to an equivalent ACP, biggest saving on the job. Agreed in principle.
 
-**RW:** Wait —
+**KL:** Wait —
 
-*[This is the moment Trace fires the invalidation alert against D-047. See demo-script.md, Scene 2.]*
+*[This is the moment Trace fires the invalidation alert against D-001. See demo-script.md, Scene 2.]*
