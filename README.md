@@ -27,6 +27,27 @@ In a construction project, the design brief evolves across dozens of meetings, b
 
 ---
 
+## Quickstart
+
+```bash
+cd Trace
+pip install -r requirements.txt
+# create Trace/.env with a single line:  DASHSCOPE_API_KEY=sk-...   (Qwen Cloud, Singapore region)
+
+python -m pytest test_store.py test_rulepack.py test_audit.py test_capture.py \
+                 test_invalidate.py test_recall.py test_mcp_tools.py     # 33 tests, no API needed
+python cli.py            # the 3-scene "Tanglin Rise" demo: capture -> red alert -> recall
+python mcp_tools.py      # a Qwen-Agent Assistant autonomously calling the tools
+```
+
+- **`cli.py`** — Scene 1 capture → Scene 2 the red invalidation alert + preserved rejected proposal → Scene 3 recall-to-budget with the token meter + abstention → the staged ambient card.
+- **`mcp_tools.py`** — a Qwen-Agent Assistant calls `capture_decision` then `check_invalidation` and concludes the PE-core ACP swap invalidates D-001.
+- Windows `CERTIFICATE_VERIFY_FAILED`? `pip-system-certs` (already in requirements) bridges the Windows cert store into Python.
+
+The module-by-module build is in [docs/superpowers/plans/](docs/superpowers/plans/); the design in [docs/02-architecture.md](docs/02-architecture.md).
+
+---
+
 ## Document map
 
 | # | Doc | What it is |
