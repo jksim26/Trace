@@ -1,7 +1,16 @@
 import json
 from types import SimpleNamespace
 
+import pytest
+
 import bubble
+
+
+@pytest.fixture(autouse=True)
+def _fresh_conversation():
+    bubble._HISTORY.clear()
+    yield
+    bubble._HISTORY.clear()
 
 
 def _fake_client(answer="ok"):
@@ -19,14 +28,28 @@ def test_state_returns_project_record_and_project_list():
     assert [p["key"] for p in s["projects"]] == ["tanglin-rise", "kranji-hub", "maple-wharf"]
 
 
-def test_each_project_has_its_own_grounded_record_no_bleed(monkeypatch):
+def test_one_memory_spans_all_projects_with_the_viewed_one_as_default(monkeypatch):
+    # Trace is one agent with one memory: viewing Maple Wharf must not hide
+    # Tanglin Rise — "I need Tanglin Rise's info now" has everything it needs.
     import openai
     calls = []
     monkeypatch.setattr(openai, "OpenAI", lambda **kw: _capture_client("ok", calls))
-    bubble.Api("kranji-hub").ask("what's the power situation?")
+    bubble.Api("maple-wharf").ask("i need to know Tanglin Rise's info now")
     ctx = "\n".join(m["content"] for m in calls[0]["messages"] if m["role"] == "system")
-    assert "400 kVA" in ctx and "Kranji" in ctx
-    assert "rainscreen" not in ctx                 # nothing from the other projects
+    assert "Tanglin Rise" in ctx and "Kranji" in ctx and "Maple Wharf" in ctx
+    assert "400 kVA" in ctx and "rainscreen" in ctx          # records, not just titles
+    assert "currently viewing: Maple Wharf" in ctx           # the default context
+
+
+def test_conversation_survives_a_project_switch(monkeypatch):
+    # Switching the dropdown must not amnesia the conversation.
+    import openai
+    calls = []
+    monkeypatch.setattr(openai, "OpenAI", lambda **kw: _capture_client("noted (D-001).", calls))
+    bubble.Api("tanglin-rise").ask("why the non-combustible facade cladding?")
+    bubble.Api("maple-wharf").ask("and how did the UK project handle the same issue?")
+    roles = [(m["role"], m["content"]) for m in calls[1]["messages"]]
+    assert any(r == "user" and "non-combustible facade" in c for r, c in roles)
 
 
 def test_court_records_are_part_of_the_llm_context(monkeypatch):

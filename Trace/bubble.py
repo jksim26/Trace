@@ -55,22 +55,28 @@ _PROJECT_BLURB = (
 # is given, not by keyword pre-routing: it is instructed to answer only from the
 # record, cite decision ids, and abstain on unrecorded decisions.
 _ASSISTANT_SYS = (
-    "You are Trace, an ambient design-decision memory agent watching a construction "
-    "project. Answer conversationally, grounded ONLY in the PROJECT CONTEXT and the "
-    "DECISION RECORD provided.\n"
+    "You are Trace, an ambient design-decision memory agent watching a PORTFOLIO of "
+    "construction projects. Answer conversationally, grounded ONLY in the PROJECT "
+    "RECORDS provided.\n"
+    "- The records span multiple projects. The user is viewing one of them (stated "
+    "below); default ambiguous questions to it — but if they name or clearly mean "
+    "another project (typos and approximate names included), answer about THAT project "
+    "and say which project you are answering about.\n"
     "- Interpret questions charitably: tolerate typos and shorthand, and use the "
     "conversation history to resolve follow-ups like 'that clause' or 'who decided it'.\n"
-    "- Cite decision ids inline like (D-001) whenever you state something from the record.\n"
-    "- If asked about a design decision that is NOT in the record, reply exactly: "
+    "- Cite decision ids inline like (D-001) whenever you state something from a record "
+    "(ids repeat across projects — the project name disambiguates).\n"
+    "- If asked about a design decision that is NOT in any record, reply exactly: "
     '"No decision on record; not yet decided."\n'
-    "- If asked for a source document the record only cites (e.g. the full text of a "
-    "fire-code clause), say what the record cites and that Trace stores the project's "
-    "decision record, not the source documents — do NOT recite statutory text from memory.\n"
-    "- If asked what Trace is or how to use this panel, answer from PROJECT CONTEXT.\n"
+    "- If asked for a source document the records only cite (e.g. the full text of a "
+    "fire-code clause), say what the record cites and that Trace stores decision "
+    "records, not the source documents — do NOT recite statutory text from memory.\n"
+    "- If asked what Trace is or how to use this panel, answer from the TRACE CONTEXT.\n"
     "- Be concise: one to three sentences."
 )
 
 _HISTORY_LIMIT = 10  # messages kept as conversation memory (this is a memory agent, after all)
+_HISTORY: list[dict] = []  # ONE conversation with Trace — it survives project switches
 HOST = os.getenv("TRACE_HOST", "127.0.0.1")
 PORT = int(os.getenv("TRACE_PORT", "8765"))
 
@@ -78,13 +84,22 @@ PORT = int(os.getenv("TRACE_PORT", "8765"))
 DEFAULT_PROJECT = "tanglin-rise"
 
 
+_STORES: dict = {}
+
+
+def _store_for(project: str):
+    if project not in _STORES:
+        _STORES[project] = build_store(project)
+    return _STORES[project]
+
+
 class Api:
-    """The bubble's engine bridge — one per project store."""
+    """The bubble's engine bridge. The `project` is the VIEWED default context —
+    the assistant's memory spans all projects (it is one agent, one memory)."""
 
     def __init__(self, project: str = DEFAULT_PROJECT):
         self.project = project
-        self.conn = build_store(project)
-        self.history: list[dict] = []  # conversation memory, per project
+        self.conn = _store_for(project)
 
     def state(self) -> str:
         decisions = [
@@ -98,9 +113,9 @@ class Api:
             "decisions": decisions,
         })
 
-    def _record(self) -> str:
+    def _record(self, conn) -> str:
         lines = []
-        for d in get_all_decisions(self.conn):
+        for d in get_all_decisions(conn):
             span = f"valid from {(d.valid_from or '')[:10]}"
             if d.valid_to:
                 span += f" to {d.valid_to[:10]} (superseded by {d.superseded_by})"
@@ -111,7 +126,7 @@ class Api:
                 lines.append(f"   assumptions: {'; '.join(d.assumptions)}")
             if d.author:
                 lines.append(f"   by: {', '.join(d.author)}  ·  {span}")
-        for r in get_court_records(self.conn):
+        for r in get_court_records(conn):
             lines.append(
                 f"COURT RECORD: proposal {r['proposal_id']} — {r['verdict']} "
                 f"(breaks {r['breaks_id']}; {r['citation']}). "
@@ -119,6 +134,15 @@ class Api:
                 f"Ruling: {r['rationale']}"
             )
         return "\n".join(lines)
+
+    def _all_records(self) -> str:
+        parts = []
+        for key, meta in PROJECTS.items():
+            parts.append(
+                f"=== PROJECT: {meta['title']}  [{key}] ===\n"
+                f"{meta['blurb']}\n{self._record(_store_for(key))}"
+            )
+        return "\n\n".join(parts)
 
     def ask(self, question: str) -> str:
         try:
@@ -130,17 +154,19 @@ class Api:
             messages = [
                 {"role": "system", "content": _ASSISTANT_SYS},
                 {"role": "system", "content":
-                    f"PROJECT CONTEXT:\n{_PROJECT_BLURB}\n{PROJECTS[self.project]['blurb']}\n\n"
-                    f"DECISION RECORD:\n{self._record()}"},
-                *self.history[-_HISTORY_LIMIT:],
+                    f"TRACE CONTEXT:\n{_PROJECT_BLURB}\n\n"
+                    f"The user is currently viewing: {PROJECTS[self.project]['title']} "
+                    f"[{self.project}] — default ambiguous questions to it.\n\n"
+                    f"PROJECT RECORDS:\n{self._all_records()}"},
+                *_HISTORY[-_HISTORY_LIMIT:],
                 {"role": "user", "content": question},
             ]
             resp = client.chat.completions.create(model=MODEL, temperature=0, messages=messages)
             answer = resp.choices[0].message.content.strip()
-            self.history.extend([{"role": "user", "content": question},
-                                 {"role": "assistant", "content": answer}])
-            self.history = self.history[-_HISTORY_LIMIT:]
-            known = {d.id for d in get_all_decisions(self.conn)}
+            _HISTORY.extend([{"role": "user", "content": question},
+                             {"role": "assistant", "content": answer}])
+            del _HISTORY[:-_HISTORY_LIMIT]
+            known = {d.id for k in PROJECTS for d in get_all_decisions(_store_for(k))}
             cited, seen = [], set()
             for did in re.findall(r"D-\d{3}", answer):
                 if did in known and did not in seen:
