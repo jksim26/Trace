@@ -14,13 +14,14 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-from recall import _content_words, recall_decisions
+from recall import _content_words
 from store import Decision, add_decision, connect, get_all_decisions, init_db
 
 _HTML = Path(__file__).with_name("bubble.html")
@@ -46,13 +47,28 @@ _PROJECT_BLURB = (
     "abstaining honestly when nothing is on record."
 )
 
-_META_SYS = (
-    "You are the assistant panel of Trace. The user's question did not match any recorded "
-    "design decision. Using ONLY the context given: if the question is about what Trace is, "
-    "what this project is, or how to use this panel, answer in at most two sentences. If it "
-    "asks about a specific design decision or project detail not in the context, reply "
-    'exactly: "No decision on record; not yet decided." Never invent decisions or facts.'
+# One brain, full context: the LLM sees the project blurb, the ENTIRE decision
+# record (packed within budget — trivial at demo scale), and the conversation so
+# far, then decides for itself how to answer. Grounding is preserved by what it
+# is given, not by keyword pre-routing: it is instructed to answer only from the
+# record, cite decision ids, and abstain on unrecorded decisions.
+_ASSISTANT_SYS = (
+    "You are Trace, an ambient design-decision memory agent watching a construction "
+    "project. Answer conversationally, grounded ONLY in the PROJECT CONTEXT and the "
+    "DECISION RECORD provided.\n"
+    "- Interpret questions charitably: tolerate typos and shorthand, and use the "
+    "conversation history to resolve follow-ups like 'that clause' or 'who decided it'.\n"
+    "- Cite decision ids inline like (D-001) whenever you state something from the record.\n"
+    "- If asked about a design decision that is NOT in the record, reply exactly: "
+    '"No decision on record; not yet decided."\n'
+    "- If asked for a source document the record only cites (e.g. the full text of a "
+    "fire-code clause), say what the record cites and that Trace stores the project's "
+    "decision record, not the source documents — do NOT recite statutory text from memory.\n"
+    "- If asked what Trace is or how to use this panel, answer from PROJECT CONTEXT.\n"
+    "- Be concise: one to three sentences."
 )
+
+_HISTORY_LIMIT = 10  # messages kept as conversation memory (this is a memory agent, after all)
 HOST = os.getenv("TRACE_HOST", "127.0.0.1")
 PORT = int(os.getenv("TRACE_PORT", "8765"))
 
@@ -81,6 +97,7 @@ class Api:
         self.conn = connect(":memory:")
         init_db(self.conn)
         _seed(self.conn)
+        self.history: list[dict] = []  # shared conversation memory for this server
 
     def state(self) -> str:
         decisions = [
@@ -89,49 +106,55 @@ class Api:
         ]
         return json.dumps({"context": "Level 0 · facade", "decisions": decisions})
 
-    def ask(self, question: str) -> str:
-        if _is_greeting(question):
-            return json.dumps({
-                "answer": 'Hi! I answer from this project\'s decision record. Try: '
-                          '"why the non-combustible facade cladding?" or '
-                          '"can we still change the facade?"',
-                "cited": [],
-            })
-        try:
-            r = recall_decisions(self.conn, question, budget=600)
-            if not r.abstained:
-                return json.dumps({"answer": r.answer, "cited": r.cited})
-            # Nothing on record matched. Decision recall stays strictly grounded,
-            # but meta-questions ("what is this project?") deserve a real answer:
-            # Qwen answers ABOUT Trace from a fixed blurb, still instructed to
-            # abstain on unrecorded decisions. Falls back to the honest
-            # abstention when no API key / network is available.
-            return json.dumps({"answer": self._meta_answer(question), "cited": []})
-        except Exception as exc:  # keep the UI alive on any hiccup
-            return json.dumps({"answer": f"(couldn't reach Trace: {exc})", "cited": []})
+    def _record(self) -> str:
+        lines = []
+        for d in get_all_decisions(self.conn):
+            lines.append(f"{d.id} [{d.status}] {d.statement}")
+            if d.rationale:
+                lines.append(f"   rationale: {d.rationale}")
+            if d.assumptions:
+                lines.append(f"   assumptions: {'; '.join(d.assumptions)}")
+            if d.author:
+                lines.append(f"   by: {', '.join(d.author)}  ·  valid from {(d.valid_from or '')[:10]}")
+        return "\n".join(lines)
 
-    def _meta_answer(self, question: str) -> str:
+    def ask(self, question: str) -> str:
         try:
             import os
 
             import openai
             from recall import BASE_URL, MODEL
             client = openai.OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
-            decisions = "\n".join(
-                f"{d.id} [{d.status}] {d.statement}" for d in get_all_decisions(self.conn)
-            )
-            resp = client.chat.completions.create(
-                model=MODEL, temperature=0,
-                messages=[
-                    {"role": "system", "content": _META_SYS},
-                    {"role": "user", "content":
-                        f"CONTEXT:\n{_PROJECT_BLURB}\n\nRECORDED DECISIONS:\n{decisions}\n\n"
-                        f"QUESTION: {question}"},
-                ],
-            )
-            return resp.choices[0].message.content.strip()
+            messages = [
+                {"role": "system", "content": _ASSISTANT_SYS},
+                {"role": "system", "content":
+                    f"PROJECT CONTEXT:\n{_PROJECT_BLURB}\n\nDECISION RECORD:\n{self._record()}"},
+                *self.history[-_HISTORY_LIMIT:],
+                {"role": "user", "content": question},
+            ]
+            resp = client.chat.completions.create(model=MODEL, temperature=0, messages=messages)
+            answer = resp.choices[0].message.content.strip()
+            self.history.extend([{"role": "user", "content": question},
+                                 {"role": "assistant", "content": answer}])
+            self.history = self.history[-_HISTORY_LIMIT:]
+            known = {d.id for d in get_all_decisions(self.conn)}
+            cited, seen = [], set()
+            for did in re.findall(r"D-\d{3}", answer):
+                if did in known and did not in seen:
+                    seen.add(did)
+                    cited.append(did)
+            return json.dumps({"answer": answer, "cited": cited})
         except Exception:
-            return "No decision on record; not yet decided."
+            # No key / no network: degrade to the deterministic layer — a pointer
+            # for greetings, the honest abstention otherwise. Never crash the UI.
+            if _is_greeting(question):
+                return json.dumps({
+                    "answer": 'Hi! I answer from this project\'s decision record. Try: '
+                              '"why the non-combustible facade cladding?" or '
+                              '"can we still change the facade?"',
+                    "cited": [],
+                })
+            return json.dumps({"answer": "No decision on record; not yet decided.", "cited": []})
 
 
 _api = None

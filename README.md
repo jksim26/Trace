@@ -28,7 +28,7 @@ In a construction project the design brief evolves across dozens of meetings, bu
 
 ## What runs today
 
-The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **70 offline tests**. Everything lives in [`Trace/`](Trace/):
+The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **71 offline tests**. Everything lives in [`Trace/`](Trace/):
 
 | Module | What it does |
 |---|---|
@@ -40,7 +40,7 @@ The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, wi
 | `recall.py`, `strategies.py` | **Recall-to-budget.** Packs only the valid critical decisions within a token budget, cites them, and abstains honestly. Multi-strategy ranking (relevance, recency, importance, composite). |
 | `mcp_tools.py` | The four functions exposed as **Qwen-Agent custom tools**, so a Qwen Assistant calls them itself (MCP-protocol exposure is roadmap). |
 | `cli.py` | The four-scene **"Tanglin Rise" demo** (capture, then alert plus court, then recall with abstention, then time-travel) plus the staged ambient card. |
-| `bubble.py`, `bubble.html` | The **ambient bubble**: a tiny local web app (Python standard library only) wired live to the engine. Its chat box is a real `recall_decisions` call. |
+| `bubble.py`, `bubble.html` | The **ambient bubble**: a tiny web app (Python standard library only) wired live to the engine. Its chat is a Qwen assistant **grounded in the decision record** — it receives the full record + conversation history, tolerates typos and follow-ups, cites decision ids, and still abstains on unrecorded decisions. Degrades to deterministic abstention without a key. |
 
 ---
 
