@@ -28,7 +28,7 @@ In a construction project the design brief evolves across dozens of meetings, bu
 
 ## What runs today
 
-The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **46 offline tests**. Everything lives in [`Trace/`](Trace/):
+The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **52 offline tests**. Everything lives in [`Trace/`](Trace/):
 
 | Module | What it does |
 |---|---|
@@ -51,7 +51,7 @@ cd Trace
 pip install -r requirements.txt
 # create Trace/.env with a single line:  DASHSCOPE_API_KEY=sk-...   (Qwen Cloud, Singapore region)
 
-python -m pytest         # 46 tests pass offline, no API key needed (the live smoke test auto-skips)
+python -m pytest         # 52 tests pass offline, no API key needed (the live smoke test auto-skips)
 python cli.py            # the four-scene "Tanglin Rise" demo (add --pause to step through it)
 python bubble.py         # the ambient bubble, a local web app with chat wired live to the engine
 python mcp_tools.py      # a Qwen-Agent Assistant autonomously calling the tools

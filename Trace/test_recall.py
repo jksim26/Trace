@@ -33,6 +33,16 @@ def test_recall_abstains_when_nothing_relevant():
     assert r.cited == []
 
 
+def test_abstention_reports_real_candidate_count():
+    # Abstention can also happen because the budget is too tight to pack a match;
+    # the meter must report the real candidate count, not pretend nothing matched.
+    # client=object() proves the LLM is never called on this path either.
+    r = recall_decisions(_store_facade(), "why the non-combustible facade cladding",
+                         budget=1, client=object())
+    assert r.abstained is True
+    assert r.candidates == 1
+
+
 def test_get_all_decisions_returns_everything_incl_nonvalid():
     conn = _store_facade()
     add_decision(conn, Decision(statement="Proposed cheaper panel", discipline="facade", status="proposed"))

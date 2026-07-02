@@ -21,6 +21,20 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _normalize_ts(ts: Optional[str]) -> Optional[str]:
+    """Canonicalize an ISO-8601 timestamp to UTC second precision
+    ("%Y-%m-%dT%H:%M:%SZ"), so lexicographic comparison in SQL is always
+    chronological. Mixed precisions otherwise mis-sort: "T00:00Z" compares
+    AFTER "T00:00:00Z" as a string.
+    """
+    if ts is None:
+        return None
+    dt = datetime.fromisoformat(ts.strip().replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def connect(db_path: str = ":memory:") -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -54,8 +68,11 @@ class Decision:
 
 
 def _next_id(conn: sqlite3.Connection) -> str:
-    n = conn.execute("SELECT COUNT(*) AS n FROM decisions").fetchone()["n"]
-    return f"D-{n + 1:03d}"
+    # MAX-based, not COUNT-based: COUNT collides with any explicitly-supplied id.
+    n = conn.execute(
+        "SELECT MAX(CAST(SUBSTR(id, 3) AS INTEGER)) AS n FROM decisions WHERE id LIKE 'D-%'"
+    ).fetchone()["n"]
+    return f"D-{(n or 0) + 1:03d}"
 
 
 def _row_to_decision(row: sqlite3.Row) -> Decision:
@@ -82,10 +99,10 @@ def _row_to_decision(row: sqlite3.Row) -> Decision:
 def add_decision(conn: sqlite3.Connection, decision: Decision) -> Decision:
     if decision.id is None:
         decision.id = _next_id(conn)
-    if decision.recorded_at is None:
-        decision.recorded_at = _now()
-    if decision.valid_from is None:
-        decision.valid_from = decision.recorded_at
+    decision.recorded_at = _normalize_ts(decision.recorded_at) or _now()
+    decision.valid_from = _normalize_ts(decision.valid_from) or decision.recorded_at
+    decision.valid_to = _normalize_ts(decision.valid_to)
+    decision.superseded_at = _normalize_ts(decision.superseded_at)
     conn.execute(
         """INSERT INTO decisions
              (id, statement, discipline, riba_stage, author, rationale, assumptions,
@@ -124,17 +141,23 @@ def get_all_decisions(conn: sqlite3.Connection) -> list[Decision]:
 def get_valid_asof(conn: sqlite3.Connection, as_of: str) -> list[Decision]:
     """Bi-temporal time-travel: decisions that were on record AND valid as of `as_of`.
 
-    recorded_at <= as_of (the system knew it by then) AND valid_from <= as_of (true in
-    the world by then) AND not-yet-invalidated by then (valid_to IS NULL OR > as_of).
-    Excludes proposals (never valid). `as_of` is an ISO-8601 timestamp string.
+    Knowledge axis: recorded_at <= as_of (the system knew it by then), and any
+    supersession only counts once it was itself known (superseded_at <= as_of) —
+    a supersession recorded later, even with a backdated valid_from, must not
+    erase what the record showed at the time ("what did you know, and when").
+    Validity axis: valid_from <= as_of, and once the closure is known,
+    valid_to must still cover as_of. Excludes proposals (never valid).
+    `as_of` is an ISO-8601 timestamp string.
     """
+    as_of = _normalize_ts(as_of)
     rows = conn.execute(
         """SELECT * FROM decisions
               WHERE status != 'proposed'
                 AND recorded_at <= ? AND valid_from <= ?
-                AND (valid_to IS NULL OR valid_to > ?)
+                AND ( (superseded_at IS NOT NULL AND superseded_at > ?)
+                      OR (valid_to IS NULL OR valid_to > ?) )
            ORDER BY recorded_at, id""",
-        (as_of, as_of, as_of),
+        (as_of, as_of, as_of, as_of),
     ).fetchall()
     return [_row_to_decision(r) for r in rows]
 
@@ -148,12 +171,17 @@ def supersede_decision(
     old = get_decision(conn, old_id)
     if old is None:
         raise ValueError(f"No decision {old_id} to supersede")
+    if old.status == "superseded":
+        raise ValueError(
+            f"{old_id} is already superseded by {old.superseded_by}; "
+            f"supersede {old.superseded_by} instead (no forking the chain)"
+        )
     new = add_decision(conn, new_decision)           # insert the replacement first
     conn.execute(
         """UPDATE decisions
               SET valid_to = ?, superseded_at = ?, superseded_by = ?, status = 'superseded'
             WHERE id = ?""",
-        (new.valid_from, superseded_at or _now(), new.id, old_id),
+        (new.valid_from, _normalize_ts(superseded_at) or _now(), new.id, old_id),
     )
     conn.commit()
     return new
