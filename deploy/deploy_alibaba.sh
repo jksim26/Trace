@@ -3,9 +3,9 @@
 # Run ON the instance, from the repo root:  sudo bash deploy/deploy_alibaba.sh
 #
 # What it does: python venv + deps, then installs and starts a systemd service
-# serving the Trace bubble (bubble.py) on 0.0.0.0:8765.
+# serving the Trace bubble (bubble.py) on 0.0.0.0:80 (standard HTTP — some networks block unusual ports).
 # Prereqs: the repo is on the instance; Trace/.env contains DASHSCOPE_API_KEY
-# (put it there yourself — never commit it); port 8765 open in the security group.
+# (put it there yourself — never commit it); port 80 open in the security group.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,7 +38,7 @@ After=network.target
 [Service]
 WorkingDirectory=$APP_DIR
 Environment=TRACE_HOST=0.0.0.0
-Environment=TRACE_PORT=8765
+Environment=TRACE_PORT=80
 ExecStart=$REPO_DIR/.venv/bin/python bubble.py --no-browser
 Restart=on-failure
 RestartSec=3
@@ -54,6 +54,6 @@ sleep 1
 systemctl --no-pager --lines=5 status $SERVICE || true
 IP=$(curl -s --max-time 3 http://100.100.100.200/latest/meta-data/eipv4 || hostname -I | awk '{print $1}')
 echo
-echo "==> Trace bubble is up:  http://$IP:8765"
+echo "==> Trace bubble is up:  http://$IP"
 echo "    This URL is the judges' testing-access link (rules §4)."
 echo "    Logs:  journalctl -u $SERVICE -f"
