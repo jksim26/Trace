@@ -42,7 +42,7 @@
 | **Problem Value & Impact** | **25%** | Lead with the **statutory golden thread** (BSA 2022 + Hackitt's verbatim quote), then industry-reported pain numbers. Reframe the product as *mandatory* for HRBs and a professional-liability defence globally — the strongest impact story any Track-1 entrant is likely to have. |
 | **Presentation & Documentation** | **15%** | The 3-scene transcript demo with the on-screen **red invalidation alert** and **context-budget meter** "visualises key logic effectively" exactly as the rubric asks; crisp README + architecture diagram + OSS-licensed repo. |
 
-> **⚠ Known ambiguity (from our adversarial fact-check):** sources disagree on which 30% bucket owns the "sophisticated Qwen API / MCP use" description vs the "architecture / code quality" description. The labels and weights (30/30/25/15) are solid; the description↔label pairing is not. **Mitigation: build to BOTH descriptions** — ship strong architecture/code quality *and* sophisticated Qwen API/MCP use — so the score holds regardless. `[verified — direct source conflict]`
+> **✅ Ambiguity RESOLVED (live rules read, 2026-07-02 — see [12-devpost-official-rules.md](12-devpost-official-rules.md)):** "Sophisticated use of Qwen Cloud APIs — e.g., custom skills, MCP integrations" + "algorithm/engineering innovation" own **Innovation & AI Creativity (30%)**; "architecture quality, engineering excellence, tech stack sophistication" own **Technical Depth & Engineering (30%)**. Building to both remains the right play. Also confirmed: **Stage One is a pass/fail gate** — the project must "reasonably fit the theme and reasonably apply the required APIs/SDKs" before weighted judging begins. `[verified — rules §6]`
 
 ## 4. The differentiation (one paragraph, memorise it)
 
@@ -52,13 +52,17 @@ No competitor closes the four-part loop of **decision + rationale + timestamp + 
 
 ## 5. Submission deliverables checklist `[verified unless noted]`
 
-- [ ] **Public GitHub repo** — must be public **AND open source with a license file**. `[verified — stronger than "just public"]`
-- [ ] **Demo video** — public on YouTube/Vimeo/Youku, link on the form. **Length: edit to ≤ 3 min** (sources conflict 3 vs 5 min → the tight cut satisfies either). **VERIFY LIVE.**
-- [ ] **Architecture diagram** (turn the §8 text diagram in [02](02-architecture.md) into a clean visual).
+*(All items below confirmed against the live rules, 2026-07-02 — verbatim in [12-devpost-official-rules.md](12-devpost-official-rules.md).)*
+
+- [ ] **Public GitHub repo** — public **AND open source with a license file**, and the license must be "detectable and visible at the top of the repository page (in the About section)"; repo must contain all source, assets, and working instructions. `[verified — rules §4]`
+- [ ] **Demo video** — public on YouTube/Vimeo/Youku, link on the form. **Length: < 3 min** ("Judges are not required to watch beyond three minutes"). No third-party trademarks or copyrighted music. `[verified — rules §4]`
+- [ ] **Architecture diagram** — required: "a clear visual representation of your system (e.g., how Qwen Cloud connects to your backend, database, and frontend)" (turn the §8 text diagram in [02](02-architecture.md) into a clean visual). `[verified — rules §4]`
 - [ ] **Presentation deck**.
-- [ ] **Written project description** on Devpost.
-- [ ] Project **uses Qwen models on Qwen Cloud** (required to qualify). `[verified]`
-- [ ] *(Insurance)* deployed on an Alibaba Cloud instance — a web-search summary suggests deployment may be required; unconfirmed. **VERIFY LIVE**; deploy as insurance regardless. `[web search — unverified]`
+- [ ] **Written project description** on Devpost — include the "significantly updated during the Submission Period" explanation. `[verified — rules §4]`
+- [ ] Project **uses Qwen models on Qwen Cloud** (required to qualify; also the Stage One pass/fail gate). `[verified]`
+- [ ] **MANDATORY: Proof of Alibaba Cloud Deployment** — "You must demonstrate that the backend is running on Alibaba Cloud. Proof must be a link to a code file in their code repo that demonstrates use of Alibaba Cloud services and APIs." Deploy the backend AND link the code file. `[verified — rules §4; upgraded from "insurance"]`
+- [ ] **Testing access link** — "a link to a website, functioning demo, or a test build," free access through 31 Jul (the deployed instance doubles as this). `[verified — rules §4]`
+- [ ] *(Optional)* **Blog Post bonus prize** — public blog/social post on the build journey, link in the submission (10 × $500 + $500 pool). `[verified — rules §4/§8]`
 
 > **Good news from the fact-check:** pre-existing projects are allowed *if significantly updated after the submission period starts* — so starting to build now and iterating is fine; it does not have to be a from-scratch-during-the-window build. `[verified — Devpost rules snippet]` Originality still required (no direct copying of OSS projects); teams retain IP, grant the sponsor a non-exclusive license for judging/promo. `[verified]`
 
@@ -87,9 +91,9 @@ No competitor closes the four-part loop of **decision + rationale + timestamp + 
 | Risk | Mitigation |
 |---|---|
 | LLM contradiction detection mis-fires live (false +/-) | Hard-code one deterministic storyline; gate the demo alert on the **rule-pack**, not pure LLM judgement. |
-| Demo-video length rule unresolved (3 vs 5 min) | Edit to ~3 min; **verify live** before upload. |
-| Judging 30%-description swap | **Build to both** 30% descriptions. |
-| Possible Alibaba-deployment requirement | Verify live; **deploy to Alibaba Cloud as insurance.** |
+| ~~Demo-video length rule unresolved~~ **RESOLVED: < 3 min** | Edit to < 3:00; judges won't watch beyond it. `[verified — rules §4]` |
+| ~~Judging 30%-description swap~~ **RESOLVED** | MCP/custom-skills = Innovation 30%; architecture/code = Technical 30%. Build to both anyway. `[verified — rules §6]` |
+| ~~Possible~~ **CONFIRMED Alibaba-deployment requirement** | **Mandatory:** deploy the backend on Alibaba Cloud + link a repo code file demonstrating Alibaba Cloud services/APIs. `[verified — rules §4]` |
 | $40 coupon may not cover embeddings/rerank/caching; qwen3.7-max SG pricing unannounced at launch | Default to qwen-plus/flash for routine extraction; reserve qwen3.7-max for contradiction reasoning; stack the per-model free quota; keep everything on the Singapore endpoint. |
 | Over-scoping the graph DB / eval harness | Freeze the MVP four-part loop on **SQLite** first; graph viz / sleep-time / eval = strictly post-MVP. |
 | A sharp judge: "ADRs already do superseded; KB tools already detect contradictions" | **Pre-empt it on stage** — concede generic contradiction detection exists, then claim the defensible *combination* (AEC dependency graph + auto invalidation + rationale + golden-thread native). |

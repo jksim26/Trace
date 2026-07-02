@@ -1,7 +1,7 @@
 # Demo Script — "Tanglin Rise"
 
 **Title card:** *Tanglin Rise — the decision nobody remembered making, until it nearly exposed the QP.*
-**Runtime target:** **≤ 3 minutes** — safe under either the 3-min or 5-min limit (which one applies is still **VERIFY LIVE** on Devpost).
+**Runtime target:** **< 3 minutes** — confirmed by the live rules read 2026-07-02: "Judges are not required to watch beyond three minutes" ([docs/12](../docs/12-devpost-official-rules.md)).
 **Setup:** the agent runs in a side panel; each scene shows a short meeting transcript on screen ([transcripts/](transcripts/)) with the agent reacting live.
 
 ---

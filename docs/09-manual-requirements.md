@@ -19,18 +19,24 @@
 
 ---
 
-## B. VERIFY LIVE before the deadline
+## B. VERIFY LIVE before the deadline — ✅ RESOLVED 2026-07-02
 
-*All of B rests on mirrors/snippets, **not** a direct read — the rules page renders empty to automated fetch. Do a live human read and lock each item.* `[web search — unverified until live read]`
+*A full human read of the live rules page was done on **2026-07-02**; the verbatim capture is **[docs/12-devpost-official-rules.md](12-devpost-official-rules.md)**. All items below are now settled from the primary source except B6.* `[verified — live read 2026-07-02]`
 
-- [ ] **B1 · Demo-video length** — sources conflict: "< 3 min" (Devpost snippet) vs "max 5 min" (qwencloud.com). **Edit to ≤ 3 min** to satisfy either; confirm the exact cap before upload. **VERIFY LIVE** `[web search — source conflict]`
-- [ ] **B2 · Mandatory Alibaba Cloud deployment?** — a web-search summary says projects must be "deployed on Alibaba Cloud infrastructure." Unconfirmed. **Deploy to an Alibaba Cloud instance as insurance regardless.** **VERIFY LIVE** `[web search — unverified]`
-- [ ] **B3 · Video host** — must be public on **YouTube / Vimeo / Youku**; the public link goes on the submission form. **VERIFY LIVE** `[web search]`
-- [ ] **B4 · Repo public + OSS-license — exact requirement.** Repo must be **public AND carry an open-source license file** (a `LICENSE` is already in the repo root). Double-check the *exact* license requirement (whether any specific license / OSI approval is named). **VERIFY LIVE** `[verified — snippet; exact terms unconfirmed]`
-- [ ] **B5 · Which 30% bucket owns "sophisticated Qwen API / MCP use" vs "architecture / code quality."** Mitigated by building to **both** descriptions (see [03](03-hackathon-strategy.md) §3 ⚠ and 06 §A8), but confirm the pairing if the live page makes it clear. `[verified — direct source conflict]`
-- [ ] **B6 · Coupon / quota scope** — whether the $40 coupon + free quota cover **embeddings, rerank, and context-caching**, and **qwen3.7-max's Singapore availability/price** (unannounced at launch). Affects model routing (qwen-plus/flash for routine extraction, qwen3.7-max reserved for contradiction reasoning). **VERIFY LIVE** `[web search — unconfirmed]`
-- [ ] **B7 · Re-confirm dates on the live page** — the **9 Jul 14:00 PDT** hard deadline is multiply corroborated `[verified]`; the tail-end dates (judging ~10–30 Jul, winners ~7 Aug) rest on a **single source** — re-check. `[web search — single source]`
-- [ ] **B8 · One full live human read of the rules page before submit** — confirm deadline, video length (B1), deployment clause (B2), OSS-license requirement (B4), eligibility/registration steps. This is the umbrella check that retires the "unverified" tag on B1–B7. **VERIFY LIVE** `[web search — pending live read]`
+- [x] **B1 · Demo-video length — RESOLVED: < 3 minutes.** "should be less than three (3) minutes. Judges are not required to watch beyond three minutes." `[verified — rules §4]`
+- [x] **B2 · Alibaba Cloud deployment — RESOLVED: MANDATORY.** "Include Proof of Alibaba Cloud Deployment: You must demonstrate that the backend is running on Alibaba Cloud. Proof must be a link to a code file in their code repo that demonstrates use of Alibaba Cloud services and APIs." Not insurance — a required submission field. `[verified — rules §4]`
+- [x] **B3 · Video host — RESOLVED: YouTube / Vimeo / Youku**, publicly visible; link on the submission form. No third-party trademarks or copyrighted music. `[verified — rules §4]`
+- [x] **B4 · Repo/license — RESOLVED:** public + open-source license file, and the license "should be detectable and visible at the top of the repository page (in the About section)" — check GitHub detects the MIT `LICENSE` and shows it in About. Repo must contain "all necessary source code, assets, and instructions required for the project to be functional." `[verified — rules §4]`
+- [x] **B5 · 30%-bucket pairing — RESOLVED:** "Sophisticated use of Qwen Cloud APIs — e.g., custom skills, MCP integrations" belongs to **Innovation & AI Creativity (30%)**; architecture/code quality/tech-stack belongs to **Technical Depth & Engineering (30%)**. The build-to-both mitigation stands. `[verified — rules §6]`
+- [ ] **B6 · Coupon / quota scope** — still not answered by the rules page (only the $40 voucher process is). Check on the Qwen Cloud benefits page when claiming credits. `[web search — unconfirmed]`
+- [x] **B7 · Dates — RESOLVED:** deadline **9 Jul 2026 2:00 pm PT**; judging 10–31 Jul; winners ~7 Aug. `[verified — rules §1]`
+- [x] **B8 · Full live read — DONE 2026-07-02**; verbatim capture in doc 12. `[verified]`
+
+**NEW obligations surfaced by the live read** (see doc 12 "New obligations"):
+
+- [ ] **B9 · Testing access** — the submission must include "a link to a website, functioning demo, or a test build," free to use until judging ends (31 Jul). Plan: the deployed Alibaba Cloud instance (B2) doubles as this link.
+- [ ] **B10 · "Significantly updated" explanation** — the project predates nothing (built inside the window), but the Devpost write-up should still state the build happened entirely within the Submission Period, since the repo's first commits are late June.
+- [ ] **B11 · Blog Post bonus prize (optional, 10 × $500 + $500)** — publish a public blog/social post on the build journey with Qwen Cloud and include the link in the submission. Low effort, separate prize pool.
 
 ---
 

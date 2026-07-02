@@ -22,7 +22,7 @@ The judge's first two actions are `pip install && pytest` and reading the Devpos
    - One measured test count everywhere (currently 33 vs 36 vs actual 46).
    - "immutable audit trail" → "never-delete, append-only by design" (supersession is a SQLite UPDATE — don't hand a sharp judge that word).
    - demo-script.md:82 claims Scene 2 shows "the supersede chain" — cli.py never calls `supersede_decision`; align the script with what's on screen.
-4. **Human task, do it today:** verify the live Devpost rules (video length 3 vs 5 min; deployment clause). Flagged "VERIFY LIVE" in doc 03 since 28 June.
+4. ~~**Human task, do it today:** verify the live Devpost rules.~~ **DONE 2026-07-02** — verbatim capture in [12-devpost-official-rules.md](12-devpost-official-rules.md). Key rulings: video **< 3 min**; **Alibaba Cloud deployment MANDATORY** (proof = a repo code file demonstrating Alibaba Cloud services/APIs); architecture diagram required; license visible in the GitHub About section; a working testing-access link required through 31 Jul.
 
 ## Day 2 — **Thu 3 July**: fix the flagship defect (Technical Depth 30%) (~4–6h)
 
@@ -46,14 +46,16 @@ The product is named for premise-invalidation, but `check_invalidation` never re
 ## Day 4 — **Sat 5 July**: demo resilience + deploy insurance (~4–6h)
 
 1. **Add a no-key/replay mode to cli.py.** The happy path makes ~6 live DashScope calls with no fallback and crashes at Scene 1 without a key. Record the LLM responses once, replay with `--offline` — protects the video shoot, any live-demo request, and every judge without credentials.
-2. **Deploy to Alibaba Cloud** as insurance (doc 03 §5: deployment may be mandatory — unresolved).
+2. **Deploy to Alibaba Cloud — now confirmed MANDATORY** (rules §4, see doc 12): the backend must run on Alibaba Cloud, with proof being *a link to a repo code file that demonstrates use of Alibaba Cloud services/APIs*. The deployed instance also doubles as the required **testing-access link** (free access through 31 Jul). Make sure a clearly-named code file shows the Alibaba Cloud usage.
 3. **Feature freeze at end of day.** Full clean-clone test on Windows and Linux.
 
 ## Day 5 — **Sun 6 July**: packaging (Presentation 15% + the submission itself)
 
-- Record + edit the **≤3-min video** (pre-recorded happy path).
-- **Architecture diagram** (docs/02 §8 is still ASCII).
-- **Deck** and **Devpost write-up**.
+- Record + edit the **< 3-min video** (pre-recorded happy path; no copyrighted music/trademarks — rules §4).
+- **Architecture diagram** (docs/02 §8 is still ASCII) — a required submission item, not polish.
+- **Deck** and **Devpost write-up** — include the "significantly updated during the Submission Period" explanation the rules ask for.
+- **Blog post (optional but cheap):** a public build-journey post with Qwen Cloud, linked in the submission — separate 10 × ($500 + $500) prize pool.
+- Confirm GitHub shows the MIT license in the repo's **About section** (an explicit rules requirement).
 - Run the council's fact-check table (§5 of the review) as a literal pre-flight checklist: every judge-facing sentence verified against the code that day.
 
 ## Day 6 — **Mon 7 July**: **SUBMIT.**
