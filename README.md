@@ -28,15 +28,15 @@ In a construction project the design brief evolves across dozens of meetings, bu
 
 ## What runs today
 
-The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **52 offline tests**. Everything lives in [`Trace/`](Trace/):
+The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **63 offline tests**. Everything lives in [`Trace/`](Trace/):
 
 | Module | What it does |
 |---|---|
 | `store.py` | The **foundation spine**: a never-delete, bi-temporal SQLite decision store. Supersession closes `valid_to` and links `superseded_by` (never a `DELETE`). Ships `get_valid_asof` for **time-travel**. |
 | `capture.py` | **Capture.** Qwen (`qwen-plus`) function-calling reads a meeting transcript and extracts each decision with its rationale, assumptions, and author. |
-| `rulepack.py`, `rules/fire.yaml` | The deterministic **SCDF rule-pack**: the gate that keeps the invalidation alert reliable on camera, so it cannot mis-fire. |
-| `invalidate.py` | **Invalidation alert**, the centrepiece. It fires the instant a new decision breaks a prior one's premise, with a plain-English blast radius. |
-| `court.py` | The **decision court**: three Qwen roles (Proposer, Guardian, Judge) deliberate a rule-pack-gated conflict and write the verdict a personally-liable QP can stand behind. |
+| `rulepack.py`, `rules/fire.yaml` | The deterministic **SCDF rule-pack** — four rules from the primary-source research (Cl 3.5.1 height **and** boundary limbs, Cl 3.5.4 low-rise Class 0, Cl 3.15.13 ACP core): the gate that keeps the invalidation alert reliable on camera. |
+| `invalidate.py` | **Invalidation alert**, the centrepiece — premise-aware: it names the *specific stored assumption* the new decision breaks, and when the rule-pack is silent, an **LLM premise check** reads each prior decision's assumptions as the general fallback. |
+| `court.py` | The **decision court**: three Qwen roles (Proposer, Guardian, Judge) deliberate a rule-pack-gated conflict, write the reasoning a personally-liable QP can stand behind, and **persist every verdict** to the court record. |
 | `recall.py`, `strategies.py` | **Recall-to-budget.** Packs only the valid critical decisions within a token budget, cites them, and abstains honestly. Multi-strategy ranking (relevance, recency, importance, composite). |
 | `mcp_tools.py` | The four functions exposed as **Qwen-Agent custom tools**, so a Qwen Assistant calls them itself (MCP-protocol exposure is roadmap). |
 | `cli.py` | The four-scene **"Tanglin Rise" demo** (capture, then alert plus court, then recall with abstention, then time-travel) plus the staged ambient card. |
@@ -51,7 +51,7 @@ cd Trace
 pip install -r requirements.txt
 # create Trace/.env with a single line:  DASHSCOPE_API_KEY=sk-...   (Qwen Cloud, Singapore region)
 
-python -m pytest         # 52 tests pass offline, no API key needed (the live smoke test auto-skips)
+python -m pytest         # 63 tests pass offline, no API key needed (the live smoke test auto-skips)
 python cli.py            # the four-scene "Tanglin Rise" demo (add --pause to step through it)
 python bubble.py         # the ambient bubble, a local web app with chat wired live to the engine
 python mcp_tools.py      # a Qwen-Agent Assistant autonomously calling the tools
