@@ -96,7 +96,9 @@ def recall_decisions(conn, question: str, budget: int = TOKEN_BUDGET, client=Non
     extra, used = _pack(others, qwords, budget, used)   # then relevant history (rejected/superseded)
     chosen = packed + extra
     if not chosen:
-        return RecallResult("No decision on record; not yet decided.", [], used, budget, True, 0)
+        # Report the real candidate count: abstention can also happen because the
+        # budget was too tight to pack a match, and the meter must not hide that.
+        return RecallResult("No decision on record; not yet decided.", [], used, budget, True, candidates)
 
     client = client or OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
     context = "\n".join(_fmt(d) for d in chosen)

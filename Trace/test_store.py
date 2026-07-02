@@ -36,7 +36,7 @@ def test_round_trip_preserves_fields():
     assert got.assumptions == ["building remains an HRB (>18m)"]
     assert got.status == "valid"
     assert got.valid_to is None
-    assert got.valid_from == "2026-01-14T11:45Z"
+    assert got.valid_from == "2026-01-14T11:45:00Z"  # canonicalized to second precision
 
 
 def test_auto_id_sequence():
@@ -73,8 +73,8 @@ def test_supersede_preserves_old_row():
     assert old is not None
     assert old.status == "superseded"
     assert old.superseded_by == "D-002"
-    assert old.valid_to == "2026-03-01T00:00Z"
-    assert old.superseded_at == "2026-03-01T00:05Z"
+    assert old.valid_to == "2026-03-01T00:00:00Z"      # canonicalized
+    assert old.superseded_at == "2026-03-01T00:05:00Z"  # canonicalized
     assert new.id == "D-002" and new.status == "valid" and new.valid_to is None
 
 
@@ -89,6 +89,32 @@ def test_supersede_unknown_id_raises():
     conn = _fresh()
     with pytest.raises(ValueError):
         supersede_decision(conn, "D-404", Decision(statement="x"))
+
+
+def test_double_supersede_raises_no_forked_chain():
+    conn = _fresh()
+    add_decision(conn, Decision(statement="v1"))
+    supersede_decision(conn, "D-001", Decision(statement="v2"))
+    with pytest.raises(ValueError):
+        supersede_decision(conn, "D-001", Decision(statement="v3-fork"))
+
+
+def test_auto_id_skips_past_explicit_ids():
+    # COUNT-based ids collided with any explicitly-supplied id; MAX-based must not.
+    conn = _fresh()
+    add_decision(conn, Decision(statement="imported", id="D-007"))
+    d = add_decision(conn, Decision(statement="next"))
+    assert d.id == "D-008"
+
+
+def test_timestamps_canonicalized_on_write():
+    # Minute-precision input is stored at second precision so string comparison
+    # in SQL is chronological.
+    conn = _fresh()
+    d = add_decision(conn, Decision(statement="A", recorded_at="2026-01-14T11:45Z"))
+    got = get_decision(conn, d.id)
+    assert got.recorded_at == "2026-01-14T11:45:00Z"
+    assert got.valid_from == "2026-01-14T11:45:00Z"
 
 
 def test_get_history_walks_full_chain():
