@@ -7,10 +7,14 @@ call). The always-on-top *floating desktop window* is a thin native shell
 (pywebview / Qt) we add once it can be tested visually.
 
 Run:  python bubble.py   → serves http://127.0.0.1:8765 and opens your browser.
+Deploy (e.g. Alibaba Cloud ECS — see deploy/README.md):
+      TRACE_HOST=0.0.0.0 python bubble.py --no-browser
 """
 from __future__ import annotations
 
 import json
+import os
+import sys
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -20,7 +24,8 @@ from recall import recall_decisions
 from store import Decision, add_decision, connect, get_all_decisions, init_db
 
 _HTML = Path(__file__).with_name("bubble.html")
-PORT = 8765
+HOST = os.getenv("TRACE_HOST", "127.0.0.1")
+PORT = int(os.getenv("TRACE_PORT", "8765"))
 
 
 def _seed(conn) -> None:
@@ -104,10 +109,10 @@ class _Handler(BaseHTTPRequestHandler):
 
 
 def main(open_browser: bool = True) -> None:
-    server = HTTPServer(("127.0.0.1", PORT), _Handler)
-    url = f"http://127.0.0.1:{PORT}"
+    server = HTTPServer((HOST, PORT), _Handler)
+    url = f"http://{HOST}:{PORT}"
     print(f"Trace bubble  ->  {url}   (Ctrl+C to stop)")
-    if open_browser:
+    if open_browser and HOST == "127.0.0.1":
         threading.Timer(0.6, lambda: _safe_open(url)).start()
     server.serve_forever()
 
@@ -120,4 +125,4 @@ def _safe_open(url):
 
 
 if __name__ == "__main__":
-    main()
+    main(open_browser="--no-browser" not in sys.argv)

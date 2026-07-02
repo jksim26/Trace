@@ -51,8 +51,9 @@ cd Trace
 pip install -r requirements.txt
 # create Trace/.env with a single line:  DASHSCOPE_API_KEY=sk-...   (Qwen Cloud, Singapore region)
 
-python -m pytest         # 63 tests pass offline, no API key needed (the live smoke test auto-skips)
+python -m pytest         # all tests pass offline, no API key needed (the live smoke test auto-skips)
 python cli.py            # the four-scene "Tanglin Rise" demo (add --pause to step through it)
+python cli.py --offline  # the same demo with canned Qwen responses — no key, no network, cannot fail
 python bubble.py         # the ambient bubble, a local web app with chat wired live to the engine
 python mcp_tools.py      # a Qwen-Agent Assistant autonomously calling the tools
 ```

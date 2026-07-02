@@ -1,0 +1,57 @@
+[
+ {
+  "kind": "tool_calls",
+  "calls": [
+   {
+    "name": "record_decision",
+    "arguments": {
+     "statement": "Facade cladding = non-combustible mineral rainscreen (A1 mineral-core panels, Class 0 outer layers per Cl 3.15)",
+     "discipline": "facade",
+     "rationale": "The building is 95 m (over 15 m), so SCDF Fire Code 2023 Cl 3.5.1 mandates wholly non-combustible external walls; this is a compliance requirement, not a preference.",
+     "assumptions": [
+      "building height remains above 15 m",
+      "combustible external cladding is prohibited over 15 m"
+     ],
+     "author": ["K. Lim (design QP / architect)", "M. Ong (fire engineer)"],
+     "brief_ref": "facade package",
+     "cladding_combustible": false
+    }
+   }
+  ]
+ },
+ {
+  "kind": "tool_calls",
+  "calls": [
+   {
+    "name": "record_decision",
+    "arguments": {
+     "statement": "Swap the facade cladding to polyethylene-core aluminium composite panel (PE-core ACP) under the 'or equivalent' clause",
+     "discipline": "facade",
+     "rationale": "The cost plan is over budget and the facade is the biggest soft target; the PE-core ACP is visually identical and the largest single saving on the package.",
+     "assumptions": [
+      "PE-core ACP is an acceptable equivalent to the specified mineral rainscreen"
+     ],
+     "author": ["T. Chua (main contractor, commercial)"],
+     "brief_ref": "facade package",
+     "cladding_combustible": true
+    }
+   }
+  ]
+ },
+ {
+  "kind": "content",
+  "text": "The contractor's position is that the PE-core ACP is visually identical to the specified rainscreen, is covered by the 'or equivalent' clause, and delivers the largest single saving available on the facade package."
+ },
+ {
+  "kind": "content",
+  "text": "The proposed swap breaks D-001's recorded premise that combustible external cladding is prohibited: a polyethylene core is combustible, so it cannot be an 'equivalent' under SCDF Fire Code 2023 Cl 3.5.1 for a 95 m building."
+ },
+ {
+  "kind": "content",
+  "text": "The substitution is rejected. However material the saving, a PE-core panel is combustible and cannot satisfy Cl 3.5.1's requirement that external walls above 15 m be wholly non-combustible; adopting it would falsify the recorded premise of decision D-001 and expose the named QP to personal liability under Building Control Act s.9. The commercial case was heard and does not displace a statutory requirement."
+ },
+ {
+  "kind": "content",
+  "text": "The facade must remain the non-combustible mineral rainscreen because the 95 m tower exceeds 15 m and SCDF Cl 3.5.1 mandates it (D-001). It cannot simply be changed: the cheaper PE-core ACP swap was already proposed and rejected on 3 Mar (D-002), so any change would need to re-open fire-safety approval."
+ }
+]
