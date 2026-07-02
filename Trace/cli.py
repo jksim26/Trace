@@ -1,9 +1,10 @@
-"""Trace demo CLI — runs the three "Tanglin Rise" scenes for the camera (C6),
+"""Trace demo CLI — runs the four "Tanglin Rise" scenes for the camera (C6),
 plus the staged ambient card (C7).
 
-Scene 1 capture -> Scene 2 invalidation alert -> Scene 3 recall + abstention.
-Real Qwen calls happen for capture (x2) and the recall answer; the alert and the
-abstention are deterministic. Run from the Trace/ dir:  python cli.py [--pause]
+Scene 1 capture -> Scene 2 invalidation alert + court -> Scene 3 recall +
+abstention -> Scene 4 bi-temporal time-travel. Real Qwen calls happen for
+capture (x2), the court (x3), and the recall answer; the alert, abstention, and
+time-travel are deterministic. Run from the Trace/ dir:  python cli.py [--pause]
 """
 from __future__ import annotations
 
@@ -126,7 +127,7 @@ def run(pause: bool = False) -> None:
         if alerts:
             _panel(render_verdict(convene(conn, c)),
                    title="The decision court — 3 Qwen roles deliberate", style="red")
-        _panel(_trail(conn), title="Immutable trail (C4) — never delete", style="yellow")
+        _panel(_trail(conn), title="Never-delete trail (C4) — nothing erased", style="yellow")
     _pause(pause)
 
     _rule("SCENE 3 - RECALL UNDER BUDGET  (Handover, 12 May 2026)")
