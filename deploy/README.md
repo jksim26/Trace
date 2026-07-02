@@ -16,7 +16,7 @@ Link these repo files on the submission form — they demonstrate Alibaba Cloud 
 1. 👤 **Create the ECS instance** — Alibaba Cloud console → ECS → Create:
    region **Singapore (ap-southeast-1)** (same region as the DashScope endpoint),
    Ubuntu 22.04 or 24.04, smallest spec is fine (2 vCPU / 2 GB, e.g. ecs.t6),
-   assign a public IP. In the **security group**, allow inbound **TCP 8765**
+   assign a public IP. In the **security group**, allow inbound **TCP 80** (standard HTTP — port 8765 also works, but real-world networks sometimes filter unusual ports)
    (and 22 for SSH).
 2. 👤 **SSH in and fetch the repo:**
    ```bash
@@ -34,8 +34,8 @@ Link these repo files on the submission form — they demonstrate Alibaba Cloud 
    ```
    The script installs a venv + dependencies, **runs the offline test suite as a
    deployment gate**, then installs and starts a `trace-bubble` systemd service
-   on `0.0.0.0:8765`.
-5. **Verify:** open `http://<instance-ip>:8765` — the bubble should render, and
+   on `0.0.0.0:80`.
+5. **Verify:** open `http://<instance-ip>` — the bubble should render, and
    the chat box should answer (a real `recall_decisions` → Qwen call). If /ask
    fails, check the key: `journalctl -u trace-bubble -f`.
 6. 👤 **Paste the URL** into the Devpost submission as the testing-access link,
