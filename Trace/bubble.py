@@ -21,8 +21,10 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
+from court import get_court_records
 from recall import _content_words
-from store import Decision, add_decision, connect, get_all_decisions, init_db
+from scenarios import PROJECTS, build_store
+from store import get_all_decisions
 
 _HTML = Path(__file__).with_name("bubble.html")
 
@@ -73,49 +75,49 @@ HOST = os.getenv("TRACE_HOST", "127.0.0.1")
 PORT = int(os.getenv("TRACE_PORT", "8765"))
 
 
-def _seed(conn) -> None:
-    add_decision(conn, Decision(
-        statement="Facade cladding = non-combustible mineral rainscreen (A1 core, Class 0)",
-        discipline="facade", status="valid",
-        rationale="Building is 95 m (> 15 m); SCDF Fire Code 2023 Cl 3.5 requires the facade "
-                  "cladding to be wholly non-combustible above that height.",
-        author=["K. Lim (QP)", "M. Ong (fire)"],
-        recorded_at="2026-01-14T11:42Z", valid_from="2026-01-14T11:42Z",
-    ))
-    add_decision(conn, Decision(
-        statement="Swap facade cladding to polyethylene-core ACP (combustible)",
-        discipline="facade", status="proposed",
-        rationale="VE cost saving under the 'or equivalent' clause — rejected: breaches Cl 3.5.",
-        recorded_at="2026-03-03T14:00Z", valid_from="2026-03-03T14:00Z",
-    ))
+DEFAULT_PROJECT = "tanglin-rise"
 
 
 class Api:
-    """The bubble's engine bridge — used by the web handler (and any native shell)."""
+    """The bubble's engine bridge — one per project store."""
 
-    def __init__(self):
-        self.conn = connect(":memory:")
-        init_db(self.conn)
-        _seed(self.conn)
-        self.history: list[dict] = []  # shared conversation memory for this server
+    def __init__(self, project: str = DEFAULT_PROJECT):
+        self.project = project
+        self.conn = build_store(project)
+        self.history: list[dict] = []  # conversation memory, per project
 
     def state(self) -> str:
         decisions = [
             {"id": d.id, "status": d.status, "statement": d.statement}
             for d in get_all_decisions(self.conn)
         ]
-        return json.dumps({"context": "Level 0 · facade", "decisions": decisions})
+        return json.dumps({
+            "context": PROJECTS[self.project]["title"],
+            "project": self.project,
+            "projects": [{"key": k, "title": v["title"]} for k, v in PROJECTS.items()],
+            "decisions": decisions,
+        })
 
     def _record(self) -> str:
         lines = []
         for d in get_all_decisions(self.conn):
+            span = f"valid from {(d.valid_from or '')[:10]}"
+            if d.valid_to:
+                span += f" to {d.valid_to[:10]} (superseded by {d.superseded_by})"
             lines.append(f"{d.id} [{d.status}] {d.statement}")
             if d.rationale:
                 lines.append(f"   rationale: {d.rationale}")
             if d.assumptions:
                 lines.append(f"   assumptions: {'; '.join(d.assumptions)}")
             if d.author:
-                lines.append(f"   by: {', '.join(d.author)}  ·  valid from {(d.valid_from or '')[:10]}")
+                lines.append(f"   by: {', '.join(d.author)}  ·  {span}")
+        for r in get_court_records(self.conn):
+            lines.append(
+                f"COURT RECORD: proposal {r['proposal_id']} — {r['verdict']} "
+                f"(breaks {r['breaks_id']}; {r['citation']}). "
+                f"For: {r['for_argument']} Against: {r['against_argument']} "
+                f"Ruling: {r['rationale']}"
+            )
         return "\n".join(lines)
 
     def ask(self, question: str) -> str:
@@ -128,7 +130,8 @@ class Api:
             messages = [
                 {"role": "system", "content": _ASSISTANT_SYS},
                 {"role": "system", "content":
-                    f"PROJECT CONTEXT:\n{_PROJECT_BLURB}\n\nDECISION RECORD:\n{self._record()}"},
+                    f"PROJECT CONTEXT:\n{_PROJECT_BLURB}\n{PROJECTS[self.project]['blurb']}\n\n"
+                    f"DECISION RECORD:\n{self._record()}"},
                 *self.history[-_HISTORY_LIMIT:],
                 {"role": "user", "content": question},
             ]
@@ -157,14 +160,20 @@ class Api:
             return json.dumps({"answer": "No decision on record; not yet decided.", "cited": []})
 
 
-_api = None
+_apis: dict[str, Api] = {}
 
 
-def _get_api() -> Api:
-    global _api
-    if _api is None:
-        _api = Api()
-    return _api
+def _get_api(project: str = DEFAULT_PROJECT) -> Api:
+    if project not in PROJECTS:
+        project = DEFAULT_PROJECT
+    if project not in _apis:
+        _apis[project] = Api(project)
+    return _apis[project]
+
+
+def _query_param(path: str, name: str) -> str:
+    from urllib.parse import parse_qs, urlparse
+    return (parse_qs(urlparse(path).query).get(name) or [""])[0]
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -181,7 +190,7 @@ class _Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             self._send(200, _HTML.read_text(encoding="utf-8"), "text/html; charset=utf-8")
         elif path == "/state":
-            self._send(200, _get_api().state())
+            self._send(200, _get_api(_query_param(self.path, "project")).state())
         else:
             self._send(404, "{}")
 
@@ -189,7 +198,8 @@ class _Handler(BaseHTTPRequestHandler):
         if self.path == "/ask":
             n = int(self.headers.get("Content-Length", 0) or 0)
             data = json.loads(self.rfile.read(n) or b"{}")
-            self._send(200, _get_api().ask(data.get("question", "")))
+            api = _get_api(data.get("project") or DEFAULT_PROJECT)
+            self._send(200, api.ask(data.get("question", "")))
         else:
             self._send(404, "{}")
 

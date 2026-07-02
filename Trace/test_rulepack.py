@@ -61,6 +61,22 @@ def test_acp_core_limb():
     assert [v.rule_id for v in check(context, load_rules())] == ["SCDF-Cl3.15.13-acp-core"]
 
 
+def test_uk_pack_loads_separately_and_fires_over_18m():
+    # A different jurisdiction is a different rule-pack, same engine.
+    import rulepack
+    from pathlib import Path
+    uk = load_rules(Path(rulepack.__file__).with_name("rules") / "uk")
+    context = {"building": {"height_m": 62}, "facade": {"cladding": {"combustible": True}}}
+    assert [v.rule_id for v in check(context, uk)] == ["UK-Reg7-2-combustible-ban"]
+    assert check({"building": {"height_m": 16}, "facade": {"cladding": {"combustible": True}}}, uk) == []
+
+
+def test_uk_pack_is_not_loaded_by_default():
+    # The default (Singapore) pack must not pick up subdirectory packs, or the
+    # demo's one-rule invariant breaks.
+    assert all(not r.id.startswith("UK-") for r in load_rules())
+
+
 def test_demo_context_still_fires_exactly_one_rule():
     # The Tanglin Rise demo context (95 m, 7.5 m boundary) must trip only the
     # height limb — the centrepiece alert stays deterministic and single.
