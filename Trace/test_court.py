@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 from capture import Captured
-from court import convene, render_verdict
+from court import convene, get_court_records, render_verdict
 from store import Decision, add_decision, connect, init_db
 
 
@@ -39,3 +39,25 @@ def test_court_allows_when_no_conflict_without_calling_llm():
                   {"cladding_combustible": False})
     v = convene(_store_with_d001(), ok, client=object())  # object() proves no LLM call
     assert v.conflict is False and v.verdict == "ALLOW"
+
+
+def test_court_persists_reject_verdict_to_the_record():
+    conn = _store_with_d001()
+    convene(conn, _combustible(), client=_fake_client())
+    records = get_court_records(conn)
+    assert len(records) == 1
+    r = records[0]
+    assert r["verdict"] == "REJECT"
+    assert r["breaks_id"] == "D-001"
+    assert r["rationale"]  # the judge's reasoning is on the record
+    assert r["created_at"]
+
+
+def test_court_persists_allow_verdict_too():
+    conn = _store_with_d001()
+    ok = Captured(Decision(statement="Keep non-combustible rainscreen", discipline="facade"),
+                  {"cladding_combustible": False})
+    convene(conn, ok, client=object())
+    records = get_court_records(conn)
+    assert len(records) == 1
+    assert records[0]["verdict"] == "ALLOW"

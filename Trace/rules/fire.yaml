@@ -3,14 +3,18 @@
 # The deterministic gate for check_invalidation: a proposed decision whose
 # structured context violates a rule here fires the invalidation alert with
 # CERTAINTY, so the demo's centrepiece never mis-fires. The LLM premise check
-# (added later, needs the API key) is the general, probabilistic second half.
-# See docs/02-architecture.md §6.
+# (invalidate.llm_premise_check, needs the API key) is the general,
+# probabilistic second half. See docs/02-architecture.md §6.
 #
 # A rule fires a violation when ALL `when` conditions hold AND any `require`
 # condition fails. Conditions are {operator: value}: gt gte lt lte eq ne in not_in.
+# A `require` attribute that the decision does not set is skipped (not engaged).
+#
+# Sources: SCDF Fire Code 2023 Cl 3.5.1 / 3.5.4 / 3.15.13 as recorded in
+# .research/singapore/sg-sg-fire-cladding.md (the Toh Guan Road findings).
 
 - id: SCDF-Cl3.5-noncombustible
-  citation: "SCDF Fire Code 2023 Cl 3.5"
+  citation: "SCDF Fire Code 2023 Cl 3.5.1"
   rationale: "External walls of a building exceeding 15 m in height must be wholly non-combustible."
   when:
     building.height_m: {gt: 15}
@@ -20,4 +24,39 @@
     - "facade support steel & fixings"
     - "fire-safety strategy re-approval"
     - "the QP's personal criminal liability (Building Control Act s.9)"
+    - "the periodic facade inspection"
+
+- id: SCDF-Cl3.5.1-boundary
+  citation: "SCDF Fire Code 2023 Cl 3.5.1"
+  rationale: "External walls within 1 m of the site boundary must be wholly non-combustible, regardless of building height."
+  when:
+    building.boundary_distance_m: {lt: 1}
+  require:
+    facade.cladding.combustible: {eq: false}
+  blast_radius:
+    - "facade support steel & fixings"
+    - "fire-safety strategy re-approval"
+    - "the QP's personal criminal liability (Building Control Act s.9)"
+
+- id: SCDF-Cl3.5.4-lowrise-class0
+  citation: "SCDF Fire Code 2023 Cl 3.5.4"
+  rationale: "Below 15 m and at least 1 m from the boundary, external cladding must still be of limited combustibility — Class 0 (BS 476 Pt 6/7) or EN 13501-1 Class B."
+  when:
+    building.height_m: {lte: 15}
+    building.boundary_distance_m: {gte: 1}
+  require:
+    facade.cladding.class_0: {eq: true}
+  blast_radius:
+    - "cladding re-specification"
+    - "fire-safety strategy re-approval"
+
+- id: SCDF-Cl3.15.13-acp-core
+  citation: "SCDF Fire Code 2023 Cl 3.15.13"
+  rationale: "Composite (ACP) panels used externally need non-combustible outer layers AND a core to Class 0 / EN 13501-1 Class B (or an assembly passing NFPA 285) — a polyethylene core fails this."
+  when:
+    facade.cladding.is_composite: {eq: true}
+  require:
+    facade.cladding.core_class0_or_b: {eq: true}
+  blast_radius:
+    - "panel certification evidence (the Toh Guan Road failure mode: visually identical compliant and non-compliant panels mixed)"
     - "the periodic facade inspection"
