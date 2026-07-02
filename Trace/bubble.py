@@ -20,10 +20,19 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-from recall import recall_decisions
+from recall import _content_words, recall_decisions
 from store import Decision, add_decision, connect, get_all_decisions, init_db
 
 _HTML = Path(__file__).with_name("bubble.html")
+
+# Small-talk words that shouldn't hit the decision store at all — a first-time
+# visitor's "hi" deserves a pointer, not "No decision on record".
+_SMALL_TALK = {"hello", "hey", "yo", "sup", "help", "test", "testing", "thanks", "thank", "you"}
+
+
+def _is_greeting(question: str) -> bool:
+    words = _content_words(question)
+    return not words or words <= _SMALL_TALK
 HOST = os.getenv("TRACE_HOST", "127.0.0.1")
 PORT = int(os.getenv("TRACE_PORT", "8765"))
 
@@ -61,6 +70,13 @@ class Api:
         return json.dumps({"context": "Level 0 · facade", "decisions": decisions})
 
     def ask(self, question: str) -> str:
+        if _is_greeting(question):
+            return json.dumps({
+                "answer": 'Hi! I answer from this project\'s decision record. Try: '
+                          '"why the non-combustible facade cladding?" or '
+                          '"can we still change the facade?"',
+                "cited": [],
+            })
         try:
             r = recall_decisions(self.conn, question, budget=600)
             return json.dumps({"answer": r.answer, "cited": r.cited})
