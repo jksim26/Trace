@@ -28,7 +28,7 @@ In a construction project the design brief evolves across dozens of meetings, bu
 
 ## What runs today
 
-The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **78 offline tests**. Everything lives in [`Trace/`](Trace/):
+The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **79 offline tests**. Everything lives in [`Trace/`](Trace/):
 
 | Module | What it does |
 |---|---|
@@ -41,7 +41,7 @@ The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, wi
 | `mcp_tools.py` | The four functions exposed as **Qwen-Agent custom tools**, so a Qwen Assistant calls them itself (MCP-protocol exposure is roadmap). |
 | `cli.py` | The four-scene **"Tanglin Rise" demo** (capture, then alert plus court, then recall with abstention, then time-travel) plus the staged ambient card. |
 | `scenarios.py`, `rules/uk/` | **Three demo projects, three companies, three code regimes** — SG high-rise (SCDF rule-gated), SG industrial MEP (LLM-premise-check story), UK residential (a separate pluggable rule-pack: reg 7(2) combustible ban). Each store carries valid decisions, rejected proposals, superseded chains, and court records — real memory to recall. |
-| `bubble.py`, `bubble.html` | The **ambient bubble**: a tiny web app (Python standard library only) wired live to the engine, with a **project switcher** across the three scenarios. Its chat is a Qwen assistant **grounded in the selected project's decision record + court records** — it receives the full record and the conversation history, tolerates typos and follow-ups, cites decision ids, and still abstains on unrecorded decisions. Degrades to deterministic abstention without a key. |
+| `bubble.py`, `bubble.html` | The **ambient bubble**: a tiny web app (Python standard library only) wired live to the engine, with a **project switcher** across the three scenarios. Its chat is ONE agent with ONE memory: a Qwen assistant **grounded in every project's decision + court records at once** (the switcher just sets the default context — ask about any project from anywhere), carrying the conversation history across switches, tolerates typos and follow-ups, cites decision ids, and still abstains on unrecorded decisions. Degrades to deterministic abstention without a key. |
 
 ---
 
