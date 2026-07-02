@@ -9,12 +9,33 @@ def _fake_client(answer="ok"):
     return SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
 
 
-def test_state_returns_seeded_decisions():
+def test_state_returns_project_record_and_project_list():
     s = json.loads(bubble.Api().state())
-    ids = [d["id"] for d in s["decisions"]]
-    assert ids == ["D-001", "D-002"]
-    assert s["decisions"][0]["status"] == "valid"
-    assert s["decisions"][1]["status"] == "proposed"
+    statuses = {d["id"]: d["status"] for d in s["decisions"]}
+    assert statuses["D-001"] == "valid"
+    assert statuses["D-002"] == "proposed"
+    assert statuses["D-004"] == "superseded"      # the never-delete chain is visible
+    assert s["project"] == "tanglin-rise"
+    assert [p["key"] for p in s["projects"]] == ["tanglin-rise", "kranji-hub", "maple-wharf"]
+
+
+def test_each_project_has_its_own_grounded_record_no_bleed(monkeypatch):
+    import openai
+    calls = []
+    monkeypatch.setattr(openai, "OpenAI", lambda **kw: _capture_client("ok", calls))
+    bubble.Api("kranji-hub").ask("what's the power situation?")
+    ctx = "\n".join(m["content"] for m in calls[0]["messages"] if m["role"] == "system")
+    assert "400 kVA" in ctx and "Kranji" in ctx
+    assert "rainscreen" not in ctx                 # nothing from the other projects
+
+
+def test_court_records_are_part_of_the_llm_context(monkeypatch):
+    import openai
+    calls = []
+    monkeypatch.setattr(openai, "OpenAI", lambda **kw: _capture_client("ok", calls))
+    bubble.Api("maple-wharf").ask("was the ACM swap ever reviewed?")
+    ctx = "\n".join(m["content"] for m in calls[0]["messages"] if m["role"] == "system")
+    assert "COURT RECORD" in ctx and "reg 7(2)" in ctx
 
 
 def test_greeting_gets_a_pointer_not_an_abstention():

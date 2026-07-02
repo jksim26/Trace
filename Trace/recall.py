@@ -3,8 +3,11 @@ token budget, with honest abstention. Directly-relevant rejected/superseded
 decisions are added as history, so an answer to "can we change it?" can cite what
 was already tried and rejected. See docs/02-architecture.md §4 Pipeline B.
 
-Retrieval + abstention are deterministic (keyword overlap on content words); the
-final answer is synthesised by qwen-plus, grounded ONLY in the packed decisions.
+Retrieval + abstention are deterministic: keyword overlap gates relevance, and
+the relevant candidates are packed in COMPOSITE order (relevance + recency +
+importance — strategies.py, à la Generative Agents) until the token budget is
+spent. The final answer is synthesised by qwen-plus, grounded ONLY in the
+packed decisions.
 """
 from __future__ import annotations
 
@@ -16,6 +19,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from store import Decision, get_all_decisions, get_valid_decisions
+from strategies import by_composite
 
 load_dotenv()
 
@@ -54,12 +58,10 @@ def _score(d: Decision, qwords: set) -> int:
     return len(qwords & dw)
 
 
-def _pack(decisions, qwords, budget, used):
-    scored = sorted(((d, _score(d, qwords)) for d in decisions), key=lambda x: -x[1])
+def _pack(decisions, qwords, budget, used, question: str = ""):
+    relevant = [d for d in decisions if _score(d, qwords) > 0]
     packed = []
-    for d, s in scored:
-        if s <= 0:
-            continue
+    for d in by_composite(relevant, question):  # relevance + recency + importance
         cost = _est_tokens(f"{d.statement} {d.rationale}")
         if used + cost > budget:
             break
@@ -69,7 +71,7 @@ def _pack(decisions, qwords, budget, used):
 
 
 def retrieve(conn, question: str, budget: int = TOKEN_BUDGET):
-    return _pack(get_valid_decisions(conn), _content_words(question), budget, 0)
+    return _pack(get_valid_decisions(conn), _content_words(question), budget, 0, question)
 
 
 _ANSWER_SYS = (
@@ -92,8 +94,8 @@ def recall_decisions(conn, question: str, budget: int = TOKEN_BUDGET, client=Non
     others = [d for d in get_all_decisions(conn) if d.status != "valid"]
     candidates = sum(1 for d in valid + others if _score(d, qwords) > 0)
 
-    packed, used = _pack(valid, qwords, budget, 0)      # currently-valid first
-    extra, used = _pack(others, qwords, budget, used)   # then relevant history (rejected/superseded)
+    packed, used = _pack(valid, qwords, budget, 0, question)      # currently-valid first
+    extra, used = _pack(others, qwords, budget, used, question)   # then relevant history (rejected/superseded)
     chosen = packed + extra
     if not chosen:
         # Report the real candidate count: abstention can also happen because the
