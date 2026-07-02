@@ -28,6 +28,23 @@ def test_greeting_gets_a_pointer_not_an_abstention():
     assert "No decision on record" not in out2["answer"]
 
 
+def test_meta_question_gets_a_real_answer_when_llm_available(monkeypatch):
+    import openai
+    monkeypatch.setattr(openai, "OpenAI", lambda **kw: _fake_client(
+        "Trace is an ambient decision-memory agent; this demo watches Tanglin Rise."))
+    out = json.loads(bubble.Api().ask("what is this project"))
+    assert "Tanglin Rise" in out["answer"]
+    assert out["cited"] == []
+
+
+def test_meta_falls_back_to_honest_abstention_without_a_key(monkeypatch):
+    # No key -> the meta path degrades to the same honest abstention as before.
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
+    out = json.loads(bubble.Api().ask("what is this project"))
+    assert out["answer"] == "No decision on record; not yet decided."
+    assert out["cited"] == []
+
+
 def test_real_question_still_reaches_recall(monkeypatch):
     import recall
     monkeypatch.setattr(recall, "OpenAI", lambda **kw: _fake_client("Because Cl 3.5.1 (D-001)."))

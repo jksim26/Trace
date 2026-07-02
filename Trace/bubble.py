@@ -33,6 +33,26 @@ _SMALL_TALK = {"hello", "hey", "yo", "sup", "help", "test", "testing", "thanks",
 def _is_greeting(question: str) -> bool:
     words = _content_words(question)
     return not words or words <= _SMALL_TALK
+
+
+_PROJECT_BLURB = (
+    "Trace is an ambient design-decision memory agent for AEC (construction) projects. "
+    "This demo watches 'Tanglin Rise', a fictional 28-storey, 95 m residential tower in "
+    "Singapore. Trace captures each design decision with its rationale and assumptions, "
+    "fires an alert the moment a new proposal breaks an earlier decision's premise "
+    "(a deterministic SCDF fire-code rule-pack plus an LLM premise check), convenes a "
+    "three-role decision court whose verdicts are recorded, can rewind the record to any "
+    "date (bi-temporal), and answers questions only from the recorded decisions — "
+    "abstaining honestly when nothing is on record."
+)
+
+_META_SYS = (
+    "You are the assistant panel of Trace. The user's question did not match any recorded "
+    "design decision. Using ONLY the context given: if the question is about what Trace is, "
+    "what this project is, or how to use this panel, answer in at most two sentences. If it "
+    "asks about a specific design decision or project detail not in the context, reply "
+    'exactly: "No decision on record; not yet decided." Never invent decisions or facts.'
+)
 HOST = os.getenv("TRACE_HOST", "127.0.0.1")
 PORT = int(os.getenv("TRACE_PORT", "8765"))
 
@@ -79,9 +99,39 @@ class Api:
             })
         try:
             r = recall_decisions(self.conn, question, budget=600)
-            return json.dumps({"answer": r.answer, "cited": r.cited})
+            if not r.abstained:
+                return json.dumps({"answer": r.answer, "cited": r.cited})
+            # Nothing on record matched. Decision recall stays strictly grounded,
+            # but meta-questions ("what is this project?") deserve a real answer:
+            # Qwen answers ABOUT Trace from a fixed blurb, still instructed to
+            # abstain on unrecorded decisions. Falls back to the honest
+            # abstention when no API key / network is available.
+            return json.dumps({"answer": self._meta_answer(question), "cited": []})
         except Exception as exc:  # keep the UI alive on any hiccup
             return json.dumps({"answer": f"(couldn't reach Trace: {exc})", "cited": []})
+
+    def _meta_answer(self, question: str) -> str:
+        try:
+            import os
+
+            import openai
+            from recall import BASE_URL, MODEL
+            client = openai.OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
+            decisions = "\n".join(
+                f"{d.id} [{d.status}] {d.statement}" for d in get_all_decisions(self.conn)
+            )
+            resp = client.chat.completions.create(
+                model=MODEL, temperature=0,
+                messages=[
+                    {"role": "system", "content": _META_SYS},
+                    {"role": "user", "content":
+                        f"CONTEXT:\n{_PROJECT_BLURB}\n\nRECORDED DECISIONS:\n{decisions}\n\n"
+                        f"QUESTION: {question}"},
+                ],
+            )
+            return resp.choices[0].message.content.strip()
+        except Exception:
+            return "No decision on record; not yet decided."
 
 
 _api = None
