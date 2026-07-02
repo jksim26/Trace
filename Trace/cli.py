@@ -4,7 +4,13 @@ plus the staged ambient card (C7).
 Scene 1 capture -> Scene 2 invalidation alert + court -> Scene 3 recall +
 abstention -> Scene 4 bi-temporal time-travel. Real Qwen calls happen for
 capture (x2), the court (x3), and the recall answer; the alert, abstention, and
-time-travel are deterministic. Run from the Trace/ dir:  python cli.py [--pause]
+time-travel are deterministic.
+
+Run from the Trace/ dir:
+  python cli.py            live Qwen calls (needs DASHSCOPE_API_KEY)
+  python cli.py --offline  replay canned Qwen responses (no key, no network)
+  python cli.py --record   live calls AND refresh the offline fixture from them
+  (add --pause to step through scene by scene)
 """
 from __future__ import annotations
 
@@ -97,14 +103,15 @@ def _asof(conn, as_of: str) -> str:
     return f"as of {as_of[:10]}:  {body}"
 
 
-def run(pause: bool = False) -> None:
+def run(pause: bool = False, client=None):
     conn = connect(":memory:")
     init_db(conn)
 
     _rule("SCENE 1 - CAPTURE  (Concept Design, 14 Jan 2026)")
     t1 = (TRANSCRIPTS / "01-concept-design-2026-01-14.md").read_text(encoding="utf-8")
     for c in capture_decision(t1, source_episode="transcript-2026-01-14",
-                              recorded_at="2026-01-14T11:42Z", valid_from="2026-01-14T11:42Z"):
+                              recorded_at="2026-01-14T11:42Z", valid_from="2026-01-14T11:42Z",
+                              client=client):
         d = add_decision(conn, c.decision)
         _panel(
             f"{d.id}  {d.statement}\n\n"
@@ -118,14 +125,15 @@ def run(pause: bool = False) -> None:
     _rule("SCENE 2 - VALUE ENGINEERING  (3 Mar 2026)")
     t2 = (TRANSCRIPTS / "02-value-engineering-2026-03-03.md").read_text(encoding="utf-8")
     for c in capture_decision(t2, source_episode="transcript-2026-03-03",
-                              recorded_at="2026-03-03T14:00Z", valid_from="2026-03-03T14:00Z"):
+                              recorded_at="2026-03-03T14:00Z", valid_from="2026-03-03T14:00Z",
+                              client=client):
         alerts = check_invalidation(conn, c)
         c.decision.status = "proposed"
         add_decision(conn, c.decision)  # never delete — preserve the rejected proposal
         for a in alerts:
             _panel(render_alert(a), title="!! INVALIDATION ALERT", style="red")
         if alerts:
-            _panel(render_verdict(convene(conn, c)),
+            _panel(render_verdict(convene(conn, c, client=client)),
                    title="The decision court — 3 Qwen roles deliberate", style="red")
         _panel(_trail(conn), title="Never-delete trail (C4) — nothing erased", style="yellow")
     _pause(pause)
@@ -135,7 +143,7 @@ def run(pause: bool = False) -> None:
         "Why the non-combustible facade cladding, and can we still change it?",
         "Did we ever decide the sky-terrace planter or balustrade material?",
     ]:
-        r = recall_decisions(conn, q, budget=DEMO_BUDGET)
+        r = recall_decisions(conn, q, budget=DEMO_BUDGET, client=client)
         cited = ("cited: " + ", ".join(r.cited)) if r.cited else "cited: (none — abstained)"
         selected = f"scanned {r.candidates} relevant decision(s) → packed {len(r.cited)} within budget"
         _panel(
@@ -158,7 +166,22 @@ def run(pause: bool = False) -> None:
 
     _rule("AMBIENT (staged) - 'you opened the 2nd-storey facade drawing'")
     _panel(ambient_card(conn), title="Trace", style="cyan")
+    return conn
 
 
 if __name__ == "__main__":
-    run(pause="--pause" in sys.argv)
+    _client = None
+    if "--offline" in sys.argv:
+        from replay import ReplayClient
+        _client = ReplayClient()
+        _panel("OFFLINE REPLAY — canned Qwen responses from demo_replay.json.\n"
+               "No API key or network needed. Run without --offline for live calls;\n"
+               "run --record (with a key) to refresh the fixture from real output.",
+               title="offline mode", style="yellow")
+    elif "--record" in sys.argv:
+        from capture import _client as _real_client
+        from replay import RecordingClient
+        _client = RecordingClient(_real_client())
+        _panel("RECORDING — live Qwen calls, refreshing demo_replay.json as they stream.",
+               title="record mode", style="yellow")
+    run(pause="--pause" in sys.argv, client=_client)
