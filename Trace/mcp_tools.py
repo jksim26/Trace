@@ -1,7 +1,9 @@
-"""C5 — expose Trace's core functions as Qwen-Agent tools (the MCP / custom-skills
-judging hook). Registers capture_decision, check_invalidation, recall_decisions,
-and supersede_decision as @register_tool classes over a shared in-memory store,
-so a Qwen-Agent Assistant can call them as tools. See docs/02 §5.
+"""C5 — expose Trace's core functions as Qwen-Agent custom tools (the
+custom-skills judging hook). Registers capture_decision, check_invalidation,
+recall_decisions, and supersede_decision as @register_tool classes over a shared
+in-memory store, so a Qwen-Agent Assistant can call them as tools. These are
+qwen-agent custom tools, not an MCP server — exposing them over the MCP protocol
+is roadmap (hence the filename). See docs/02 §5.
 """
 from __future__ import annotations
 

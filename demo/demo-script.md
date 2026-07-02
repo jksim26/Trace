@@ -1,7 +1,7 @@
 # Demo Script — "Tanglin Rise"
 
 **Title card:** *Tanglin Rise — the decision nobody remembered making, until it nearly exposed the QP.*
-**Runtime target:** ~3–4 minutes (fits either the 3-min or 5-min video limit).
+**Runtime target:** **≤ 3 minutes** — safe under either the 3-min or 5-min limit (which one applies is still **VERIFY LIVE** on Devpost).
 **Setup:** the agent runs in a side panel; each scene shows a short meeting transcript on screen ([transcripts/](transcripts/)) with the agent reacting live.
 
 ---
@@ -48,7 +48,7 @@ Contractor: *"…I didn't know that decision existed."*
 
 **Narration:** clash detection would only catch this when two materials physically collide in the model — *months later, as rework*. We caught it the instant the **premise was contradicted**, in the meeting, before it became a submission failure — or a fire.
 
-Then show the **bi-temporal mechanic** explicitly: the agent never deletes. **D-002** is preserved as a **rejected** proposal, permanently linked to the decision it challenged (**D-001**) — the "we considered a cheaper panel and rejected it, and why" trail survives. Had the team instead **overridden** D-001, its validity would be **closed** (`valid_to` set), the superseding decision linked via `supersedes` / `superseded_by`, and the full "changed by whom, when, why" chain preserved — precisely the attributable, immutable record a personally-liable QP needs to stand behind a s.9 due-diligence defence.
+Then show the **never-delete trail** explicitly: the agent never deletes. **D-002** is preserved on the record as a **rejected** proposal alongside the live decision it challenged (**D-001**) — the "we considered a cheaper panel and rejected it, and why" trail survives. Had the team instead **overridden** D-001, `supersede_decision` would close its validity (`valid_to` set), link the replacement via `superseded_by`, and preserve the full "changed by whom, when, why" chain *(built and tested; not shown in this storyline, where the proposal is rejected)* — precisely the attributable, never-delete record a personally-liable QP needs to stand behind a s.9 due-diligence defence.
 
 ---
 
@@ -79,7 +79,7 @@ Cut to the architecture diagram. End.
 
 - [ ] **C1** Scene 1 — structured record read-back (capture with rationale + assumptions + named QP).
 - [ ] **C2** Scene 2 — the unprompted red alert naming D-001 and explaining why (the spine).
-- [ ] **C4** Scene 2 — the supersede chain (valid_to + superseded_by), never deleted.
+- [ ] **C4** Scene 2 — the never-delete trail: D-002 preserved as a rejected proposal, nothing erased.
 - [ ] **C3** Scene 3 — the context-budget meter + the abstention case.
-- [ ] **C5** any scene — the agent visibly calling MCP tools (`capture_decision`, `check_invalidation`, `recall_decisions`).
+- [ ] **C5** any scene — the agent visibly calling its Qwen-Agent tools (`capture_decision`, `check_invalidation`, `recall_decisions`).
 - [ ] Close — architecture diagram.
