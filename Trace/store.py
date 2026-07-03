@@ -37,7 +37,9 @@ def _normalize_ts(ts: Optional[str]) -> Optional[str]:
 
 
 def connect(db_path: str = ":memory:") -> sqlite3.Connection:
-    conn = sqlite3.connect(db_path)
+    # check_same_thread=False: the bubble's HTTP server answers one request at
+    # a time but may not be the thread that first built the store cache.
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn

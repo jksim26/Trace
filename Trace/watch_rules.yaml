@@ -1,0 +1,26 @@
+# Ambient trigger allowlist — window/document titles Trace reacts to.
+# Anything that matches NO rule here is ignored entirely (personal apps,
+# email, browsers). Patterns are case-insensitive regexes, matched against
+# both real window titles ("Tanglin-Rise_L01_Fire-Plan.pdf - Adobe Acrobat",
+# "Tanglin Rise - Floor Plan: Level 1 - Autodesk Revit") and workspace
+# document names.
+
+- pattern: "Tanglin[-_ ]?Rise.*(L0?1|Level 1|1st[ -]storey|Fire[- ]Plan)"
+  project: tanglin-rise
+  context: "Level 1 · fire plan"
+  keywords: "facade cladding fire non-combustible rainscreen sprinkler"
+
+- pattern: "Tanglin[-_ ]?Rise.*(L20|Level 20|Sky[- ]Terrace)"
+  project: tanglin-rise
+  context: "Level 20 · sky terrace"
+  keywords: "balustrade sky terrace glass fin wind"
+
+- pattern: "Kranji.*(Switchboard|MSB|GF|Power)"
+  project: kranji-hub
+  context: "Ground floor · switchboard"
+  keywords: "switchboard power supply kVA flood basement"
+
+- pattern: "Maple[-_ ]?Wharf.*(Elevation|Facade|East)"
+  project: maple-wharf
+  context: "East elevation · facade"
+  keywords: "facade terracotta rainscreen cladding ACM"

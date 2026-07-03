@@ -35,7 +35,9 @@ Link these repo files on the submission form — they demonstrate Alibaba Cloud 
    The script installs a venv + dependencies, **runs the offline test suite as a
    deployment gate**, then installs and starts a `trace-bubble` systemd service
    on `0.0.0.0:80`.
-5. **Verify:** open `http://<instance-ip>` — the bubble should render, and
+5. **Verify:** open `http://<instance-ip>` — the bubble should render — and
+   `http://<instance-ip>/workspace`: open a drawing, the ambient nudge should
+   fire from the live store. Also:
    the chat box should answer (a real `recall_decisions` → Qwen call). If /ask
    fails, check the key: `journalctl -u trace-bubble -f`.
 6. 👤 **Paste the URL** into the Devpost submission as the testing-access link,

@@ -28,7 +28,7 @@ In a construction project the design brief evolves across dozens of meetings, bu
 
 ## What runs today
 
-The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **83 offline tests**. Everything lives in [`Trace/`](Trace/):
+The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **88 offline tests**. Everything lives in [`Trace/`](Trace/):
 
 | Module | What it does |
 |---|---|
@@ -41,6 +41,9 @@ The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, wi
 | `mcp_tools.py` | The four functions exposed as **Qwen-Agent custom tools**, so a Qwen Assistant calls them itself (MCP-protocol exposure is roadmap). |
 | `cli.py` | The four-scene **"Tanglin Rise" demo** (capture, then alert plus court, then recall with abstention, then time-travel) plus the staged ambient card. |
 | `scenarios.py`, `rules/uk/` | **Three demo projects, three companies, three code regimes** — SG high-rise (SCDF rule-gated), SG industrial MEP (LLM-premise-check story), UK residential (a separate pluggable rule-pack: reg 7(2) combustible ban). Each store carries valid decisions, rejected proposals, superseded chains, and court records — real memory to recall. |
+| `ambient.py`, `watch_rules.yaml` | **The ambient trigger — one brain, two worlds.** An allowlist matcher maps window/document titles to project contexts. Called by BOTH trigger paths, so the browser demo and the real desktop watcher are provably the same logic. |
+| `watcher.py` | **The Windows desktop watcher**: polls the foreground window title (title bar only — no screen capture) and, on an allowlist match, pushes the document-open event to the bubble — open the Level 1 fire plan in Acrobat or Revit and Trace nudges you, unprompted. |
+| `workspace.html` | **The simulated workspace** (`/workspace` on the bubble server): openable demo drawings (real PDFs in `demo/drawings/`) over the same matcher and the same live store — so judges experience the ambient nudge from a browser, zero install. Labeled honestly: the drawings are demo files; everything Trace does is live. |
 | `bubble.py`, `bubble.html` | The **ambient bubble**: a tiny web app (Python standard library only) wired live to the engine, with a **project switcher** across the three scenarios. Its chat is ONE agent with ONE memory: a Qwen assistant **grounded in every project's decision + court records at once** (the switcher just sets the default context — ask about any project from anywhere), carrying the conversation history across switches, tolerates typos and follow-ups, cites decision ids, and still abstains on unrecorded decisions. Degrades to deterministic abstention without a key. |
 
 ---
@@ -57,6 +60,8 @@ python cli.py            # the four-scene "Tanglin Rise" demo (add --pause to st
 python cli.py --offline  # the same demo with canned Qwen responses — no key, no network, cannot fail
 python bubble.py         # the ambient bubble, a local web app with chat wired live to the engine
 python mcp_tools.py      # a Qwen-Agent Assistant autonomously calling the tools
+# then open http://127.0.0.1:8765/workspace — open a drawing, watch the ambient nudge fire
+python watcher.py        # (Windows) the real desktop watcher — same matcher, real window titles
 ```
 
 - **`cli.py`**: Scene 1 capture, then Scene 2 the red invalidation alert plus the **decision court**'s REJECT verdict (the rejected proposal is preserved, never deleted), then Scene 3 recall-to-budget with the token meter plus abstention, then Scene 4 **bi-temporal time-travel**, then the staged ambient card. Capture and the court make real Qwen calls; the alert and abstention are deterministic.
