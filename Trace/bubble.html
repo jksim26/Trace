@@ -5,247 +5,439 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Trace</title>
 <style>
-  /* ─────────────────────────────────────────────────────────────────
-     Trace — tracing-paper UI.
-     The card is a sheet of translucent butter paper laid over the desk:
-     frosted, faintly non-photo-blue, a whisper of drafting grid beneath.
-     Status lives ONLY in the dot before a line — never in the text colour.
-     The one accent is blueprint-blue, reserved for things you can act on
-     (a citation, a link, the send key). Everything else is graphite ink.
-     ───────────────────────────────────────────────────────────────── */
+  /* ── Self-hosted type (offline; served by bubble.py at /fonts). Newsreader 300
+     for prose, IBM Plex Mono for the drafting marks. Falls back to system
+     serif/mono if opened as a bare file. ──────────────────────────────────── */
+  @font-face{font-family:'Newsreader';font-style:normal;font-weight:300;font-display:swap;
+    src:url('/fonts/newsreader-latin-300.woff2') format('woff2')}
+  @font-face{font-family:'Newsreader';font-style:italic;font-weight:300;font-display:swap;
+    src:url('/fonts/newsreader-latin-300-italic.woff2') format('woff2')}
+  @font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;
+    src:url('/fonts/plexmono-latin-400.woff2') format('woff2')}
+  @font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:600;font-display:swap;
+    src:url('/fonts/plexmono-latin-600.woff2') format('woff2')}
+
   :root{
-    /* paper + ink */
-    --ink:#182233;            /* graphite — all primary text            */
-    --muted:#5b6b80;          /* pencil grey — secondary text           */
-    --line:rgba(24,34,51,.10);/* hairline rule                          */
-    --line-soft:rgba(24,34,51,.06);
-    /* the one accent — blueprint blue, for actionable things only */
-    --trace:#2f57e6;
-    --trace-soft:rgba(47,87,230,.16);
-    /* status — expressed only as dots */
-    --ok:#1a9d6e;             /* valid / locked                         */
-    --no:#e0435a;             /* proposed · rejected                    */
-    --sup:#d19a2e;            /* superseded                             */
-    /* non-photo blue — the tint that makes it read as tracing paper */
-    --npb:150,205,225;
-    --radius:20px;
-    --spring:cubic-bezier(.32,.72,0,1);
+    --serif:'Newsreader',Georgia,'Times New Roman',serif;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+    --ink:#23262B; --ink60:rgba(35,38,43,.6); --ink45:rgba(35,38,43,.45); --ink37:rgba(35,38,43,.37);
+    --line:rgba(45,50,58,.14); --line-s:rgba(45,50,58,.28);
+    --accent:#8FB4F8; --accent-faint:rgba(143,180,248,.08); --link:#2a78d6;
+    --inforce:#55835B; --superseded:#C08A2D; --rejected:#B04A3E;
+    --sheet-bg:rgba(252,251,247,.3);
+    --sheet-blur:blur(1.5px) saturate(1.08);
+    --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.42 0 0 0 0 0.40 0 0 0 0.32 0'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{
-    background:transparent;height:100%;overflow:hidden;
-    -webkit-user-select:none;user-select:none;
-    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
-    color:var(--ink);
-  }
-  .mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,"Roboto Mono",Menlo,monospace;
-    font-size:.86em;letter-spacing:-.01em}
+  html,body{height:100%;background:transparent;color:var(--ink);
+    font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden;
+    -webkit-user-select:none;user-select:none}
 
-  .stage{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;align-items:flex-end;gap:14px}
+  /* the mocked drawing the sheet lies on — demo scaffolding, hidden with ?bare=1
+     (the real desktop widget floats over Revit itself, not this) */
+  #canvas{position:fixed;inset:0;z-index:0;background:#F1EFE9}
+  #canvas svg{width:100%;height:100%;display:block}
+  body.bare #canvas{display:none}
 
-  /* ── the bubble: a drop of blueprint ink under frosted glass ────────── */
-  .bubble{
-    width:56px;height:56px;border-radius:50%;cursor:pointer;position:relative;
-    display:flex;align-items:center;justify-content:center;
-    background:
-      radial-gradient(120% 120% at 32% 26%,rgba(255,255,255,.85),rgba(var(--npb),.5) 42%,rgba(47,87,230,.16) 100%);
-    -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
-    border:1px solid rgba(255,255,255,.7);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,.9) inset,
-      0 -6px 18px rgba(47,87,230,.10) inset,
-      0 12px 30px rgba(24,34,51,.22);
-    animation:breathe 4s ease-in-out infinite;
-  }
-  @keyframes breathe{
-    0%,100%{transform:scale(1);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 -6px 18px rgba(47,87,230,.10) inset,0 0 0 0 var(--trace-soft),0 12px 30px rgba(24,34,51,.22)}
-    50%{transform:scale(1.045);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 -6px 18px rgba(47,87,230,.10) inset,0 0 0 12px rgba(47,87,230,0),0 14px 34px rgba(24,34,51,.26)}
-  }
-  .bubble svg{width:27px;height:27px;color:var(--trace);filter:drop-shadow(0 1px 1px rgba(47,87,230,.18))}
-  .badge{position:absolute;top:-2px;right:-2px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;
-    background:var(--trace);color:#fff;font-size:11px;font-weight:600;
-    display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.85);
-    box-shadow:0 2px 6px rgba(47,87,230,.4)}
+  .stage{position:fixed;right:26px;bottom:24px;z-index:2}
 
-  /* ── the sheet of tracing paper ────────────────────────────────────── */
-  .card{
-    width:330px;position:relative;border-radius:var(--radius);overflow:hidden;
-    background:linear-gradient(180deg,rgba(253,254,255,.82),rgba(248,251,253,.78));
-    -webkit-backdrop-filter:blur(30px) saturate(1.4);backdrop-filter:blur(30px) saturate(1.4);
-    border:1px solid rgba(255,255,255,.6);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,.8) inset,
-      0 0 0 1px var(--line-soft),
-      0 30px 60px -12px rgba(24,34,51,.32);
-    transition:opacity .32s var(--spring),transform .32s var(--spring);
-  }
-  /* the drafting grid + non-photo-blue wash, behind the content */
-  .card::before{
-    content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
-    background:
-      linear-gradient(rgba(47,87,230,.035) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(47,87,230,.035) 1px,transparent 1px),
-      radial-gradient(140% 90% at 80% -10%,rgba(var(--npb),.16),transparent 60%);
-    background-size:22px 22px,22px 22px,100% 100%;
-  }
-  .card>*{position:relative;z-index:1}
-  .hidden{opacity:0;transform:scale(.94) translateY(10px);pointer-events:none;position:absolute;bottom:70px;right:0}
+  /* ── the liquid-glass drop (idle) ───────────────────────────────────────── */
+  .drop{position:relative;width:120px;cursor:pointer;transition:opacity .4s ease,transform .4s ease;
+    filter:drop-shadow(0 6px 14px rgba(60,70,95,.18))}
+  .drop svg{width:120px;height:76px;display:block;overflow:visible}
+  .drop .label{margin-top:2px;text-align:center;font:600 8px/1 var(--mono);letter-spacing:.26em;color:var(--ink37)}
+  .drop .badge{position:absolute;top:2px;right:8px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;
+    background:var(--rejected);color:#fff;font:600 9px/16px var(--mono);text-align:center;
+    box-shadow:0 2px 5px rgba(120,60,55,.4)}
+  body.open .drop{opacity:0;transform:translateY(8px) scale(.9);pointer-events:none}
+
+  /* ── the torn trace sheet ───────────────────────────────────────────────── */
+  .sheet{position:absolute;right:0;bottom:104px;width:330px;transform-origin:bottom right;
+    transition:opacity .34s cubic-bezier(.32,.72,0,1),transform .34s cubic-bezier(.32,.72,0,1)}
+  .sheet.hidden{opacity:0;transform:scale(.95) translateY(10px);pointer-events:none}
+  .paper{position:relative;clip-path:url(#tornA);background:var(--sheet-bg);
+    -webkit-backdrop-filter:var(--sheet-blur);backdrop-filter:var(--sheet-blur);
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.22);
+    filter:drop-shadow(0 -1px 0 rgba(255,255,255,.7)) drop-shadow(0 1.5px 0 rgba(255,255,255,.75))
+      drop-shadow(0 2px 3px rgba(60,70,95,.10)) drop-shadow(0 14px 30px rgba(60,70,95,.16))}
+  .grain{position:absolute;inset:0;background-image:var(--grain);background-size:130px 130px;opacity:.32;pointer-events:none}
+  .pad{position:relative;padding:22px 24px 24px}
 
   /* header */
-  .chead{display:flex;align-items:center;gap:9px;padding:14px 16px 13px;border-bottom:1px solid var(--line-soft)}
-  .live{width:8px;height:8px;border-radius:50%;background:var(--ok);position:relative;flex:none}
-  .live::after{content:"";position:absolute;inset:-3px;border-radius:50%;
-    box-shadow:0 0 0 0 rgba(26,157,110,.4);animation:pulse 2.8s ease-out infinite}
-  @keyframes pulse{to{box-shadow:0 0 0 6px rgba(26,157,110,0)}}
-  .chead .t{font-weight:650;font-size:15px;letter-spacing:-.02em}
-  .chead .s{font-size:11.5px;color:var(--muted);font-weight:450;letter-spacing:-.01em}
-  .chead .x{margin-left:auto;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;opacity:.6;transition:opacity .15s}
-  .chead .x:hover{opacity:1}
+  .hdr{display:flex;align-items:center;gap:8px}
+  .hdot{width:12px;height:11px;flex:none;border-radius:52% 48% 50% 50%/56% 46% 58% 42%;
+    background:radial-gradient(circle at 34% 28%,#EAF1FE 0%,var(--accent) 55%,#7FA9F7 100%);
+    box-shadow:inset -1px -1.5px 2.5px rgba(88,124,200,.45),inset .8px 1px 2px rgba(255,255,255,.7),0 .5px 1.5px rgba(80,105,170,.25)}
+  .wordmark{font:600 9.5px/1 var(--mono);letter-spacing:.24em;color:var(--ink60)}
+  .hdr .sp{flex:1}
+  select.prj{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--ink37);
+    border:0;background:transparent;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;text-align:right;max-width:150px}
+  select.prj option{font-family:var(--mono);color:var(--ink)}
+  .x{margin-left:8px;font:400 15px/1 var(--serif);color:var(--ink37);cursor:pointer;opacity:.7;transition:opacity .15s}
+  .x:hover{opacity:1}
 
-  /* nudge body */
-  .ntitle{padding:15px 16px 4px;font-size:12.5px;color:var(--muted);font-weight:450;letter-spacing:-.01em}
-  .ntitle b{color:var(--ink);font-weight:600}
-  .rows{padding:8px 16px 4px;display:flex;flex-direction:column;gap:12px}
-  .row{display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.4}
-  .rdot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.5)}
-  .g{background:var(--ok)}.r{background:var(--no)}.a{background:var(--sup)}
-  .row b{font-weight:600}
-  .row .k{color:var(--muted);font-weight:450}
-  .actions{display:flex;gap:9px;padding:15px 16px 16px}
-  .btn{flex:1;font:inherit;font-size:12.5px;font-weight:550;letter-spacing:-.01em;padding:9px;border-radius:11px;
-    cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.5);color:var(--ink);
-    transition:background .15s,border-color .15s}
-  .btn:hover{background:rgba(255,255,255,.8)}
-  .btn.primary{background:var(--trace);border-color:var(--trace);color:#fff;box-shadow:0 4px 12px rgba(47,87,230,.28)}
-  .btn.primary:hover{background:#2a4ed3}
-  .allow{font-size:10.5px;color:var(--muted);padding:9px 16px;border-top:1px solid var(--line-soft);
-    background:rgba(var(--npb),.06);font-weight:450;letter-spacing:-.005em}
-  .allow b{color:#334155;font-weight:600}
+  /* scroll region between header and the ask bar */
+  .body{max-height:56vh;overflow-y:auto;overflow-x:hidden;margin:0 -2px;padding:0 2px;
+    scrollbar-width:none}
+  .body::-webkit-scrollbar{width:0}
 
-  /* chat body */
-  .projbar{padding:10px 14px 2px}
-  .projbar select{width:100%;font:inherit;font-size:12px;font-weight:500;color:var(--muted);
-    border:1px solid var(--line);border-radius:10px;padding:7px 10px;
-    background:rgba(255,255,255,.55);outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;
-    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
-    background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
-  .msgs{padding:14px;display:flex;flex-direction:column;gap:10px;max-height:300px;overflow:auto;scroll-behavior:smooth}
-  .msgs::-webkit-scrollbar{width:0}
-  .msg{max-width:85%;font-size:13px;line-height:1.5;padding:10px 13px;border-radius:15px;letter-spacing:-.006em;
-    overflow-wrap:anywhere;animation:rise .3s var(--spring) both}
-  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .from-t{align-self:flex-start;background:rgba(255,255,255,.7);border:1px solid var(--line-soft);
-    border-bottom-left-radius:5px;color:var(--ink);box-shadow:0 1px 0 rgba(255,255,255,.6) inset}
-  .from-u{align-self:flex-end;background:var(--trace);color:#fff;border-bottom-right-radius:5px;
-    box-shadow:0 4px 12px rgba(47,87,230,.22)}
-  /* citations + links: the accent, and the ONLY coloured text — because they
-     are the actionable references, not a status signal */
-  .cite{color:var(--trace);font-weight:600;text-decoration:none;border-bottom:1px solid var(--trace-soft)}
-  .cite.mono{white-space:nowrap}   /* a decision id never splits across lines */
-  .from-u .cite{color:#fff;border-bottom-color:rgba(255,255,255,.5)}
-  .inbar{display:flex;gap:8px;padding:11px 14px;border-top:1px solid var(--line-soft)}
-  .inbar input{flex:1;font:inherit;font-size:13px;color:var(--ink);border:1px solid var(--line);
-    border-radius:11px;padding:9px 12px;outline:none;background:rgba(255,255,255,.6);transition:border-color .15s,box-shadow .15s}
-  .inbar input::placeholder{color:var(--muted)}
-  .inbar input:focus{border-color:var(--trace);box-shadow:0 0 0 3px var(--trace-soft)}
-  .send{width:38px;border:none;border-radius:11px;background:var(--trace);color:#fff;cursor:pointer;font-size:15px;
-    box-shadow:0 4px 12px rgba(47,87,230,.28);transition:background .15s}
-  .send:hover{background:#2a4ed3}
+  .intro{margin:16px 0 0;font:300 15px/1.55 var(--serif);color:var(--ink)}
+  .kicker{margin:18px 0 8px;font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--ink37)}
+  .chips{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+  .chips.wrap{flex-direction:row;flex-wrap:wrap}
+  .chip{font:300 13px/1.3 var(--serif);color:var(--ink);text-align:left;cursor:pointer;
+    padding:7px 13px 8px;border:1px solid rgba(255,255,255,.65);border-radius:9px;
+    background:linear-gradient(165deg,rgba(255,255,255,.42) 0%,rgba(255,255,255,.12) 55%,rgba(200,220,252,.2) 100%);
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 1px 3px rgba(80,105,170,.12),0 0 0 .5px rgba(120,140,170,.28);
+    transition:border-color .15s,background .15s}
+  .chip:hover{border-color:var(--accent);background:var(--accent-faint)}
+
+  /* conversation */
+  .you{margin:16px 0 0;font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--ink37)}
+  .youq{margin:4px 0 0;font:italic 300 13.5px/1.4 var(--serif);color:var(--ink60)}
+  .ans{margin:12px 0 0;font:300 15px/1.55 var(--serif);color:var(--ink);overflow-wrap:anywhere}
+  .ans .cite,.cite{font:600 11px/1 var(--mono);color:var(--link);text-decoration:none;
+    white-space:nowrap;border-bottom:1px solid rgba(42,120,214,.28)}
+  a.cite{white-space:normal}
+
+  /* decision record (the revision schedule) */
+  .rec-head{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 0}
+  .rec-head span{font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--ink37)}
+  .rec-body{margin:6px -24px 0;border-top:1px solid var(--line)}
+  .rec-row{display:grid;grid-template-columns:7px 44px 1fr 58px;column-gap:9px;
+    padding:9px 24px 10px;border-bottom:1px solid var(--line);align-items:start}
+  .pdot{width:7px;height:7px;margin-top:5px}
+  .rid{font:600 10.5px/1.5 var(--mono);letter-spacing:.06em;color:var(--ink);white-space:nowrap}
+  .rst{font:300 13px/1.45 var(--serif);color:var(--ink)}
+  .rdt{font:600 9px/1.7 var(--mono);letter-spacing:.03em;color:var(--ink60);text-align:right;white-space:nowrap}
+  .legend{display:flex;flex-wrap:wrap;gap:13px;margin-top:10px}
+  .legend span{display:inline-flex;align-items:center;gap:5px;font:600 7.5px/1 var(--mono);letter-spacing:.14em;color:var(--ink37)}
+  .legend i{width:6px;height:6px;border-radius:51% 49% 53% 47%/49% 54% 46% 51%}
+
+  /* ask bar */
+  .ask{display:flex;align-items:center;gap:10px;margin-top:16px}
+  .ask input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid var(--line-s);
+    border-radius:0;padding:6px 2px 7px;font:300 14px/1.4 var(--serif);color:var(--ink);outline:none;transition:border-color .15s}
+  .ask input::placeholder{color:rgba(35,38,43,.32);font-style:italic}
+  .ask input:focus{border-bottom-color:var(--accent)}
+  .send{flex:none;width:30px;height:27px;border:0;cursor:pointer;padding:0;text-align:center;
+    color:rgba(58,92,168,.9);font:600 12px/27px var(--mono);
+    border-radius:50% 50% 46% 54%/56% 50% 52% 44%;
+    background:radial-gradient(circle at 38% 30%,rgba(255,255,255,.38) 0%,rgba(222,234,253,.16) 42%,rgba(150,185,248,.2) 78%,rgba(127,169,247,.32) 100%);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),inset -2px -3px 5px rgba(88,124,200,.38),inset 2px 3px 5px rgba(255,255,255,.6),0 2px 5px rgba(80,105,170,.22);
+    transition:filter .15s}
+  .send:hover{filter:brightness(.96)}
+  .hide{display:none !important}
 </style>
 </head>
 <body>
+  <!-- hidden defs: liquid-glass drop gradients/filters, the torn-edge clip, and
+       the mocked plan drawing used as the demo backdrop -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <radialGradient id="dBody" cx="0.62" cy="0.38" r="0.58"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"></stop><stop offset="0.55" stop-color="#DCE9FD" stop-opacity="0.16"></stop><stop offset="0.85" stop-color="#AECBF9" stop-opacity="0.26"></stop><stop offset="1" stop-color="#8FB4F8" stop-opacity="0.4"></stop></radialGradient>
+    <filter id="dBlur3" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.6"></feGaussianBlur></filter>
+    <filter id="dBlur1" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="0.9"></feGaussianBlur></filter>
+    <filter id="dBlur6" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5"></feGaussianBlur></filter>
+    <linearGradient id="dRim" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"></stop><stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.12"></stop><stop offset="1" stop-color="#FFFFFF" stop-opacity="0.55"></stop></linearGradient>
+    <clipPath id="tornA" clipPathUnits="objectBoundingBox"><path d="M0,0.012 C0.04,0.006 0.09,0.016 0.14,0.010 C0.19,0.004 0.24,0.014 0.30,0.009 C0.36,0.004 0.42,0.015 0.48,0.010 C0.54,0.005 0.60,0.014 0.66,0.009 C0.72,0.004 0.78,0.013 0.84,0.008 C0.90,0.004 0.95,0.012 1,0.008 L1,0.988 C0.95,0.995 0.90,0.985 0.84,0.991 C0.78,0.997 0.72,0.986 0.66,0.992 C0.60,0.998 0.54,0.987 0.48,0.992 C0.42,0.997 0.36,0.986 0.30,0.991 C0.24,0.997 0.19,0.987 0.14,0.992 C0.09,0.997 0.04,0.990 0,0.994 Z"></path></clipPath>
+    <symbol id="plan" viewBox="0 0 760 600" preserveAspectRatio="xMidYMid slice">
+      <rect width="760" height="600" fill="#F7F6F2"></rect>
+      <g stroke="#E0E4EB" stroke-width="1" stroke-dasharray="7 5">
+        <line x1="90" y1="46" x2="90" y2="552"></line><line x1="290" y1="46" x2="290" y2="552"></line><line x1="470" y1="46" x2="470" y2="552"></line><line x1="660" y1="46" x2="660" y2="552"></line>
+        <line x1="60" y1="110" x2="726" y2="110"></line><line x1="60" y1="310" x2="726" y2="310"></line><line x1="60" y1="470" x2="726" y2="470"></line>
+      </g>
+      <g fill="none" stroke="#C9CFD9" stroke-width="1">
+        <circle cx="90" cy="32" r="11"></circle><circle cx="290" cy="32" r="11"></circle><circle cx="470" cy="32" r="11"></circle><circle cx="660" cy="32" r="11"></circle>
+        <circle cx="34" cy="110" r="11"></circle><circle cx="34" cy="310" r="11"></circle><circle cx="34" cy="470" r="11"></circle><circle cx="700" cy="60" r="11"></circle>
+      </g>
+      <g font-family="'IBM Plex Mono',monospace" font-size="10" fill="#9AA3B2" text-anchor="middle">
+        <text x="90" y="35.5">1</text><text x="290" y="35.5">2</text><text x="470" y="35.5">3</text><text x="660" y="35.5">4</text>
+        <text x="34" y="113.5">A</text><text x="34" y="313.5">B</text><text x="34" y="473.5">C</text><text x="700" y="42" font-size="8">N</text>
+      </g>
+      <line x1="700" y1="71" x2="700" y2="49" stroke="#A6B0C0" stroke-width="0.8"></line>
+      <rect x="90" y="110" width="570" height="360" fill="none" stroke="#98A2B3" stroke-width="1.6"></rect>
+      <rect x="97" y="117" width="556" height="346" fill="none" stroke="#BCC3CE" stroke-width="0.8"></rect>
+      <g stroke="#98A2B3" stroke-width="1.1">
+        <line x1="290" y1="117" x2="290" y2="250"></line><line x1="290" y1="290" x2="290" y2="463"></line>
+        <line x1="470" y1="117" x2="470" y2="180"></line><line x1="470" y1="220" x2="470" y2="463"></line>
+        <line x1="470" y1="240" x2="653" y2="240"></line><line x1="97" y1="310" x2="150" y2="310"></line><line x1="190" y1="310" x2="290" y2="310"></line>
+      </g>
+      <g fill="none" stroke="#A6B0C0" stroke-width="0.8">
+        <line x1="290" y1="250" x2="330" y2="250"></line><path d="M 330 250 A 40 40 0 0 1 290 290"></path>
+        <line x1="470" y1="220" x2="430" y2="220"></line><path d="M 430 220 A 40 40 0 0 0 470 180"></path>
+        <line x1="190" y1="310" x2="190" y2="270"></line><path d="M 190 270 A 40 40 0 0 0 150 310"></path>
+      </g>
+      <g stroke="#ACB6C5" stroke-width="0.7">
+        <line x1="490" y1="125" x2="490" y2="232"></line><line x1="505" y1="125" x2="505" y2="232"></line><line x1="520" y1="125" x2="520" y2="232"></line><line x1="535" y1="125" x2="535" y2="232"></line><line x1="550" y1="125" x2="550" y2="232"></line><line x1="565" y1="125" x2="565" y2="232"></line><line x1="580" y1="125" x2="580" y2="232"></line><line x1="595" y1="125" x2="595" y2="232"></line><line x1="610" y1="125" x2="610" y2="232"></line><line x1="625" y1="125" x2="625" y2="232"></line><line x1="640" y1="125" x2="640" y2="232"></line>
+        <line x1="482" y1="178" x2="645" y2="178"></line><line x1="645" y1="178" x2="636" y2="173"></line><line x1="645" y1="178" x2="636" y2="183"></line>
+        <rect x="99" y="425" width="184" height="36" fill="none"></rect><circle cx="150" cy="443" r="8" fill="none"></circle>
+        <rect x="525" y="322" width="14" height="14" fill="none"></rect><rect x="560" y="322" width="14" height="14" fill="none"></rect><rect x="525" y="396" width="14" height="14" fill="none"></rect><rect x="560" y="396" width="14" height="14" fill="none"></rect>
+      </g>
+      <rect x="508" y="340" width="96" height="52" rx="2" fill="none" stroke="#A6B0C0" stroke-width="0.9"></rect>
+      <rect x="338" y="248" width="84" height="84" fill="none" stroke="#98A2B3" stroke-width="0.9" stroke-dasharray="5 4"></rect>
+      <line x1="338" y1="248" x2="422" y2="332" stroke="#C6CDD8" stroke-width="0.5"></line><line x1="422" y1="248" x2="338" y2="332" stroke="#C6CDD8" stroke-width="0.5"></line>
+      <g stroke="#A8C6FA" stroke-width="0.8" stroke-dasharray="10 5" opacity="0.75"><line x1="380" y1="196" x2="380" y2="384"></line><line x1="296" y1="290" x2="464" y2="290"></line></g>
+      <g font-family="'IBM Plex Mono',monospace" fill="#9AA3B2" text-anchor="middle">
+        <text x="380" y="226" font-size="11" letter-spacing="3">ATRIUM</text><text x="380" y="240" font-size="8.5" fill="#ACB4C2">68 m²</text>
+        <text x="380" y="348" font-size="7.5" fill="#ACB4C2" letter-spacing="1.5">SKYLIGHT — 4200 CLR</text>
+        <text x="190" y="205" font-size="10" letter-spacing="2.5">STUDIO 03</text><text x="190" y="390" font-size="10" letter-spacing="2.5">STUDIO 04</text>
+        <text x="556" y="330" font-size="9" letter-spacing="2">MEETING 2</text><text x="500" y="196" font-size="7.5" fill="#ACB4C2">UP</text>
+      </g>
+      <g stroke="#A8B2C2" stroke-width="0.6"><line x1="90" y1="520" x2="660" y2="520"></line>
+        <line x1="85" y1="525" x2="95" y2="515" stroke-width="0.9"></line><line x1="285" y1="525" x2="295" y2="515" stroke-width="0.9"></line><line x1="465" y1="525" x2="475" y2="515" stroke-width="0.9"></line><line x1="655" y1="525" x2="665" y2="515" stroke-width="0.9"></line>
+      </g>
+      <g font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#9AA3B2" text-anchor="middle"><text x="190" y="537">6 000</text><text x="380" y="537">5 400</text><text x="565" y="537">5 700</text></g>
+      <text x="90" y="566" font-family="'IBM Plex Mono',monospace" font-size="8" letter-spacing="1.5" fill="#A5ADBB">TANGLIN RISE — L01 — 1:50</text>
+      <text x="660" y="566" font-family="'IBM Plex Mono',monospace" font-size="10" font-weight="600" letter-spacing="1" fill="#99A2B0" text-anchor="end">A-201</text>
+    </symbol>
+  </defs></svg>
+
+  <div id="canvas"><svg aria-hidden="true"><use href="#plan"></use></svg></div>
+
   <div class="stage">
-    <div class="card hidden" id="nudge">
-      <div class="chead"><span class="live"></span><span class="t">Trace</span><span class="s">· watching Revit</span><span class="x" onclick="setState('idle')">&times;</span></div>
-      <div class="ntitle">On <b id="ctx">this view</b> — <span id="ncount">…</span></div>
-      <div class="rows" id="nrows"></div>
-      <div class="actions"><button class="btn" onclick="setState('chat')">Ask Trace</button><button class="btn primary" onclick="setState('idle')">Got it</button></div>
-      <div class="allow">🔒 monitoring only: <b>Revit · SketchUp · Office</b> — personal apps ignored</div>
+    <div class="sheet hidden" id="sheet">
+      <div class="paper">
+        <div class="grain"></div>
+        <div class="pad">
+          <div class="hdr">
+            <span class="hdot"></span><span class="wordmark">TRACE</span><span class="sp"></span>
+            <select class="prj" id="proj" onchange="switchProject()" title="Switch project"></select>
+            <span class="x" onclick="closeSheet()" title="Close">&times;</span>
+          </div>
+
+          <div class="body" id="body">
+            <div id="intro">
+              <p class="intro">Trace remembers every decision on this drawing — what changed, who called it, and whether it still holds.</p>
+              <div class="kicker">ASK THE SHEET</div>
+              <div class="chips" id="suggest"></div>
+            </div>
+
+            <div id="record" class="hide">
+              <div class="rec-head"><span>DECISION RECORD</span><span id="recctx"></span></div>
+              <div class="rec-body" id="nrows"></div>
+              <div class="legend">
+                <span><i style="background:var(--inforce)"></i>IN FORCE</span>
+                <span><i style="background:var(--superseded)"></i>SUPERSEDED</span>
+                <span><i style="background:var(--rejected)"></i>REJECTED</span>
+              </div>
+            </div>
+
+            <div id="msgs" class="hide"></div>
+
+            <div id="follow" class="hide">
+              <div class="kicker">FOLLOW-UPS</div>
+              <div class="chips wrap" id="followchips"></div>
+            </div>
+          </div>
+
+          <div class="ask">
+            <input id="q" placeholder="Ask the sheet…" onkeydown="if(event.key==='Enter')send()"/>
+            <button class="send" onclick="send()" title="Ask">&rarr;</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="card hidden" id="chat">
-      <div class="chead"><span class="live"></span><span class="t">Trace</span><span class="s">· ask anything</span><span class="x" onclick="setState('idle')">&times;</span></div>
-      <div class="projbar"><select id="proj" onchange="switchProject()"></select></div>
-      <div class="msgs" id="msgs"><div class="msg from-t">Ask me anything about this project's decisions.</div></div>
-      <div class="inbar"><input id="q" placeholder="Ask about this project…" onkeydown="if(event.key==='Enter')send()"/><button class="send" onclick="send()">↑</button></div>
-    </div>
-
-    <div class="bubble" onclick="toggleChat()" title="Trace">
-      <span class="badge" id="badge">1</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 C 8 8, 16 8, 20 18"/><circle cx="4" cy="18" r="1.6" fill="currentColor"/><circle cx="20" cy="18" r="1.6" fill="currentColor"/></svg>
+    <div class="drop" id="drop" onclick="toggleSheet()" title="Trace">
+      <span class="badge hide" id="badge">1</span>
+      <svg data-drop="a" viewBox="0 0 190 120" aria-hidden="true"></svg>
+      <div class="label">TRACE</div>
     </div>
   </div>
 
 <script>
-  const DOT={valid:"g",proposed:"r",superseded:"a"};
-  const LABEL={valid:"locked",proposed:"proposed · rejected",superseded:"superseded"};
-  function setState(s){
-    document.getElementById('nudge').classList.toggle('hidden', s!=='nudge');
-    document.getElementById('chat').classList.toggle('hidden', s!=='chat');
-    document.getElementById('badge').style.display=(s==='nudge')?'flex':'none';
-  }
-  function toggleChat(){setState(document.getElementById('chat').classList.contains('hidden')?'chat':'idle');}
-  function renderNudge(d){
-    document.getElementById('ctx').textContent=d.context||'this view';
-    document.getElementById('ncount').textContent=(d.decisions.length)+' decision(s) on record:';
-    document.getElementById('nrows').innerHTML=d.decisions.map(x=>
-      `<div class="row"><span class="rdot ${DOT[x.status]||'a'}"></span><div><b class="mono">${x.id}</b> ${esc(x.statement)} <span class="k">— ${LABEL[x.status]||x.status}</span></div></div>`).join('');
-    setState('nudge');
-  }
-  function append(cls,html){const m=document.getElementById('msgs');const e=document.createElement('div');e.className='msg '+cls;e.innerHTML=html;m.appendChild(e);m.scrollTop=m.scrollHeight;return e;}
-  function esc(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  function cite(t){return t.replace(/\((D-\d+)\)/g,'(<span class="cite mono">$1</span>)');}
-  function linkify(t){return t.replace(/(https?:\/\/[^\s<)]+)/g,'<a href="$1" target="_blank" rel="noopener" class="cite">$1</a>');}
+  /* ── liquid-glass drop: two drops in one plane joined by a live capillary
+     neck that stretches, pinches off and re-merges. Ported from the design's
+     own component (metaball neck math + per-frame render). ─────────────────── */
+  (function(){
+    var NS="http://www.w3.org/2000/svg", drops=null, raf=0;
+    function mk(tag,attrs,parent){var el=document.createElementNS(NS,tag);for(var k in attrs)el.setAttribute(k,attrs[k]);parent.appendChild(el);return el;}
+    function initDrops(){
+      var hosts=[].slice.call(document.querySelectorAll("svg[data-drop]"));
+      if(!hosts.length)return;
+      drops=hosts.map(function(svg,i){
+        if(svg.__drop)return svg.__drop;
+        var id="dcp"+i;
+        var defs=mk("defs",{},svg), clip=mk("clipPath",{id:id},defs), clipPath=mk("path",{},clip);
+        var shadow=mk("path",{transform:"translate(2.5,5)",fill:"rgba(70,100,170,.17)",filter:"url(#dBlur3)"},svg);
+        var body=mk("path",{fill:"url(#dBody)"},svg);
+        var g=mk("g",{"clip-path":"url(#"+id+")"},svg);
+        var band=mk("path",{fill:"none",stroke:"rgba(120,155,225,.45)","stroke-width":"9",filter:"url(#dBlur6)"},g);
+        var band2=mk("path",{transform:"translate(0,2)",fill:"none",stroke:"rgba(96,132,205,.5)","stroke-width":"3",filter:"url(#dBlur3)"},g);
+        var sheen1=mk("ellipse",{fill:"#FFFFFF",opacity:".45",filter:"url(#dBlur3)"},g);
+        var sheen2=mk("ellipse",{fill:"#FFFFFF",opacity:".5",filter:"url(#dBlur1)"},g);
+        var caustic=mk("ellipse",{fill:"#FFFFFF",opacity:".22",filter:"url(#dBlur3)"},g);
+        var spec=mk("ellipse",{fill:"#FFFFFF",opacity:".9",filter:"url(#dBlur1)"},g);
+        var edge=mk("path",{fill:"none",stroke:"rgba(105,140,210,.5)","stroke-width":"1"},svg);
+        var rim=mk("path",{fill:"none",stroke:"url(#dRim)","stroke-width":"1.4"},svg);
+        svg.__drop={phase:i*2.1,clipPath:clipPath,shadow:shadow,body:body,band:band,band2:band2,sheen1:sheen1,sheen2:sheen2,caustic:caustic,spec:spec,edge:edge,rim:rim};
+        return svg.__drop;
+      });
+      updateDrops(4.2);
+      if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+      var tick=function(now){updateDrops(now/1000);raf=requestAnimationFrame(tick);};raf=requestAnimationFrame(tick);
+    }
+    function updateDrops(t){
+      if(!drops)return;
+      var keys=["clipPath","shadow","body","band","band2","edge","rim"];
+      for(var j=0;j<drops.length;j++){
+        var d=drops[j], p=d.phase;
+        var r1=45+1.6*Math.sin(t*0.5+p), r2=16.5+1.1*Math.sin(t*0.7+p+1.7);
+        var c1=[117+2*Math.sin(t*0.33+p),61+1.4*Math.sin(t*0.47+p+0.8)];
+        var wander=12*Math.sin(t*0.21+p+0.6);
+        var c2=[36-0.35*wander,62+2.2*Math.sin(t*0.41+p+2)];
+        var path=metaball(r1,r2,c1,c2)||twoCircles(r1,r2,c1,c2);
+        for(var k=0;k<keys.length;k++)d[keys[k]].setAttribute("d",path);
+        var set=function(el,cx,cy,rx,ry,rot){el.setAttribute("cx",cx.toFixed(1));el.setAttribute("cy",cy.toFixed(1));el.setAttribute("rx",rx.toFixed(1));el.setAttribute("ry",ry.toFixed(1));el.setAttribute("transform","rotate("+rot+" "+cx.toFixed(1)+" "+cy.toFixed(1)+")");};
+        set(d.sheen1,c1[0]-r1*0.06,c1[1]-r1*0.66,r1*0.55,r1*0.085,-7);
+        set(d.spec,c1[0]-r1*0.3,c1[1]-r1*0.74,r1*0.16,r1*0.045,-14);
+        set(d.sheen2,c2[0],c2[1]-r2*0.55,r2*0.5,r2*0.13,-12);
+        set(d.caustic,c1[0]+r1*0.05,c1[1]+r1*0.74,r1*0.42,r1*0.06,4);
+      }
+    }
+    function metaball(r1,r2,c1,c2){
+      var dx=c2[0]-c1[0],dy=c2[1]-c1[1],dist=Math.sqrt(dx*dx+dy*dy),maxDist=r1+r2*2.5,v=0.5,handle=2.4;
+      if(dist<0.01||dist>maxDist||dist<=Math.abs(r1-r2)+0.5)return null;
+      var u1=0,u2=0;
+      if(dist<r1+r2){u1=Math.acos((r1*r1+dist*dist-r2*r2)/(2*r1*dist));u2=Math.acos((r2*r2+dist*dist-r1*r1)/(2*r2*dist));}
+      var ab=Math.atan2(dy,dx),maxSpread=Math.acos((r1-r2)/dist);
+      var a1=ab+u1+(maxSpread-u1)*v,a2=ab-u1-(maxSpread-u1)*v;
+      var a3=ab+Math.PI-u2-(Math.PI-u2-maxSpread)*v,a4=ab-Math.PI+u2+(Math.PI-u2-maxSpread)*v;
+      var vec=function(c,a,r){return [c[0]+r*Math.cos(a),c[1]+r*Math.sin(a)];};
+      var p1=vec(c1,a1,r1),p2=vec(c1,a2,r1),p3=vec(c2,a3,r2),p4=vec(c2,a4,r2);
+      var totalR=r1+r2;
+      var dBase=Math.min(v*handle,Math.sqrt(Math.pow(p3[0]-p1[0],2)+Math.pow(p3[1]-p1[1],2))/totalR);
+      var d2=dBase*Math.min(1,(dist*2)/totalR),hr1=r1*d2,hr2=r2*d2,HALF=Math.PI/2;
+      var h1=vec(p1,a1-HALF,hr1),h2=vec(p2,a2+HALF,hr1),h3=vec(p3,a3+HALF,hr2),h4=vec(p4,a4-HALF,hr2);
+      var esc=dist>r1?1:0,f=function(n){return n.toFixed(2);},P=function(pt){return f(pt[0])+","+f(pt[1]);};
+      return "M"+P(p1)+" C"+P(h1)+" "+P(h3)+" "+P(p3)+" A"+f(r2)+","+f(r2)+" 0 "+esc+",0 "+P(p4)+" C"+P(h4)+" "+P(h2)+" "+P(p2)+" A"+f(r1)+","+f(r1)+" 0 1,0 "+P(p1)+" Z";
+    }
+    function twoCircles(r1,r2,c1,c2){
+      var C=function(c,r){return "M"+(c[0]-r).toFixed(2)+","+c[1].toFixed(2)+" a"+r.toFixed(2)+","+r.toFixed(2)+" 0 1,0 "+(2*r).toFixed(2)+",0 a"+r.toFixed(2)+","+r.toFixed(2)+" 0 1,0 "+(-2*r).toFixed(2)+",0 Z";};
+      return C(c1,r1)+" "+C(c2,r2);
+    }
+    if(document.readyState!=="loading")initDrops();else document.addEventListener("DOMContentLoaded",initDrops);
+  })();
+
+  /* ── the widget, wired to the live engine ───────────────────────────────── */
+  var DOTC={valid:"var(--inforce)",superseded:"var(--superseded)",proposed:"var(--rejected)"};
+  var RAD=["49% 51% 53% 47%/52% 48% 55% 45%","53% 47% 49% 51%/48% 55% 45% 52%","51% 49% 47% 53%/55% 45% 52% 48%"];
+  var SUGGEST=["Why the non-combustible façade cladding?","Can we still switch to the cheaper panel?","Who signed off, and when?"];
+  var FOLLOW=["Show me the exact fire-code clause","What’s still open on this project?"];
+
+  var PROJECT="", CONVO=[], CTX=false, DECISIONS=[], RECLABEL="";
+
+  function $(id){return document.getElementById(id);}
+  function esc(t){return (t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function cite(t){return t.replace(/\((D-\d+)\)/g,"(<span class=\"cite\">$1</span>)");}
+  function linkify(t){return t.replace(/(https?:\/\/[^\s<)]+)/g,"<a href=\"$1\" target=\"_blank\" rel=\"noopener\" class=\"cite\">$1</a>");}
   function render(t){return linkify(cite(esc(t)));}   // escape FIRST — model/user text never becomes markup
-  let PROJECT='';
+
+  function fillRecord(ds,label){
+    DECISIONS=ds||[]; RECLABEL=label||"";
+    $("recctx").textContent=RECLABEL;
+    $("nrows").innerHTML=DECISIONS.map(function(x,i){
+      return '<div class="rec-row">'
+        +'<span class="pdot" style="background:'+(DOTC[x.status]||"var(--superseded)")+';border-radius:'+RAD[i%RAD.length]+'"></span>'
+        +'<span class="rid">'+esc(x.id)+'</span>'
+        +'<span class="rst">'+esc(x.statement)+'</span>'
+        +'<span class="rdt">'+esc(x.date||"")+'</span></div>';
+    }).join("");
+  }
+  function renderChips(el,items){
+    $(el).innerHTML=items.map(function(q){return '<button class="chip">'+esc(q)+'</button>';}).join("");
+    [].forEach.call($(el).children,function(b){b.onclick=function(){$("q").value=b.textContent;send();};});
+  }
+  function renderMsgs(){
+    $("msgs").innerHTML=CONVO.map(function(m){
+      return m.role==="user"
+        ? '<div class="you">YOU ASKED</div><div class="youq">“'+esc(m.text)+'”</div>'
+        : '<p class="ans">'+render(m.text)+'</p>';
+    }).join("");
+  }
+  function layout(){
+    var hasMsgs=CONVO.length>0;
+    var answered=hasMsgs && CONVO[CONVO.length-1].role==="assistant";
+    $("intro").classList.toggle("hide", hasMsgs || CTX);
+    $("record").classList.toggle("hide", !CTX);
+    $("msgs").classList.toggle("hide", !hasMsgs);
+    $("follow").classList.toggle("hide", !answered);
+    if(hasMsgs)renderMsgs();
+  }
+
+  function openSheet(){document.body.classList.add("open");$("sheet").classList.remove("hidden");$("badge").classList.add("hide");layout();}
+  function closeSheet(){document.body.classList.remove("open");$("sheet").classList.add("hidden");}
+  function toggleSheet(){$("sheet").classList.contains("hidden")?openSheet():closeSheet();}
+
   function send(){
-    const i=document.getElementById('q'),q=i.value.trim();if(!q)return;i.value='';
-    append('from-u',esc(q)); const pend=append('from-t','…');
-    fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,project:PROJECT})})
-      .then(r=>r.json()).then(d=>{pend.innerHTML=render(d.answer);})
-      .catch(()=>{pend.innerHTML="(couldn't reach Trace — is the app running?)";});
+    var i=$("q"), q=i.value.trim(); if(!q)return; i.value="";
+    CONVO.push({role:"user",text:q});
+    CONVO.push({role:"assistant",text:"…"});
+    layout(); $("body").scrollTop=$("body").scrollHeight;
+    fetch("/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,project:PROJECT})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        CONVO[CONVO.length-1]={role:"assistant",text:d.answer};
+        CTX=true; fillRecord(DECISIONS,RECLABEL); renderChips("followchips",FOLLOW); layout();
+        $("body").scrollTop=$("body").scrollHeight;
+      })
+      .catch(function(){CONVO[CONVO.length-1]={role:"assistant",text:"(couldn’t reach Trace — is the app running?)"};layout();});
+  }
+
+  function applyState(d){
+    PROJECT=d.project||PROJECT;
+    var sel=$("proj");
+    if(d.projects)sel.innerHTML=d.projects.map(function(p){return '<option value="'+p.key+'"'+(p.key===PROJECT?" selected":"")+'>'+esc(p.title)+'</option>';}).join("");
+    if(d.decisions){DECISIONS=d.decisions;RECLABEL=(d.context||"").split("·")[0].trim();fillRecord(DECISIONS,RECLABEL);}
   }
   function loadState(project){
-    fetch('/state'+(project?('?project='+encodeURIComponent(project)):'')).then(r=>r.json()).then(d=>{
-      PROJECT=d.project||'';
-      const sel=document.getElementById('proj');
-      if(d.projects){sel.innerHTML=d.projects.map(p=>`<option value="${p.key}" ${p.key===PROJECT?'selected':''}>${p.title}</option>`).join('');}
-      renderNudge(d);
-    }).catch(()=>renderNudge({context:"Level 0 · facade",decisions:[
-      {id:"D-001",status:"valid",statement:"Facade cladding = non-combustible mineral rainscreen"},
-      {id:"D-002",status:"proposed",statement:"Swap to PE-core ACP (combustible)"}]}));
+    fetch("/state"+(project?("?project="+encodeURIComponent(project)):"")).then(function(r){return r.json();})
+      .then(applyState)
+      .catch(function(){ // bare-file demo: no engine — seed a static record
+        PROJECT="tanglin-rise";
+        $("proj").innerHTML='<option>Tanglin Rise · SG · 95 m</option>';
+        fillRecord([
+          {id:"D-001",status:"valid",statement:"Façade cladding = non-combustible mineral rainscreen",date:"12 JAN 26"},
+          {id:"D-002",status:"proposed",statement:"Swap to PE-core ACP (combustible)",date:"03 MAR 26"},
+          {id:"D-004",status:"superseded",statement:"Curtain-wall glazing (earlier revision)",date:"20 FEB 26"}
+        ],"Tanglin Rise");
+      });
   }
   function switchProject(){
-    const key=document.getElementById('proj').value;
-    document.getElementById('msgs').innerHTML='<div class="msg from-t">Ask me anything about this project\'s decisions.</div>';
-    loadState(key);
-    setState('chat');
+    var key=$("proj").value;
+    CONVO=[]; CTX=false;
+    loadState(key); openSheet();
   }
-  // Ambient nudges: poll for document-open events (from the Windows watcher or
-  // the workspace page). A new nudge pops the card AND switches the chat's
-  // default project to the document's project — the agent follows your work.
-  let NUDGE_SEQ = 0;
+
+  /* ambient nudges: the watcher / workspace posts a document-open event; the
+     sheet pops with that drawing's record and the agent follows your work */
+  var NUDGE_SEQ=0;
   function pollNudge(){
-    fetch('/nudge-state').then(r=>r.json()).then(n=>{
-      if(n.seq && n.seq !== NUDGE_SEQ){
-        NUDGE_SEQ = n.seq;
-        if(n.project && n.project !== PROJECT){ PROJECT = n.project; loadStateSilent(n.project); }
-        renderNudge(n);
+    fetch("/nudge-state").then(function(r){return r.json();}).then(function(n){
+      if(n.seq && n.seq!==NUDGE_SEQ){
+        NUDGE_SEQ=n.seq;
+        if(n.project && n.project!==PROJECT){PROJECT=n.project;CONVO=[];loadStateSilent(n.project);}
+        fillRecord(n.decisions||[], (n.context||"").split("—")[0].trim());
+        CTX=true;
+        if($("sheet").classList.contains("hidden")){$("badge").textContent=(n.decisions||[]).length||1;$("badge").classList.remove("hide");}
+        else layout();
       }
-    }).catch(()=>{});
+    }).catch(function(){});
   }
   function loadStateSilent(project){
-    fetch('/state?project='+encodeURIComponent(project)).then(r=>r.json()).then(d=>{
+    fetch("/state?project="+encodeURIComponent(project)).then(function(r){return r.json();}).then(function(d){
       PROJECT=d.project||PROJECT;
-      const sel=document.getElementById('proj');
-      if(d.projects){sel.innerHTML=d.projects.map(p=>`<option value="${p.key}" ${p.key===PROJECT?'selected':''}>${p.title}</option>`).join('');}
-    }).catch(()=>{});
+      var sel=$("proj");
+      if(d.projects)sel.innerHTML=d.projects.map(function(p){return '<option value="'+p.key+'"'+(p.key===PROJECT?" selected":"")+'>'+esc(p.title)+'</option>';}).join("");
+    }).catch(function(){});
   }
-  setInterval(pollNudge, 2500);
+  setInterval(pollNudge,2500);
 
-  // Live from the engine when served by bubble.py; static demo if opened as a bare file.
-  loadState('');
+  if(location.search.indexOf("bare")>=0)document.body.classList.add("bare");
+  renderChips("suggest",SUGGEST);
+  loadState("");
 </script>
 </body>
 </html>

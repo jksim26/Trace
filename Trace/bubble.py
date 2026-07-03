@@ -43,8 +43,22 @@ def _code_registry() -> str:
 
 _DRAWINGS = Path(__file__).resolve().parent.parent / "demo" / "drawings"
 _WORKSPACE = Path(__file__).with_name("workspace.html")
+_FONTS = Path(__file__).with_name("fonts")
 
 _HTML = Path(__file__).with_name("bubble.html")
+
+_MONTHS = ("JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
+
+
+def _short_date(iso: Optional[str]) -> str:
+    """ISO 'YYYY-MM-DD…' -> drafting-schedule stamp '02 MAR 26'. Blank on miss —
+    the widget just shows nothing rather than an invented date."""
+    try:
+        y, m, d = (iso or "")[:10].split("-")
+        return f"{d} {_MONTHS[int(m) - 1]} {y[2:]}"
+    except Exception:
+        return ""
 
 # Small-talk words that shouldn't hit the decision store at all — a first-time
 # visitor's "hi" deserves a pointer, not "No decision on record".
@@ -122,7 +136,8 @@ class Api:
 
     def state(self) -> str:
         decisions = [
-            {"id": d.id, "status": d.status, "statement": d.statement}
+            {"id": d.id, "status": d.status, "statement": d.statement,
+             "date": _short_date(d.valid_from)}
             for d in get_all_decisions(self.conn)
         ]
         return json.dumps({
@@ -226,7 +241,8 @@ def build_nudge(title: str) -> Optional[dict]:
         key=lambda d: -len(kw & _content_words(
             f"{d.statement} {d.rationale} {' '.join(d.assumptions)}")),
     )
-    rows = [{"id": d.id, "status": d.status, "statement": d.statement}
+    rows = [{"id": d.id, "status": d.status, "statement": d.statement,
+             "date": _short_date(d.valid_from)}
             for d in ranked[:4]]
     global _NUDGE
     _NUDGE = {
@@ -286,6 +302,13 @@ class _Handler(BaseHTTPRequestHandler):
             f = _DRAWINGS / name
             if f.is_file():
                 self._send_bytes(200, f.read_bytes(), "application/pdf")
+            else:
+                self._send(404, "{}")
+        elif path.startswith("/fonts/"):
+            name = Path(path).name  # basename only — no traversal
+            f = _FONTS / name
+            if f.is_file() and f.suffix == ".woff2":
+                self._send_bytes(200, f.read_bytes(), "font/woff2")
             else:
                 self._send(404, "{}")
         else:
