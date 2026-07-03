@@ -98,13 +98,16 @@
     setState('nudge');
   }
   function append(cls,html){const m=document.getElementById('msgs');const e=document.createElement('div');e.className='msg '+cls;e.innerHTML=html;m.appendChild(e);m.scrollTop=m.scrollHeight;return e;}
-  function cite(t){return (t||'').replace(/\((D-\d+)\)/g,'(<span class="cite">$1</span>)');}
+  function esc(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function cite(t){return t.replace(/\((D-\d+)\)/g,'(<span class="cite">$1</span>)');}
+  function linkify(t){return t.replace(/(https?:\/\/[^\s<)]+)/g,'<a href="$1" target="_blank" rel="noopener" class="cite">$1</a>');}
+  function render(t){return linkify(cite(esc(t)));}   // escape FIRST — model/user text never becomes markup
   let PROJECT='';
   function send(){
     const i=document.getElementById('q'),q=i.value.trim();if(!q)return;i.value='';
-    append('from-u',q); const pend=append('from-t','…');
+    append('from-u',esc(q)); const pend=append('from-t','…');
     fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,project:PROJECT})})
-      .then(r=>r.json()).then(d=>{pend.innerHTML=cite(d.answer);})
+      .then(r=>r.json()).then(d=>{pend.innerHTML=render(d.answer);})
       .catch(()=>{pend.innerHTML="(couldn't reach Trace — is the app running?)";});
   }
   function loadState(project){

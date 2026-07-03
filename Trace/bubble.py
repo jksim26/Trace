@@ -22,11 +22,24 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Optional
 
+import rulepack
 from ambient import match_title
 from court import get_court_records
 from recall import _content_words
+from rulepack import load_rules
 from scenarios import PROJECTS, build_store
 from store import get_all_decisions
+
+
+def _code_registry() -> str:
+    """Provisions curated from primary sources at rulepack-authoring time —
+    'automation, not a tool': the clause comes to the user, with its official
+    link, instead of the user hunting a statutes portal."""
+    rules = load_rules() + load_rules(Path(rulepack.__file__).with_name("rules") / "uk")
+    return "\n".join(
+        f"{r.citation} — {r.provision} Official source: {r.url}"
+        for r in rules if r.provision or r.url
+    )
 
 _DRAWINGS = Path(__file__).resolve().parent.parent / "demo" / "drawings"
 _WORKSPACE = Path(__file__).with_name("workspace.html")
@@ -73,9 +86,10 @@ _ASSISTANT_SYS = (
     "(ids repeat across projects — the project name disambiguates).\n"
     "- If asked about a design decision that is NOT in any record, reply exactly: "
     '"No decision on record; not yet decided."\n'
-    "- If asked for a source document the records only cite (e.g. the full text of a "
-    "fire-code clause), say what the record cites and that Trace stores decision "
-    "records, not the source documents — do NOT recite statutory text from memory.\n"
+    "- If asked for a clause or provision, quote it from the CODE REGISTRY (curated "
+    "from the cited primary source) and include its official link — never send the "
+    "user off to search a portal. If a provision is not in the registry, say so "
+    "plainly and give the official link only; never improvise statutory text.\n"
     "- If asked what Trace is or how to use this panel, answer from the TRACE CONTEXT.\n"
     "- Be concise: one to three sentences."
 )
@@ -162,6 +176,8 @@ class Api:
                     f"TRACE CONTEXT:\n{_PROJECT_BLURB}\n\n"
                     f"The user is currently viewing: {PROJECTS[self.project]['title']} "
                     f"[{self.project}] — default ambiguous questions to it.\n\n"
+                    f"CODE REGISTRY (provisions curated from primary sources):\n"
+                    f"{_code_registry()}\n\n"
                     f"PROJECT RECORDS:\n{self._all_records()}"},
                 *_HISTORY[-_HISTORY_LIMIT:],
                 {"role": "user", "content": question},

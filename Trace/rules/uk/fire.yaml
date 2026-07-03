@@ -12,6 +12,8 @@
 - id: UK-Reg7-2-combustible-ban
   citation: "Building Regulations 2010 reg 7(2) (amended 2018)"
   rationale: "External wall materials of a relevant residential building over 18 m must be European Class A2-s1,d0 or better — combustible cladding is banned."
+  provision: "Materials which become part of an external wall, or specified attachment, of a relevant building shall be of European Classification A2-s1,d0 or A1. (curated from reg 7(2))"
+  url: "https://www.legislation.gov.uk/uksi/2010/2214/regulation/7"
   when:
     building.height_m: {gt: 18}
   require:

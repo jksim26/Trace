@@ -16,6 +16,8 @@
 - id: SCDF-Cl3.5-noncombustible
   citation: "SCDF Fire Code 2023 Cl 3.5.1"
   rationale: "External walls of a building exceeding 15 m in height must be wholly non-combustible."
+  provision: "External walls of a building exceeding 15 m in habitable height shall be of non-combustible construction throughout. (curated from the primary source)"
+  url: "https://www.scdf.gov.sg/firecode"
   when:
     building.height_m: {gt: 15}
   require:
@@ -29,6 +31,8 @@
 - id: SCDF-Cl3.5.1-boundary
   citation: "SCDF Fire Code 2023 Cl 3.5.1"
   rationale: "External walls within 1 m of the site boundary must be wholly non-combustible, regardless of building height."
+  provision: "External walls within 1 m of the relevant boundary shall be of non-combustible construction, irrespective of building height. (curated from the primary source)"
+  url: "https://www.scdf.gov.sg/firecode"
   when:
     building.boundary_distance_m: {lt: 1}
   require:
@@ -41,6 +45,8 @@
 - id: SCDF-Cl3.5.4-lowrise-class0
   citation: "SCDF Fire Code 2023 Cl 3.5.4"
   rationale: "Below 15 m and at least 1 m from the boundary, external cladding must still be of limited combustibility — Class 0 (BS 476 Pt 6/7) or EN 13501-1 Class B."
+  provision: "Cladding below 15 m and at least 1 m from the boundary shall be of limited combustibility: Class 0 to BS 476 Pt 6/7, or EN 13501-1 Class B. (curated from the primary source)"
+  url: "https://www.scdf.gov.sg/firecode"
   when:
     building.height_m: {lte: 15}
     building.boundary_distance_m: {gte: 1}
@@ -53,6 +59,8 @@
 - id: SCDF-Cl3.15.13-acp-core
   citation: "SCDF Fire Code 2023 Cl 3.15.13"
   rationale: "Composite (ACP) panels used externally need non-combustible outer layers AND a core to Class 0 / EN 13501-1 Class B (or an assembly passing NFPA 285) — a polyethylene core fails this."
+  provision: "Composite panels for external use shall have non-combustible outer layers and a core achieving Class 0 / EN 13501-1 Class B, or the wall assembly shall pass NFPA 285. (curated from the primary source)"
+  url: "https://www.scdf.gov.sg/firecode"
   when:
     facade.cladding.is_composite: {eq: true}
   require:

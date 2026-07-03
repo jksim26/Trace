@@ -61,6 +61,14 @@ def test_acp_core_limb():
     assert [v.rule_id for v in check(context, load_rules())] == ["SCDF-Cl3.15.13-acp-core"]
 
 
+def test_every_rule_carries_its_provision_and_official_source():
+    # Automation, not a tool: the clause comes to the user with its link —
+    # nobody gets sent off to search a statutes portal.
+    for r in load_rules():
+        assert r.provision, r.id
+        assert r.url.startswith("https://"), r.id
+
+
 def test_uk_pack_loads_separately_and_fires_over_18m():
     # A different jurisdiction is a different rule-pack, same engine.
     import rulepack

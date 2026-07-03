@@ -28,7 +28,7 @@ In a construction project the design brief evolves across dozens of meetings, bu
 
 ## What runs today
 
-The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **88 offline tests**. Everything lives in [`Trace/`](Trace/):
+The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **90 offline tests**. Everything lives in [`Trace/`](Trace/):
 
 | Module | What it does |
 |---|---|
