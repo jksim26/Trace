@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Trace — system architecture</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#20242e; --ink-soft:#4a5064; --ink-faint:#8b91a6;
+    --paper:#fbfbf8; --card:#ffffff;
+    --blue:#6e9ef7; --blue-soft:#dbe7fd; --blue-faint:rgba(110,158,247,.16);
+    --ok:#2fae7d; --no:#e05c72; --old:#d99a2b;
+    --hair:#d8dae2;
+  }
+  body{width:1600px;height:1000px;background:var(--paper);position:relative;overflow:hidden;
+    font-family:-apple-system,"SF Pro Text","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+    color:var(--ink);-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:absolute;inset:0;
+    background:
+      linear-gradient(rgba(110,158,247,.05) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, rgba(110,158,247,.05) 1px, transparent 1px) 0 0/40px 40px}
+
+  /* drafting sheet frame */
+  .frame{position:absolute;inset:22px;border:1.5px solid var(--ink);pointer-events:none}
+  .frame::before{content:"";position:absolute;inset:6px;border:.5px solid var(--ink-faint)}
+
+  /* title block */
+  .tblock{position:absolute;right:29px;bottom:29px;width:470px;border:1.5px solid var(--ink);
+    background:var(--card);display:grid;grid-template-columns:1fr 1fr 1fr;z-index:5}
+  .tb{padding:8px 12px;border-top:.5px solid var(--hair);border-left:.5px solid var(--hair)}
+  .tb:nth-child(-n+1){border-top:none}
+  .tb .k{font-size:8.5px;font-weight:650;letter-spacing:.14em;color:var(--ink-faint)}
+  .tb .v{font-size:11.5px;font-weight:300;margin-top:2px}
+  .tb.wide{grid-column:1/4;border-left:none;padding:10px 12px}
+  .tb.wide .v{font-size:16px;font-weight:650;letter-spacing:.01em}
+  .tb.wide .v span{font-weight:300;color:var(--ink-soft)}
+
+  h1{position:absolute;left:56px;top:44px;font-size:21px;font-weight:700;letter-spacing:-.01em}
+  h1 span{font-weight:300;color:var(--ink-soft)}
+  .sub{position:absolute;left:56px;top:74px;font-size:11px;font-weight:300;color:var(--ink-soft);letter-spacing:.02em}
+
+  /* cards */
+  .card{position:absolute;background:var(--card);border:1px solid var(--ink);border-radius:3px;
+    box-shadow:2.5px 2.5px 0 rgba(32,36,46,.07)}
+  .card .hd{padding:7px 11px 6px;border-bottom:.5px solid var(--hair);
+    font-size:9.5px;font-weight:700;letter-spacing:.13em;color:var(--ink)}
+  .card .hd small{float:right;font-weight:650;color:var(--blue);letter-spacing:.1em}
+  .card .bd{padding:8px 11px 9px;font-size:11px;font-weight:300;line-height:1.5;color:var(--ink-soft)}
+  .card .bd b{font-weight:650;color:var(--ink)}
+  .card .bd .mono{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:10px;color:var(--ink-soft)}
+  .card .row{display:flex;gap:7px;align-items:flex-start;padding:2.5px 0}
+  .card .row + .row{border-top:.5px dashed var(--hair)}
+  .dot{flex:none;width:6px;height:6px;border-radius:50%;margin-top:5px}
+
+  .pill{position:absolute;font-size:9px;font-weight:700;letter-spacing:.1em;color:#3b62c4;
+    background:var(--blue-faint);border:1px solid var(--blue);border-radius:99px;padding:4px 10px;z-index:4}
+
+  .zone{position:absolute;border:1px dashed var(--blue);border-radius:6px;z-index:0}
+  .zone .zl{position:absolute;top:-8px;left:12px;background:var(--paper);padding:0 7px;
+    font-size:9px;font-weight:700;letter-spacing:.14em;color:#3b62c4}
+
+  svg.wires{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .card,.pill{z-index:2}
+  .wire{stroke:var(--ink-soft);stroke-width:1.1;fill:none;marker-end:url(#ah)}
+  .wire.blue{stroke:var(--blue);marker-end:url(#ahb)}
+  .wire.dash{stroke-dasharray:4 4}
+  .wl{font-size:8.5px;font-weight:650;letter-spacing:.09em;fill:var(--ink-faint)}
+</style>
+</head>
+<body>
+  <div class="frame"></div>
+  <h1>TRACE <span>— system architecture</span></h1>
+  <div class="sub">the design-decision memory agent for AEC · memory lifecycle: WRITE → STORE → FORGET (invalidate, never delete) → RECALL</div>
+
+  <!-- ==================== wires ==================== -->
+  <svg class="wires" width="1600" height="1000">
+    <defs>
+      <marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#4a5064"/></marker>
+      <marker id="ahb" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#6e9ef7"/></marker>
+    </defs>
+    <!-- transcripts -> capture -->
+    <path class="wire" d="M262,505 L318,505"/>
+    <!-- capture -> store -->
+    <path class="wire" d="M574,505 L636,505"/>
+    <!-- capture -> gate (new decision checked) -->
+    <path class="wire blue" d="M450,438 L450,195 L606,195"/>
+    <text class="wl" x="466" y="186">NEW DECISION</text>
+    <!-- gate -> premise check (fallback when rules silent) -->
+    <path class="wire dash" d="M700,256 L700,282 L574,282"/>
+    <text class="wl" x="600" y="274">WHEN SILENT</text>
+    <!-- gate -> court -->
+    <path class="wire blue" d="M834,195 L1034,195"/>
+    <text class="wl" x="900" y="186">ON HIT</text>
+    <!-- court -> store (persist verdict) -->
+    <path class="wire" d="M1160,282 L1160,368 L988,438"/>
+    <text class="wl" x="1030" y="392">VERDICT PERSISTED</text>
+    <!-- store <-> recall -->
+    <path class="wire" d="M988,540 L1038,540"/>
+    <!-- recall -> surfaces (two) -->
+    <path class="wire" d="M1298,520 L1322,520 L1322,462 L1344,462"/>
+    <path class="wire" d="M1298,580 L1322,580 L1322,624 L1344,624"/>
+    <!-- surfaces -> cloud (deployed) -->
+    <path class="wire blue dash" d="M1440,700 L1440,782 L1084,782"/>
+    <!-- engine -> cloud API calls -->
+    <path class="wire dash" d="M450,572 L450,788 L516,788" />
+    <path class="wire dash" d="M1160,652 L1160,714 L1040,742"/>
+  </svg>
+
+  <!-- ==================== FORGET zone (top) ==================== -->
+  <div class="zone" style="left:340px;top:96px;width:900px;height:250px">
+    <span class="zl">ACTIVE PREMISE-INVALIDATION</span>
+  </div>
+
+  <div class="card" style="left:610px;top:140px;width:224px">
+    <div class="hd">RULE-PACK GATE <small>DETERMINISTIC</small></div>
+    <div class="bd">4 SCDF fire rules <span class="mono">rules/fire.yaml</span><br>
+      + pluggable UK pack <span class="mono">rules/uk/</span><br>
+      <b>never mis-fires on camera</b></div>
+  </div>
+
+  <div class="card" style="left:356px;top:238px;width:218px">
+    <div class="hd">LLM PREMISE CHECK <small>QWEN</small></div>
+    <div class="bd">reads each decision's <b>stored assumptions</b>; names the broken premise.</div>
+  </div>
+
+  <div class="card" style="left:1038px;top:118px;width:250px">
+    <div class="hd">DECISION COURT <small>3 QWEN ROLES</small></div>
+    <div class="bd">
+      <div class="row"><span>Proposer — the commercial case</span></div>
+      <div class="row"><span>Guardian — the compliance case</span></div>
+      <div class="row"><span>Judge — writes the <b>reasoned verdict</b>; rule-pack gates the outcome</span></div>
+    </div>
+  </div>
+
+  <!-- ==================== main flow ==================== -->
+  <div class="card" style="left:66px;top:438px;width:196px">
+    <div class="hd">PROJECT EPISODES</div>
+    <div class="bd">meeting transcripts · MoM · RFIs · VE workshops<br>
+      <span class="mono">demo/transcripts/</span><br>3 projects · SG + UK</div>
+  </div>
+
+  <div class="card" style="left:318px;top:438px;width:256px">
+    <div class="hd">CAPTURE — WRITE <small>QWEN-PLUS</small></div>
+    <div class="bd">function-calling extraction → <b>decision + rationale + assumptions</b> + author + machine-checkable attributes</div>
+  </div>
+
+  <div class="card" style="left:636px;top:410px;width:352px">
+    <div class="hd">BI-TEMPORAL DECISION STORE — SQLITE</div>
+    <div class="bd">
+      <div class="row"><span class="dot" style="background:var(--ok)"></span><span><b>valid_from / valid_to</b> — true in the world</span></div>
+      <div class="row"><span class="dot" style="background:var(--blue)"></span><span><b>recorded_at / superseded_at</b> — known to the system</span></div>
+      <div class="row"><span class="dot" style="background:var(--old)"></span><span>supersession links, <b>never DELETE</b> · court records on the same trail</span></div>
+      <div class="row"><span class="dot" style="background:var(--no)"></span><span><span class="mono">get_valid_asof()</span> — time-travel: "what did we know, and when"</span></div>
+    </div>
+  </div>
+
+  <div class="card" style="left:1038px;top:462px;width:260px">
+    <div class="hd">RECALL — READ <small>BUDGETED</small></div>
+    <div class="bd">composite ranking (relevance + recency + importance) → <b>pack to token budget</b> → cited Qwen answer<br>
+      <b>honest abstention</b>: zero LLM calls when nothing is on record</div>
+  </div>
+
+  <!-- ==================== surfaces ==================== -->
+  <div class="card" style="left:1348px;top:398px;width:196px">
+    <div class="hd">CLI DEMO</div>
+    <div class="bd">4 scenes: capture → alert + court → recall → time-travel<br>
+      <span class="mono">--offline</span> replay: <b>no key, no network</b></div>
+  </div>
+
+  <div class="card" style="left:1348px;top:552px;width:196px">
+    <div class="hd">AMBIENT BUBBLE <small>LIVE</small></div>
+    <div class="bd">tracing-paper widget over Revit · one agent, one memory across 3 projects · <b>judges' testing link</b></div>
+  </div>
+
+  <!-- ==================== cloud strip ==================== -->
+  <div class="card" style="left:516px;top:742px;width:568px">
+    <div class="hd">ALIBABA CLOUD — SINGAPORE <small>QWEN CLOUD</small></div>
+    <div class="bd">
+      <b>Model Studio / DashScope endpoint</b> — qwen-plus serves capture · premise check · court ×3 · recall<br>
+      <b>ECS deployment</b> — <span class="mono">trace-bubble</span> systemd service, port 80, live through judging
+    </div>
+  </div>
+
+  <!-- ==================== Track-1 pillar pills ==================== -->
+  <div class="pill" style="left:660px;top:390px">TRACK 1 · EFFICIENT STORAGE &amp; RETRIEVAL</div>
+  <div class="pill" style="left:840px;top:325px">TRACK 1 · TIMELY FORGETTING</div>
+  <div class="pill" style="left:1052px;top:444px">TRACK 1 · RECALL IN LIMITED CONTEXT</div>
+
+  <!-- ==================== title block ==================== -->
+  <div class="tblock">
+    <div class="tb wide"><div class="k">PROJECT</div><div class="v">TRACE <span>· design-decision memory agent</span></div></div>
+    <div class="tb"><div class="k">EVENT</div><div class="v">Qwen Cloud Hackathon · Track 1</div></div>
+    <div class="tb"><div class="k">SHEET</div><div class="v">A-001 · Architecture</div></div>
+    <div class="tb"><div class="k">REV</div><div class="v">A · 2026-07-03</div></div>
+    <div class="tb"><div class="k">STACK</div><div class="v">Python · SQLite · Qwen</div></div>
+    <div class="tb"><div class="k">TESTS</div><div class="v">79 offline · TDD</div></div>
+    <div class="tb"><div class="k">LICENSE</div><div class="v">MIT · open source</div></div>
+  </div>
+</body>
+</html>

@@ -83,6 +83,7 @@ The module-by-module build is in [docs/superpowers/plans/](docs/superpowers/plan
 | 08 | [docs/08-tech-implementation.md](docs/08-tech-implementation.md) | **Tech implementation:** the technologies needed to build each part of Trace, with multiple implementation options per module. |
 | 09 | [docs/09-manual-requirements.md](docs/09-manual-requirements.md) | **Manual requirements:** the human-only tasks (Qwen Cloud account, coupon, API key, live Devpost checks, deliverables) the AI build cannot do. |
 | 10 | [docs/10-pitch-kit.md](docs/10-pitch-kit.md) | **Pitch kit:** the demo-video shot-list (the court is the money shot), the six-slide deck outline, and the final Devpost write-up. |
+| diagram | [docs/diagram/architecture.png](docs/diagram/architecture.png) | **The system architecture diagram** (required submission artifact) — drawn as an architect's sheet: memory lifecycle, rule-gate + court, Alibaba Cloud footprint. Source: [architecture.html](docs/diagram/architecture.html). |
 | demo | [demo/demo-script.md](demo/demo-script.md) | The "Tanglin Rise" (Singapore) demo storyline and on-screen beats. |
 | demo | [demo/transcripts/](demo/transcripts/) | The fictional meeting transcripts the agent ingests in the demo. |
 | research | [.research/](.research/) | Raw deep-research appendix (six dimensions, adversarial verification, synthesis). |
