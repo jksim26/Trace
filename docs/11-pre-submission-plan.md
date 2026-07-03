@@ -52,7 +52,7 @@ The product is named for premise-invalidation, but `check_invalidation` never re
 ## Day 5 — **Sun 6 July**: packaging (Presentation 15% + the submission itself)
 
 - Record + edit the **< 3-min video** (pre-recorded happy path; no copyrighted music/trademarks — rules §4).
-- **Architecture diagram** (docs/02 §8 is still ASCII) — a required submission item, not polish.
+- ~~**Architecture diagram**~~ **DONE 2026-07-03** — docs/diagram/architecture.png (drafting-sheet style, Track-1 pillars mapped).
 - **Deck** and **Devpost write-up** — include the "significantly updated during the Submission Period" explanation the rules ask for.
 - **Blog post (optional but cheap):** a public build-journey post with Qwen Cloud, linked in the submission — separate 10 × ($500 + $500) prize pool.
 - Confirm GitHub shows the MIT license in the repo's **About section** (an explicit rules requirement).
