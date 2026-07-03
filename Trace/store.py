@@ -7,6 +7,7 @@ both the correct memory design and the golden-thread/QP audit requirement.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from dataclasses import dataclass, field
@@ -67,6 +68,39 @@ class Decision:
     id: Optional[str] = None
 
 
+_GENESIS = "0" * 64
+
+
+def _append_audit(conn: sqlite3.Connection, event: str, ref: Optional[str], payload: dict) -> None:
+    """Append a tamper-evident event: hash covers the previous event's hash, so
+    any later edit anywhere in the log breaks every hash after it."""
+    row = conn.execute("SELECT hash FROM audit_log ORDER BY seq DESC LIMIT 1").fetchone()
+    prev = row["hash"] if row else _GENESIS
+    at = _now()
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    h = hashlib.sha256(f"{prev}|{event}|{ref or ''}|{canonical}|{at}".encode()).hexdigest()
+    conn.execute(
+        "INSERT INTO audit_log (event, ref, payload, at, prev_hash, hash) VALUES (?,?,?,?,?,?)",
+        (event, ref, canonical, at, prev, h),
+    )
+
+
+def verify_audit_chain(conn: sqlite3.Connection) -> tuple[bool, int]:
+    """Recompute the whole chain. Returns (True, event_count) if intact,
+    (False, first_bad_seq) if any event was altered, inserted, or removed."""
+    prev = _GENESIS
+    n = 0
+    for r in conn.execute("SELECT * FROM audit_log ORDER BY seq").fetchall():
+        expected = hashlib.sha256(
+            f"{prev}|{r['event']}|{r['ref'] or ''}|{r['payload']}|{r['at']}".encode()
+        ).hexdigest()
+        if r["prev_hash"] != prev or r["hash"] != expected:
+            return False, r["seq"]
+        prev = r["hash"]
+        n += 1
+    return True, n
+
+
 def _next_id(conn: sqlite3.Connection) -> str:
     # MAX-based, not COUNT-based: COUNT collides with any explicitly-supplied id.
     n = conn.execute(
@@ -117,6 +151,13 @@ def add_decision(conn: sqlite3.Connection, decision: Decision) -> Decision:
             decision.status, decision.source_episode,
         ),
     )
+    _append_audit(conn, "add", decision.id, {
+        "statement": decision.statement, "discipline": decision.discipline,
+        "rationale": decision.rationale, "assumptions": decision.assumptions,
+        "author": decision.author, "importance": decision.importance,
+        "valid_from": decision.valid_from, "recorded_at": decision.recorded_at,
+        "status": decision.status, "source_episode": decision.source_episode,
+    })
     conn.commit()
     return decision
 
@@ -177,12 +218,16 @@ def supersede_decision(
             f"supersede {old.superseded_by} instead (no forking the chain)"
         )
     new = add_decision(conn, new_decision)           # insert the replacement first
+    when = _normalize_ts(superseded_at) or _now()
     conn.execute(
         """UPDATE decisions
               SET valid_to = ?, superseded_at = ?, superseded_by = ?, status = 'superseded'
             WHERE id = ?""",
-        (new.valid_from, _normalize_ts(superseded_at) or _now(), new.id, old_id),
+        (new.valid_from, when, new.id, old_id),
     )
+    _append_audit(conn, "supersede", old_id, {
+        "superseded_by": new.id, "valid_to": new.valid_from, "superseded_at": when,
+    })
     conn.commit()
     return new
 

@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from invalidate import check_invalidation
-from store import _now
+from store import _append_audit, _now
 
 load_dotenv()
 
@@ -82,6 +82,10 @@ def _persist(conn, captured, v: Verdict) -> None:
         (captured.decision.id, v.breaks, v.verdict, v.citation,
          v.for_argument, v.against_argument, v.rationale, _now()),
     )
+    _append_audit(conn, "verdict", captured.decision.id, {
+        "verdict": v.verdict, "breaks": v.breaks, "citation": v.citation,
+        "rationale": v.rationale,
+    })
     conn.commit()
 
 

@@ -18,6 +18,19 @@ CREATE TABLE IF NOT EXISTS decisions (
     source_episode TEXT
 );
 
+-- Tamper-evident audit chain: every write (add / supersede / verdict) appends
+-- an event whose hash covers the previous event's hash — so any later edit to
+-- the log breaks the chain and is detectable by verify_audit_chain().
+CREATE TABLE IF NOT EXISTS audit_log (
+    seq       INTEGER PRIMARY KEY AUTOINCREMENT,
+    event     TEXT NOT NULL CHECK (event IN ('add','supersede','verdict')),
+    ref       TEXT,                 -- decision id the event concerns
+    payload   TEXT NOT NULL,        -- canonical JSON of what was written
+    at        TEXT NOT NULL,
+    prev_hash TEXT NOT NULL,
+    hash      TEXT NOT NULL
+);
+
 -- The decision court's record: every verdict is persisted, so the "defensible
 -- record" the court produces actually exists on the trail (never deleted).
 CREATE TABLE IF NOT EXISTS court_records (
