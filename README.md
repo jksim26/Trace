@@ -28,7 +28,7 @@ In a construction project the design brief evolves across dozens of meetings, bu
 
 ## What runs today
 
-The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **105 offline tests**. Everything lives in [`Trace/`](Trace/):
+The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **111 offline tests**. Everything lives in [`Trace/`](Trace/):
 
 | Module | What it does |
 |---|---|
@@ -37,7 +37,7 @@ The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, wi
 | `rulepack.py`, `rules/fire.yaml` | The deterministic **SCDF rule-pack** — four rules from the primary-source research (Cl 3.5.1 height **and** boundary limbs, Cl 3.5.4 low-rise Class 0, Cl 3.15.13 ACP core): the gate that keeps the invalidation alert reliable on camera. |
 | `invalidate.py` | **Invalidation alert**, the centrepiece — premise-aware: it names the *specific stored assumption* the new decision breaks, and when the rule-pack is silent, an **LLM premise check** reads each prior decision's assumptions as the general fallback. |
 | `court.py` | The **decision court**: three Qwen roles (Proposer, Guardian, Judge) deliberate a rule-pack-gated conflict, write the reasoning a personally-liable QP can stand behind, and **persist every verdict** to the court record. |
-| `recall.py`, `strategies.py` | **Recall-to-budget.** Packs only the valid critical decisions within a token budget, cites them, and abstains honestly. Multi-strategy ranking (relevance, recency, importance, composite). |
+| `recall.py`, `strategies.py`, `embeddings.py` | **Hybrid recall-to-budget.** Blends lexical overlap with a **Qwen text-embedding** semantic signal — so a paraphrase with no shared words ("make the exterior envelope cheaper" → the facade decision) is still recalled — then packs only the valid critical decisions within a token budget, cites them, and abstains honestly. The semantic half is additive and degrades to the deterministic lexical path with no key. Multi-strategy ranking (relevance, recency, importance, composite, hybrid). |
 | `mcp_tools.py` | The four functions exposed as **Qwen-Agent custom tools** (LLM-driven), so a Qwen Assistant calls them itself. |
 | `mcp_server.py` | The **real MCP server** (official `mcp` SDK, stdio) — eight **deterministic, keyless** tools over the Model Context Protocol: the never-delete record (`list_projects` / `list_decisions` / `get_decision`), bi-temporal `decisions_asof` time-travel, the rule-pack gate `check_compliance` (returns the clause + official link), `get_code_provision`, `verify_audit_chain` (recomputes the golden thread), and the persisted `court_records`. Any MCP client — Claude Desktop, a Qwen agent, an IDE — can ground on Trace's *certain* half with no key and no network. |
 | `cli.py` | The four-scene **"Tanglin Rise" demo** (capture, then alert plus court, then recall with abstention, then time-travel) plus the staged ambient card. |
