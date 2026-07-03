@@ -52,6 +52,19 @@ def test_conversation_survives_a_project_switch(monkeypatch):
     assert any(r == "user" and "non-combustible facade" in c for r, c in roles)
 
 
+def test_code_registry_reaches_the_llm_with_provisions_and_links(monkeypatch):
+    # "Send me the clause" must be answerable without hunting: provisions and
+    # official URLs are in the grounded context.
+    import openai
+    calls = []
+    monkeypatch.setattr(openai, "OpenAI", lambda **kw: _capture_client("ok", calls))
+    bubble.Api().ask("show me the exact fire code clause")
+    ctx = "\n".join(m["content"] for m in calls[0]["messages"] if m["role"] == "system")
+    assert "CODE REGISTRY" in ctx
+    assert "scdf.gov.sg" in ctx and "legislation.gov.uk" in ctx
+    assert "non-combustible construction throughout" in ctx  # the provision itself
+
+
 def test_court_records_are_part_of_the_llm_context(monkeypatch):
     import openai
     calls = []

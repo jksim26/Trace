@@ -36,6 +36,8 @@ class Rule:
     rationale: str = ""
     citation: str = ""
     blast_radius: list = field(default_factory=list)
+    provision: str = ""   # the requirement wording, curated from the primary source
+    url: str = ""         # official source link — the clause comes to the user
 
 
 @dataclass
@@ -60,6 +62,8 @@ def load_rules(path=None) -> list[Rule]:
                     rationale=raw.get("rationale", ""),
                     citation=raw.get("citation", ""),
                     blast_radius=raw.get("blast_radius", []),
+                    provision=raw.get("provision", ""),
+                    url=raw.get("url", ""),
                 )
             )
     return rules
