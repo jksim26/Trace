@@ -18,13 +18,18 @@ import re
 import sys
 import threading
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Optional
 
+from ambient import match_title
 from court import get_court_records
 from recall import _content_words
 from scenarios import PROJECTS, build_store
 from store import get_all_decisions
+
+_DRAWINGS = Path(__file__).resolve().parent.parent / "demo" / "drawings"
+_WORKSPACE = Path(__file__).with_name("workspace.html")
 
 _HTML = Path(__file__).with_name("bubble.html")
 
@@ -186,6 +191,38 @@ class Api:
             return json.dumps({"answer": "No decision on record; not yet decided.", "cited": []})
 
 
+# Latest ambient nudge — written by /nudge (watcher or workspace), polled by
+# the bubble UI. Everything in it is built LIVE from the store at match time.
+_NUDGE: dict = {"seq": 0}
+
+
+def build_nudge(title: str) -> Optional[dict]:
+    """Run the shared matcher over a window/document title; on a hit, build the
+    nudge from the REAL store: relevant decisions ranked by keyword overlap,
+    with live statuses. Returns None when the title matches no allowlist rule."""
+    m = match_title(title)
+    if m is None:
+        return None
+    api = _get_api(m.project)
+    kw = _content_words(m.keywords)
+    ranked = sorted(
+        get_all_decisions(api.conn),
+        key=lambda d: -len(kw & _content_words(
+            f"{d.statement} {d.rationale} {' '.join(d.assumptions)}")),
+    )
+    rows = [{"id": d.id, "status": d.status, "statement": d.statement}
+            for d in ranked[:4]]
+    global _NUDGE
+    _NUDGE = {
+        "seq": _NUDGE["seq"] + 1,
+        "project": m.project,
+        "context": f"{PROJECTS[m.project]['title'].split('·')[0].strip()} — {m.context}",
+        "decisions": rows,
+        "title": title,
+    }
+    return _NUDGE
+
+
 _apis: dict[str, Api] = {}
 
 
@@ -211,21 +248,43 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    def _send_bytes(self, code, raw: bytes, ctype: str):
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
     def do_GET(self):
         path = self.path.split("?")[0]
         if path in ("/", "/index.html"):
             self._send(200, _HTML.read_text(encoding="utf-8"), "text/html; charset=utf-8")
+        elif path == "/workspace":
+            self._send(200, _WORKSPACE.read_text(encoding="utf-8"), "text/html; charset=utf-8")
         elif path == "/state":
             self._send(200, _get_api(_query_param(self.path, "project")).state())
+        elif path == "/nudge-state":
+            self._send(200, json.dumps(_NUDGE))
+        elif path.startswith("/drawings/"):
+            name = Path(path).name  # no traversal: basename only
+            f = _DRAWINGS / name
+            if f.is_file():
+                self._send_bytes(200, f.read_bytes(), "application/pdf")
+            else:
+                self._send(404, "{}")
         else:
             self._send(404, "{}")
 
     def do_POST(self):
+        n = int(self.headers.get("Content-Length", 0) or 0)
+        data = json.loads(self.rfile.read(n) or b"{}")
         if self.path == "/ask":
-            n = int(self.headers.get("Content-Length", 0) or 0)
-            data = json.loads(self.rfile.read(n) or b"{}")
             api = _get_api(data.get("project") or DEFAULT_PROJECT)
             self._send(200, api.ask(data.get("question", "")))
+        elif self.path == "/nudge":
+            nudge = build_nudge(data.get("title", ""))
+            self._send(200, json.dumps({"matched": nudge is not None,
+                                        **({"seq": nudge["seq"]} if nudge else {})}))
         else:
             self._send(404, "{}")
 
@@ -234,7 +293,9 @@ class _Handler(BaseHTTPRequestHandler):
 
 
 def main(open_browser: bool = True) -> None:
-    server = HTTPServer((HOST, PORT), _Handler)
+    # Threading: a browser PDF viewer can hold its connection open; a
+    # single-threaded server would queue the nudge polls behind it forever.
+    server = ThreadingHTTPServer((HOST, PORT), _Handler)
     url = f"http://{HOST}:{PORT}"
     print(f"Trace bubble  ->  {url}   (Ctrl+C to stop)")
     if open_browser and HOST == "127.0.0.1":

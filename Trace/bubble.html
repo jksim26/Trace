@@ -123,6 +123,28 @@
     loadState(key);
     setState('chat');
   }
+  // Ambient nudges: poll for document-open events (from the Windows watcher or
+  // the workspace page). A new nudge pops the card AND switches the chat's
+  // default project to the document's project — the agent follows your work.
+  let NUDGE_SEQ = 0;
+  function pollNudge(){
+    fetch('/nudge-state').then(r=>r.json()).then(n=>{
+      if(n.seq && n.seq !== NUDGE_SEQ){
+        NUDGE_SEQ = n.seq;
+        if(n.project && n.project !== PROJECT){ PROJECT = n.project; loadStateSilent(n.project); }
+        renderNudge(n);
+      }
+    }).catch(()=>{});
+  }
+  function loadStateSilent(project){
+    fetch('/state?project='+encodeURIComponent(project)).then(r=>r.json()).then(d=>{
+      PROJECT=d.project||PROJECT;
+      const sel=document.getElementById('proj');
+      if(d.projects){sel.innerHTML=d.projects.map(p=>`<option value="${p.key}" ${p.key===PROJECT?'selected':''}>${p.title}</option>`).join('');}
+    }).catch(()=>{});
+  }
+  setInterval(pollNudge, 2500);
+
   // Live from the engine when served by bubble.py; static demo if opened as a bare file.
   loadState('');
 </script>
