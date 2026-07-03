@@ -4,6 +4,7 @@ python-dotenv>=1.0
 rich>=13.0
 pyyaml>=6.0          # rulepack.py
 qwen-agent
+mcp>=1.0             # mcp_server.py — the deterministic, keyless MCP server (stdio)
 # qwen-agent imports these at runtime but does not declare them:
 numpy
 soundfile
