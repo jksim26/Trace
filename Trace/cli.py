@@ -17,6 +17,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from audit import render_chain_status
 from capture import capture_decision
 from court import convene, render_verdict
 from invalidate import check_invalidation, render_alert
@@ -135,7 +136,8 @@ def run(pause: bool = False, client=None):
         if alerts:
             _panel(render_verdict(convene(conn, c, client=client)),
                    title="The decision court — 3 Qwen roles deliberate", style="red")
-        _panel(_trail(conn), title="Never-delete trail (C4) — nothing erased", style="yellow")
+        _panel(_trail(conn) + "\n\n" + render_chain_status(conn),
+               title="Never-delete trail (C4) — tamper-evident", style="yellow")
     _pause(pause)
 
     _rule("SCENE 3 - RECALL UNDER BUDGET  (Handover, 12 May 2026)")
