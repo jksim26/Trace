@@ -33,11 +33,6 @@
     font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden;
     -webkit-user-select:none;user-select:none}
 
-  /* the mocked drawing the sheet lies on — demo scaffolding, hidden with ?bare=1
-     (the real desktop widget floats over Revit itself, not this) */
-  #canvas{position:fixed;inset:0;z-index:0;background:#F1EFE9}
-  #canvas svg{width:100%;height:100%;display:block}
-  body.bare #canvas{display:none}
 
   .stage{position:fixed;right:26px;bottom:24px;z-index:2}
 
@@ -133,8 +128,9 @@
 </style>
 </head>
 <body>
-  <!-- hidden defs: liquid-glass drop gradients/filters, the torn-edge clip, and
-       the mocked plan drawing used as the demo backdrop -->
+  <!-- hidden defs: liquid-glass drop gradients/filters + the torn-edge clip. The
+       widget is transparent and floats over the REAL drawing (workspace PDF /
+       desktop) — no baked-in fake plan. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
     <radialGradient id="dBody" cx="0.62" cy="0.38" r="0.58"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"></stop><stop offset="0.55" stop-color="#DCE9FD" stop-opacity="0.16"></stop><stop offset="0.85" stop-color="#AECBF9" stop-opacity="0.26"></stop><stop offset="1" stop-color="#8FB4F8" stop-opacity="0.4"></stop></radialGradient>
     <filter id="dBlur3" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.6"></feGaussianBlur></filter>
@@ -142,59 +138,8 @@
     <filter id="dBlur6" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5"></feGaussianBlur></filter>
     <linearGradient id="dRim" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"></stop><stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.12"></stop><stop offset="1" stop-color="#FFFFFF" stop-opacity="0.55"></stop></linearGradient>
     <clipPath id="tornA" clipPathUnits="objectBoundingBox"><path d="M0,0.012 C0.04,0.006 0.09,0.016 0.14,0.010 C0.19,0.004 0.24,0.014 0.30,0.009 C0.36,0.004 0.42,0.015 0.48,0.010 C0.54,0.005 0.60,0.014 0.66,0.009 C0.72,0.004 0.78,0.013 0.84,0.008 C0.90,0.004 0.95,0.012 1,0.008 L1,0.988 C0.95,0.995 0.90,0.985 0.84,0.991 C0.78,0.997 0.72,0.986 0.66,0.992 C0.60,0.998 0.54,0.987 0.48,0.992 C0.42,0.997 0.36,0.986 0.30,0.991 C0.24,0.997 0.19,0.987 0.14,0.992 C0.09,0.997 0.04,0.990 0,0.994 Z"></path></clipPath>
-    <symbol id="plan" viewBox="0 0 760 600" preserveAspectRatio="xMidYMid slice">
-      <rect width="760" height="600" fill="#F7F6F2"></rect>
-      <g stroke="#E0E4EB" stroke-width="1" stroke-dasharray="7 5">
-        <line x1="90" y1="46" x2="90" y2="552"></line><line x1="290" y1="46" x2="290" y2="552"></line><line x1="470" y1="46" x2="470" y2="552"></line><line x1="660" y1="46" x2="660" y2="552"></line>
-        <line x1="60" y1="110" x2="726" y2="110"></line><line x1="60" y1="310" x2="726" y2="310"></line><line x1="60" y1="470" x2="726" y2="470"></line>
-      </g>
-      <g fill="none" stroke="#C9CFD9" stroke-width="1">
-        <circle cx="90" cy="32" r="11"></circle><circle cx="290" cy="32" r="11"></circle><circle cx="470" cy="32" r="11"></circle><circle cx="660" cy="32" r="11"></circle>
-        <circle cx="34" cy="110" r="11"></circle><circle cx="34" cy="310" r="11"></circle><circle cx="34" cy="470" r="11"></circle><circle cx="700" cy="60" r="11"></circle>
-      </g>
-      <g font-family="'IBM Plex Mono',monospace" font-size="10" fill="#9AA3B2" text-anchor="middle">
-        <text x="90" y="35.5">1</text><text x="290" y="35.5">2</text><text x="470" y="35.5">3</text><text x="660" y="35.5">4</text>
-        <text x="34" y="113.5">A</text><text x="34" y="313.5">B</text><text x="34" y="473.5">C</text><text x="700" y="42" font-size="8">N</text>
-      </g>
-      <line x1="700" y1="71" x2="700" y2="49" stroke="#A6B0C0" stroke-width="0.8"></line>
-      <rect x="90" y="110" width="570" height="360" fill="none" stroke="#98A2B3" stroke-width="1.6"></rect>
-      <rect x="97" y="117" width="556" height="346" fill="none" stroke="#BCC3CE" stroke-width="0.8"></rect>
-      <g stroke="#98A2B3" stroke-width="1.1">
-        <line x1="290" y1="117" x2="290" y2="250"></line><line x1="290" y1="290" x2="290" y2="463"></line>
-        <line x1="470" y1="117" x2="470" y2="180"></line><line x1="470" y1="220" x2="470" y2="463"></line>
-        <line x1="470" y1="240" x2="653" y2="240"></line><line x1="97" y1="310" x2="150" y2="310"></line><line x1="190" y1="310" x2="290" y2="310"></line>
-      </g>
-      <g fill="none" stroke="#A6B0C0" stroke-width="0.8">
-        <line x1="290" y1="250" x2="330" y2="250"></line><path d="M 330 250 A 40 40 0 0 1 290 290"></path>
-        <line x1="470" y1="220" x2="430" y2="220"></line><path d="M 430 220 A 40 40 0 0 0 470 180"></path>
-        <line x1="190" y1="310" x2="190" y2="270"></line><path d="M 190 270 A 40 40 0 0 0 150 310"></path>
-      </g>
-      <g stroke="#ACB6C5" stroke-width="0.7">
-        <line x1="490" y1="125" x2="490" y2="232"></line><line x1="505" y1="125" x2="505" y2="232"></line><line x1="520" y1="125" x2="520" y2="232"></line><line x1="535" y1="125" x2="535" y2="232"></line><line x1="550" y1="125" x2="550" y2="232"></line><line x1="565" y1="125" x2="565" y2="232"></line><line x1="580" y1="125" x2="580" y2="232"></line><line x1="595" y1="125" x2="595" y2="232"></line><line x1="610" y1="125" x2="610" y2="232"></line><line x1="625" y1="125" x2="625" y2="232"></line><line x1="640" y1="125" x2="640" y2="232"></line>
-        <line x1="482" y1="178" x2="645" y2="178"></line><line x1="645" y1="178" x2="636" y2="173"></line><line x1="645" y1="178" x2="636" y2="183"></line>
-        <rect x="99" y="425" width="184" height="36" fill="none"></rect><circle cx="150" cy="443" r="8" fill="none"></circle>
-        <rect x="525" y="322" width="14" height="14" fill="none"></rect><rect x="560" y="322" width="14" height="14" fill="none"></rect><rect x="525" y="396" width="14" height="14" fill="none"></rect><rect x="560" y="396" width="14" height="14" fill="none"></rect>
-      </g>
-      <rect x="508" y="340" width="96" height="52" rx="2" fill="none" stroke="#A6B0C0" stroke-width="0.9"></rect>
-      <rect x="338" y="248" width="84" height="84" fill="none" stroke="#98A2B3" stroke-width="0.9" stroke-dasharray="5 4"></rect>
-      <line x1="338" y1="248" x2="422" y2="332" stroke="#C6CDD8" stroke-width="0.5"></line><line x1="422" y1="248" x2="338" y2="332" stroke="#C6CDD8" stroke-width="0.5"></line>
-      <g stroke="#A8C6FA" stroke-width="0.8" stroke-dasharray="10 5" opacity="0.75"><line x1="380" y1="196" x2="380" y2="384"></line><line x1="296" y1="290" x2="464" y2="290"></line></g>
-      <g font-family="'IBM Plex Mono',monospace" fill="#9AA3B2" text-anchor="middle">
-        <text x="380" y="226" font-size="11" letter-spacing="3">ATRIUM</text><text x="380" y="240" font-size="8.5" fill="#ACB4C2">68 m²</text>
-        <text x="380" y="348" font-size="7.5" fill="#ACB4C2" letter-spacing="1.5">SKYLIGHT — 4200 CLR</text>
-        <text x="190" y="205" font-size="10" letter-spacing="2.5">STUDIO 03</text><text x="190" y="390" font-size="10" letter-spacing="2.5">STUDIO 04</text>
-        <text x="556" y="330" font-size="9" letter-spacing="2">MEETING 2</text><text x="500" y="196" font-size="7.5" fill="#ACB4C2">UP</text>
-      </g>
-      <g stroke="#A8B2C2" stroke-width="0.6"><line x1="90" y1="520" x2="660" y2="520"></line>
-        <line x1="85" y1="525" x2="95" y2="515" stroke-width="0.9"></line><line x1="285" y1="525" x2="295" y2="515" stroke-width="0.9"></line><line x1="465" y1="525" x2="475" y2="515" stroke-width="0.9"></line><line x1="655" y1="525" x2="665" y2="515" stroke-width="0.9"></line>
-      </g>
-      <g font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="#9AA3B2" text-anchor="middle"><text x="190" y="537">6 000</text><text x="380" y="537">5 400</text><text x="565" y="537">5 700</text></g>
-      <text x="90" y="566" font-family="'IBM Plex Mono',monospace" font-size="8" letter-spacing="1.5" fill="#A5ADBB">TANGLIN RISE — L01 — 1:50</text>
-      <text x="660" y="566" font-family="'IBM Plex Mono',monospace" font-size="10" font-weight="600" letter-spacing="1" fill="#99A2B0" text-anchor="end">A-201</text>
-    </symbol>
   </defs></svg>
 
-  <div id="canvas"><svg aria-hidden="true"><use href="#plan"></use></svg></div>
 
   <div class="stage">
     <div class="sheet hidden" id="sheet">
@@ -421,8 +366,7 @@
         if(n.project && n.project!==PROJECT){PROJECT=n.project;CONVO=[];loadStateSilent(n.project);}
         fillRecord(n.decisions||[], (n.context||"").split("—")[0].trim());
         CTX=true;
-        if($("sheet").classList.contains("hidden")){$("badge").textContent=(n.decisions||[]).length||1;$("badge").classList.remove("hide");}
-        else layout();
+        openSheet();   // ambient: Trace surfaces itself, unprompted, when you open a drawing
       }
     }).catch(function(){});
   }
@@ -435,7 +379,6 @@
   }
   setInterval(pollNudge,2500);
 
-  if(location.search.indexOf("bare")>=0)document.body.classList.add("bare");
   renderChips("suggest",SUGGEST);
   loadState("");
 </script>
