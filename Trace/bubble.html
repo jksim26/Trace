@@ -38,7 +38,13 @@
 
   /* ── the liquid-glass drop (idle) ───────────────────────────────────────── */
   .drop{position:relative;width:120px;cursor:pointer;transition:opacity .4s ease,transform .4s ease;
-    filter:drop-shadow(0 6px 14px rgba(60,70,95,.18))}
+    filter:drop-shadow(0 6px 14px rgba(60,70,95,.18));animation:dropBreath 5.6s ease-in-out infinite}
+  /* the whole drop breathes: a slow, soft halo swelling in and out with the
+     silhouette's own inhale/exhale (the geometry breath lives in updateDrops) */
+  @keyframes dropBreath{
+    0%,100%{filter:drop-shadow(0 5px 13px rgba(60,70,95,.15))}
+    50%    {filter:drop-shadow(0 9px 22px rgba(74,96,150,.24))}}
+  @media (prefers-reduced-motion:reduce){.drop{animation:none}}
   .drop svg{width:120px;height:76px;display:block;overflow:visible}
   .drop .label{margin-top:2px;text-align:center;font:600 8px/1 var(--mono);letter-spacing:.26em;color:var(--ink37)}
   .drop .badge{position:absolute;top:2px;right:8px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;
@@ -229,10 +235,22 @@
       var keys=["clipPath","shadow","body","band","band2","edge","rim"];
       for(var j=0;j<drops.length;j++){
         var d=drops[j], p=d.phase;
-        var r1=45+1.6*Math.sin(t*0.5+p), r2=16.5+1.1*Math.sin(t*0.7+p+1.7);
-        var c1=[117+2*Math.sin(t*0.33+p),61+1.4*Math.sin(t*0.47+p+0.8)];
-        var wander=12*Math.sin(t*0.21+p+0.6);
-        var c2=[36-0.35*wander,62+2.2*Math.sin(t*0.41+p+2)];
+        // one calm breath the whole drop rides on (~5s inhale/exhale), plus a
+        // slower undertone so the rhythm never loops audibly on itself
+        var swell=0.55*Math.sin(t*1.15+p)+0.45*Math.sin(t*0.43+p*1.7+0.9);
+        // radii breathe together — the silhouette visibly swells and settles
+        var r1=43.6+3.6*swell+0.7*Math.sin(t*1.9+p);
+        var r2=16.1+2.3*Math.sin(t*1.02+p+2.3)+0.5*Math.sin(t*2.3+p);
+        // body anchored bottom-right, drifting just enough to feel alive
+        var c1=[116+2.4*Math.sin(t*0.37+p+0.4),60+2.1*Math.sin(t*0.52+p+1.1)];
+        // the satellite orbits on a gentle arc and is pulled in and out on a
+        // living neck — but reach is a FRACTION of the pinch-off distance, so
+        // the two never break apart: it flows and stretches, it doesn't toggle
+        var span=r1+r2*2.5;                                   // distance the neck would snap at
+        var neck=0.70+0.17*Math.sin(t*0.9+p+1.3)+0.03*Math.sin(t*2.1+p); // stays ~[0.53,0.90]
+        var reach=span*neck;
+        var ang=Math.PI+0.30*Math.sin(t*0.6+p+0.7)+0.10*Math.sin(t*1.3+p);  // aimed left, sweeping up/down
+        var c2=[c1[0]+reach*Math.cos(ang),c1[1]+reach*Math.sin(ang)];
         var path=metaball(r1,r2,c1,c2)||twoCircles(r1,r2,c1,c2);
         for(var k=0;k<keys.length;k++)d[keys[k]].setAttribute("d",path);
         var set=function(el,cx,cy,rx,ry,rot){el.setAttribute("cx",cx.toFixed(1));el.setAttribute("cy",cy.toFixed(1));el.setAttribute("rx",rx.toFixed(1));el.setAttribute("ry",ry.toFixed(1));el.setAttribute("transform","rotate("+rot+" "+cx.toFixed(1)+" "+cy.toFixed(1)+")");};
