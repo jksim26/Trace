@@ -28,7 +28,7 @@ In a construction project the design brief evolves across dozens of meetings, bu
 
 ## What runs today
 
-The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **90 offline tests**. Everything lives in [`Trace/`](Trace/):
+The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, with **111 offline tests**. Everything lives in [`Trace/`](Trace/):
 
 | Module | What it does |
 |---|---|
@@ -37,8 +37,9 @@ The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, wi
 | `rulepack.py`, `rules/fire.yaml` | The deterministic **SCDF rule-pack** — four rules from the primary-source research (Cl 3.5.1 height **and** boundary limbs, Cl 3.5.4 low-rise Class 0, Cl 3.15.13 ACP core): the gate that keeps the invalidation alert reliable on camera. |
 | `invalidate.py` | **Invalidation alert**, the centrepiece — premise-aware: it names the *specific stored assumption* the new decision breaks, and when the rule-pack is silent, an **LLM premise check** reads each prior decision's assumptions as the general fallback. |
 | `court.py` | The **decision court**: three Qwen roles (Proposer, Guardian, Judge) deliberate a rule-pack-gated conflict, write the reasoning a personally-liable QP can stand behind, and **persist every verdict** to the court record. |
-| `recall.py`, `strategies.py` | **Recall-to-budget.** Packs only the valid critical decisions within a token budget, cites them, and abstains honestly. Multi-strategy ranking (relevance, recency, importance, composite). |
-| `mcp_tools.py` | The four functions exposed as **Qwen-Agent custom tools**, so a Qwen Assistant calls them itself (MCP-protocol exposure is roadmap). |
+| `recall.py`, `strategies.py`, `embeddings.py` | **Hybrid recall-to-budget.** Blends lexical overlap with a **Qwen text-embedding** semantic signal — so a paraphrase with no shared words ("make the exterior envelope cheaper" → the facade decision) is still recalled — then packs only the valid critical decisions within a token budget, cites them, and abstains honestly. The semantic half is additive and degrades to the deterministic lexical path with no key. Multi-strategy ranking (relevance, recency, importance, composite, hybrid). |
+| `mcp_tools.py` | The four functions exposed as **Qwen-Agent custom tools** (LLM-driven), so a Qwen Assistant calls them itself. |
+| `mcp_server.py` | The **real MCP server** (official `mcp` SDK, stdio) — eight **deterministic, keyless** tools over the Model Context Protocol: the never-delete record (`list_projects` / `list_decisions` / `get_decision`), bi-temporal `decisions_asof` time-travel, the rule-pack gate `check_compliance` (returns the clause + official link), `get_code_provision`, `verify_audit_chain` (recomputes the golden thread), and the persisted `court_records`. Any MCP client — Claude Desktop, a Qwen agent, an IDE — can ground on Trace's *certain* half with no key and no network. |
 | `cli.py` | The four-scene **"Tanglin Rise" demo** (capture, then alert plus court, then recall with abstention, then time-travel) plus the staged ambient card. |
 | `scenarios.py`, `rules/uk/` | **Three demo projects, three companies, three code regimes** — SG high-rise (SCDF rule-gated), SG industrial MEP (LLM-premise-check story), UK residential (a separate pluggable rule-pack: reg 7(2) combustible ban). Each store carries valid decisions, rejected proposals, superseded chains, and court records — real memory to recall. |
 | `ambient.py`, `watch_rules.yaml` | **The ambient trigger — one brain, two worlds.** An allowlist matcher maps window/document titles to project contexts. Called by BOTH trigger paths, so the browser demo and the real desktop watcher are provably the same logic. |
@@ -60,6 +61,7 @@ python cli.py            # the four-scene "Tanglin Rise" demo (add --pause to st
 python cli.py --offline  # the same demo with canned Qwen responses — no key, no network, cannot fail
 python bubble.py         # the ambient bubble, a local web app with chat wired live to the engine
 python mcp_tools.py      # a Qwen-Agent Assistant autonomously calling the tools
+python mcp_server.py     # the deterministic, keyless MCP server (stdio) — register with any MCP client
 # then open http://127.0.0.1:8765/workspace — open a drawing, watch the ambient nudge fire
 python watcher.py        # (Windows) the real desktop watcher — same matcher, real window titles
 ```
@@ -67,6 +69,7 @@ python watcher.py        # (Windows) the real desktop watcher — same matcher, 
 - **`cli.py`**: Scene 1 capture, then Scene 2 the red invalidation alert plus the **decision court**'s REJECT verdict (the rejected proposal is preserved, never deleted), then Scene 3 recall-to-budget with the token meter plus abstention, then Scene 4 **bi-temporal time-travel**, then the staged ambient card. Capture and the court make real Qwen calls; the alert and abstention are deterministic.
 - **`bubble.py`**: serves the Trace bubble at `http://127.0.0.1:8765` and opens it in your browser. On Windows, double-click `run_bubble.bat` (or `run_demo.bat` for the CLI).
 - **`mcp_tools.py`**: a Qwen-Agent Assistant calls `capture_decision` then `check_invalidation` and concludes the PE-core ACP swap invalidates D-001. (`test_connection.py` is a live-API smoke check; it skips itself automatically when no key is set.)
+- **`mcp_server.py`**: the deterministic half over the Model Context Protocol — point any MCP client at `python mcp_server.py` and it can `verify_audit_chain`, `decisions_asof`, `check_compliance`, and read the record with **no API key**. The tool functions are plain and importable, so the logic is unit-tested without the SDK.
 - Windows `CERTIFICATE_VERIFY_FAILED`? `pip-system-certs` (already in requirements) bridges the Windows cert store into Python.
 
 The module-by-module build is in [docs/superpowers/plans/](docs/superpowers/plans/) and [docs/superpowers/specs/](docs/superpowers/specs/); the design is in [docs/02-architecture.md](docs/02-architecture.md).

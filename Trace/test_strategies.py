@@ -1,5 +1,8 @@
 from store import Decision
-from strategies import STRATEGIES, by_composite, by_importance, by_recency, by_relevance
+from strategies import (
+    STRATEGIES, by_composite, by_hybrid, by_importance, by_recency, by_relevance,
+    hybrid_relevant,
+)
 
 
 def _d(id, statement="x", rec="2026-01-01", imp=3):
@@ -30,5 +33,21 @@ def test_composite_blends_all_three():
     assert by_composite(ds, "facade cladding")[0].id == "hi"
 
 
+def test_hybrid_gate_admits_a_semantic_match_and_reorders_by_it():
+    # "B" shares no query word but is semantically near; the gate admits it and
+    # the ranker floats it above a lexical-only weak match.
+    ds = [_d("A", statement="parking ramp gradient"),
+          _d("B", statement="core relocation east")]
+    sem = {id(ds[0]): 0.05, id(ds[1]): 0.88}         # only B is semantically close
+    admitted = [d.id for d in hybrid_relevant(ds, "move the service riser", sem)]
+    assert admitted == ["B"]                          # A below the floor, B above it
+    assert by_hybrid(ds, "move the service riser", sem)[0].id == "B"
+
+
+def test_hybrid_with_no_sem_is_purely_lexical():
+    ds = [_d("A", statement="facade cladding"), _d("B", statement="parking")]
+    assert hybrid_relevant(ds, "facade", None) == [ds[0]]   # lexical gate only
+
+
 def test_registry_exposes_named_strategies():
-    assert set(STRATEGIES) == {"relevance", "recency", "importance", "composite"}
+    assert set(STRATEGIES) == {"relevance", "recency", "importance", "composite", "hybrid"}

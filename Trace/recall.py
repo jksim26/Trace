@@ -3,11 +3,14 @@ token budget, with honest abstention. Directly-relevant rejected/superseded
 decisions are added as history, so an answer to "can we change it?" can cite what
 was already tried and rejected. See docs/02-architecture.md §4 Pipeline B.
 
-Retrieval + abstention are deterministic: keyword overlap gates relevance, and
-the relevant candidates are packed in COMPOSITE order (relevance + recency +
-importance — strategies.py, à la Generative Agents) until the token budget is
-spent. The final answer is synthesised by qwen-plus, grounded ONLY in the
-packed decisions.
+Retrieval is HYBRID: lexical overlap AND a Qwen-embedding semantic signal both
+gate relevance (so a paraphrase with no shared words is still recalled), and the
+candidates are packed in a blended relevance + recency + importance order
+(strategies.py, à la Generative Agents) until the token budget is spent. The
+semantic half is strictly additive and degradable — no key / no network / any
+embedding error falls straight back to the deterministic lexical path, so
+abstention stays deterministic. The final answer is synthesised by qwen-plus,
+grounded ONLY in the packed decisions.
 """
 from __future__ import annotations
 
@@ -18,8 +21,9 @@ from dataclasses import dataclass, field
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from embeddings import client_embedder, cosine
 from store import Decision, get_all_decisions, get_valid_decisions
-from strategies import by_composite
+from strategies import by_hybrid, hybrid_relevant
 
 load_dotenv()
 
@@ -53,15 +57,27 @@ class RecallResult:
     candidates: int = 0  # how many decisions matched the query (for the budget meter)
 
 
-def _score(d: Decision, qwords: set) -> int:
-    dw = _content_words(f"{d.statement} {d.rationale} {' '.join(d.assumptions)}")
-    return len(qwords & dw)
+def _sem_scores(question: str, decisions, embedder):
+    """Semantic cosine of the query against each decision, as {id(d): cosine}.
+    Returns None — so callers fall straight back to lexical — when there is no
+    embedder, no decisions, or any embedding call fails (no key / no network)."""
+    if not embedder or not decisions:
+        return None
+    try:
+        texts = [f"{d.statement}. {d.rationale}" for d in decisions]
+        vecs = embedder([question] + texts)
+        if not vecs or len(vecs) != len(decisions) + 1:
+            return None
+        qv = vecs[0]
+        return {id(d): cosine(qv, vecs[i + 1]) for i, d in enumerate(decisions)}
+    except Exception:
+        return None
 
 
-def _pack(decisions, qwords, budget, used, question: str = ""):
-    relevant = [d for d in decisions if _score(d, qwords) > 0]
+def _pack(decisions, question, budget, used, sem=None):
+    relevant = hybrid_relevant(decisions, question, sem)   # lexical OR semantic gate
     packed = []
-    for d in by_composite(relevant, question):  # relevance + recency + importance
+    for d in by_hybrid(relevant, question, sem):           # relevance + recency + importance
         cost = _est_tokens(f"{d.statement} {d.rationale}")
         if used + cost > budget:
             break
@@ -70,8 +86,8 @@ def _pack(decisions, qwords, budget, used, question: str = ""):
     return packed, used
 
 
-def retrieve(conn, question: str, budget: int = TOKEN_BUDGET):
-    return _pack(get_valid_decisions(conn), _content_words(question), budget, 0, question)
+def retrieve(conn, question: str, budget: int = TOKEN_BUDGET, sem=None):
+    return _pack(get_valid_decisions(conn), question, budget, 0, sem)
 
 
 _ANSWER_SYS = (
@@ -88,14 +104,21 @@ def _fmt(d: Decision) -> str:
     return f"{d.id} [{d.status}] {d.statement} | rationale: {d.rationale} | valid_from: {d.valid_from}"
 
 
-def recall_decisions(conn, question: str, budget: int = TOKEN_BUDGET, client=None, model: str = MODEL) -> RecallResult:
-    qwords = _content_words(question)
+def recall_decisions(conn, question: str, budget: int = TOKEN_BUDGET, client=None,
+                     model: str = MODEL, embedder=None) -> RecallResult:
     valid = get_valid_decisions(conn)
     others = [d for d in get_all_decisions(conn) if d.status != "valid"]
-    candidates = sum(1 for d in valid + others if _score(d, qwords) > 0)
 
-    packed, used = _pack(valid, qwords, budget, 0, question)      # currently-valid first
-    extra, used = _pack(others, qwords, budget, used, question)   # then relevant history (rejected/superseded)
+    # Hybrid retrieval: blend lexical overlap with Qwen-embedding cosine. The
+    # embedder rides the same client; with no key / no client it stays None and
+    # retrieval is exactly the deterministic lexical path.
+    if embedder is None and client is not None:
+        embedder = client_embedder(client)
+    sem = _sem_scores(question, valid + others, embedder)
+    candidates = len(hybrid_relevant(valid + others, question, sem))
+
+    packed, used = _pack(valid, question, budget, 0, sem)      # currently-valid first
+    extra, used = _pack(others, question, budget, used, sem)   # then relevant history (rejected/superseded)
     chosen = packed + extra
     if not chosen:
         # Report the real candidate count: abstention can also happen because the

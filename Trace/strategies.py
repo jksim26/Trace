@@ -59,9 +59,49 @@ def by_composite(decisions, query: str):
     return sorted(decisions, key=score, reverse=True)
 
 
+SEM_FLOOR = 0.42  # cosine below this is treated as "not semantically relevant"
+
+
+def hybrid_relevant(decisions, query: str, sem=None, floor: float = SEM_FLOOR):
+    """The relevance gate for hybrid recall: a decision is a candidate if it
+    overlaps the query lexically OR is semantically near it. `sem` maps id(d) ->
+    cosine in [-1, 1]; when it is None the gate is purely lexical (unchanged)."""
+    qw = _words(query)
+    out = []
+    for d in decisions:
+        lexical = relevance_score(d, qw) > 0
+        semantic = sem is not None and sem.get(id(d), 0.0) >= floor
+        if lexical or semantic:
+            out.append(d)
+    return out
+
+
+def by_hybrid(decisions, query: str, sem=None):
+    """Rank by blended relevance + recency + importance, where relevance is the
+    stronger of normalised lexical overlap and semantic cosine. With sem=None this
+    is by_composite with a graded (not 0/1) lexical term."""
+    qw = _words(query)
+    by_time = sorted(decisions, key=lambda x: x.recorded_at or "")
+    pos = {id(d): i for i, d in enumerate(by_time)}
+    span = max(1, len(decisions) - 1)
+    lex = {id(d): relevance_score(d, qw) for d in decisions}
+    mx = max(lex.values()) if lex else 0
+
+    def score(d):
+        rel_lex = (lex[id(d)] / mx) if mx else 0.0
+        rel_sem = max(0.0, sem.get(id(d), 0.0)) if sem else 0.0
+        relevance = max(rel_lex, rel_sem)
+        rec = pos[id(d)] / span
+        imp = (d.importance or 0) / 5.0
+        return relevance + rec + imp
+
+    return sorted(decisions, key=score, reverse=True)
+
+
 STRATEGIES = {
     "relevance": lambda decisions, query="": by_relevance(decisions, query),
     "recency": lambda decisions, query="": by_recency(decisions),
     "importance": lambda decisions, query="": by_importance(decisions),
     "composite": lambda decisions, query="": by_composite(decisions, query),
+    "hybrid": lambda decisions, query="", sem=None: by_hybrid(decisions, query, sem),
 }

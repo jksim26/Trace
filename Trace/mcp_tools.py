@@ -2,8 +2,9 @@
 custom-skills judging hook). Registers capture_decision, check_invalidation,
 recall_decisions, and supersede_decision as @register_tool classes over a shared
 in-memory store, so a Qwen-Agent Assistant can call them as tools. These are
-qwen-agent custom tools, not an MCP server — exposing them over the MCP protocol
-is roadmap (hence the filename). See docs/02 §5.
+qwen-agent custom tools (LLM-driven, and they need the API key). The real,
+deterministic MCP server — no key, no network, spoken over the MCP protocol — is
+mcp_server.py. See docs/02 §5.
 """
 from __future__ import annotations
 
