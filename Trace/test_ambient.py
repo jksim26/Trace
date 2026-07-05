@@ -64,7 +64,8 @@ def test_http_round_trip_watcher_to_nudge_state():
         assert post_nudge("Inbox - Outlook", url) is False
         # The workspace page and a demo drawing are served.
         with urllib.request.urlopen(f"{url}/workspace", timeout=5) as r:
-            assert b"SIMULATED WORKSPACE" in r.read()
+            body = r.read()
+            assert b"PROJECT WORKSPACE" in body and b"SIMULATED" in body
         with urllib.request.urlopen(f"{url}/drawings/Tanglin-Rise_L01_Fire-Plan.pdf", timeout=5) as r:
             assert r.read()[:5] == b"%PDF-"
     finally:

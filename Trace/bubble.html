@@ -24,8 +24,8 @@
     --line:rgba(45,50,58,.14); --line-s:rgba(45,50,58,.28);
     --accent:#8FB4F8; --accent-faint:rgba(143,180,248,.08); --link:#2a78d6;
     --inforce:#55835B; --superseded:#C08A2D; --rejected:#B04A3E;
-    --sheet-bg:rgba(252,251,247,.3);
-    --sheet-blur:blur(1.5px) saturate(1.08);
+    --sheet-bg:rgba(252,251,247,.62);
+    --sheet-blur:blur(7px) saturate(1.08);
     --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.42 0 0 0 0 0.40 0 0 0 0.32 0'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -64,11 +64,13 @@
     background:radial-gradient(circle at 34% 28%,#EAF1FE 0%,var(--accent) 55%,#7FA9F7 100%);
     box-shadow:inset -1px -1.5px 2.5px rgba(88,124,200,.45),inset .8px 1px 2px rgba(255,255,255,.7),0 .5px 1.5px rgba(80,105,170,.25)}
   .wordmark{font:600 9.5px/1 var(--mono);letter-spacing:.24em;color:var(--ink60)}
-  .hdr .sp{flex:1}
+  .hdr .sp{flex:1;min-width:4px}
   select.prj{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--ink37);
-    border:0;background:transparent;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;text-align:right;max-width:150px}
+    border:0;background:transparent;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;
+    text-align:right;flex:0 1 auto;min-width:0;max-width:128px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   select.prj option{font-family:var(--mono);color:var(--ink)}
-  .x{margin-left:8px;font:400 15px/1 var(--serif);color:var(--ink37);cursor:pointer;opacity:.7;transition:opacity .15s}
+  .x{flex:none;margin-left:8px;font:400 15px/1 var(--serif);color:var(--ink37);cursor:pointer;opacity:.7;transition:opacity .15s}
+  .x:focus-visible,.chip:focus-visible,.send:focus-visible,.doc:focus-visible{outline:1.5px solid var(--accent);outline-offset:2px}
   .x:hover{opacity:1}
 
   /* scroll region between header and the ask bar */
