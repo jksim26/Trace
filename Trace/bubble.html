@@ -20,133 +20,139 @@
   :root{
     --serif:'Newsreader',Georgia,'Times New Roman',serif;
     --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
-    --ink:#23262B; --ink60:rgba(35,38,43,.6); --ink45:rgba(35,38,43,.45); --ink37:rgba(35,38,43,.37);
-    --line:rgba(45,50,58,.14); --line-s:rgba(45,50,58,.28);
-    --accent:#8FB4F8; --accent-faint:rgba(143,180,248,.08); --link:#2a78d6;
-    --inforce:#55835B; --superseded:#C08A2D; --rejected:#B04A3E;
-    --sheet-bg:rgba(252,251,247,.62);
-    --sheet-blur:blur(7px) saturate(1.08);
-    --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.42 0 0 0 0 0.40 0 0 0 0.32 0'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)'/%3E%3C/svg%3E");
+    /* dark glass card — high tint so the record stays legible over white
+       drawings, a dark workspace, or any real desktop behind it */
+    --tx:#EAEDF3; --tx60:rgba(234,237,243,.62); --tx45:rgba(234,237,243,.46); --tx35:rgba(234,237,243,.34);
+    --line:rgba(255,255,255,.10); --line-s:rgba(255,255,255,.20);
+    --accent:#8FB4F8; --accent-faint:rgba(143,180,248,.10); --link:#A9C6FA;
+    --inforce:#82BD8F; --superseded:#D9AE5F; --rejected:#E08A80;
+    --sheet-bg:rgba(15,19,27,.68);
+    --sheet-blur:blur(22px) saturate(1.2);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;background:transparent;color:var(--ink);
+  html,body{height:100%;background:transparent;color:var(--tx);
     font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden;
     -webkit-user-select:none;user-select:none}
+  /* Opened directly (not as the workspace overlay): give the glass a room to
+     sit in — same graphite + soft glow as the workspace, so the judge's first
+     visit to "/" looks intentional rather than a card on a bare page. */
+  body.standalone{background:
+    radial-gradient(52% 44% at 18% -6%, rgba(143,180,248,.10), transparent 68%),
+    radial-gradient(44% 40% at 88% 108%, rgba(143,180,248,.06), transparent 70%),
+    #101318}
 
 
   .stage{position:fixed;right:26px;bottom:24px;z-index:2}
 
   /* ── the liquid-glass drop (idle) ───────────────────────────────────────── */
   .drop{position:relative;width:120px;cursor:pointer;transition:opacity .4s ease,transform .4s ease;
-    filter:drop-shadow(0 6px 14px rgba(60,70,95,.18))}
+    filter:drop-shadow(0 6px 14px rgba(20,30,55,.35))}
   .drop svg{width:120px;height:76px;display:block;overflow:visible}
-  .drop .label{margin-top:2px;text-align:center;font:600 8px/1 var(--mono);letter-spacing:.26em;color:var(--ink37)}
+  .drop .label{margin-top:2px;text-align:center;font:600 8px/1 var(--mono);letter-spacing:.26em;color:rgba(150,162,185,.85)}
   .drop .badge{position:absolute;top:2px;right:8px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;
-    background:var(--rejected);color:#fff;font:600 9px/16px var(--mono);text-align:center;
+    background:#B04A3E;color:#fff;font:600 9px/16px var(--mono);text-align:center;
     box-shadow:0 2px 5px rgba(120,60,55,.4)}
   body.open .drop{opacity:0;transform:translateY(8px) scale(.9);pointer-events:none}
 
-  /* ── the torn trace sheet ───────────────────────────────────────────────── */
+  /* ── the glass sheet ────────────────────────────────────────────────────── */
   .sheet{position:absolute;right:0;bottom:104px;width:330px;transform-origin:bottom right;
     transition:opacity .34s cubic-bezier(.32,.72,0,1),transform .34s cubic-bezier(.32,.72,0,1)}
   .sheet.hidden{opacity:0;transform:scale(.95) translateY(10px);pointer-events:none}
-  .paper{position:relative;clip-path:url(#tornA);background:var(--sheet-bg);
+  .paper{position:relative;border-radius:18px;background:var(--sheet-bg);
+    border:1px solid var(--line-s);
     -webkit-backdrop-filter:var(--sheet-blur);backdrop-filter:var(--sheet-blur);
-    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.22);
-    filter:drop-shadow(0 -1px 0 rgba(255,255,255,.7)) drop-shadow(0 1.5px 0 rgba(255,255,255,.75))
-      drop-shadow(0 2px 3px rgba(60,70,95,.10)) drop-shadow(0 14px 30px rgba(60,70,95,.16))}
-  .grain{position:absolute;inset:0;background-image:var(--grain);background-size:130px 130px;opacity:.32;pointer-events:none}
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(255,255,255,.05),
+      0 2px 6px rgba(0,0,0,.25),0 22px 48px rgba(0,0,0,.42)}
   .pad{position:relative;padding:22px 24px 24px}
 
   /* header */
   .hdr{display:flex;align-items:center;gap:8px}
   .hdot{width:12px;height:11px;flex:none;border-radius:52% 48% 50% 50%/56% 46% 58% 42%;
     background:radial-gradient(circle at 34% 28%,#EAF1FE 0%,var(--accent) 55%,#7FA9F7 100%);
-    box-shadow:inset -1px -1.5px 2.5px rgba(88,124,200,.45),inset .8px 1px 2px rgba(255,255,255,.7),0 .5px 1.5px rgba(80,105,170,.25)}
-  .wordmark{font:600 9.5px/1 var(--mono);letter-spacing:.24em;color:var(--ink60)}
+    box-shadow:inset -1px -1.5px 2.5px rgba(88,124,200,.45),inset .8px 1px 2px rgba(255,255,255,.7),0 .5px 1.5px rgba(0,0,0,.35)}
+  .wordmark{font:600 9.5px/1 var(--mono);letter-spacing:.24em;color:var(--tx60)}
   .hdr .sp{flex:1;min-width:4px}
-  select.prj{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--ink37);
+  select.prj{font:600 8.5px/1 var(--mono);letter-spacing:.1em;color:var(--tx45);
     border:0;background:transparent;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;
     text-align:right;flex:0 1 auto;min-width:0;max-width:128px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  select.prj option{font-family:var(--mono);color:var(--ink)}
-  .x{flex:none;margin-left:8px;font:400 15px/1 var(--serif);color:var(--ink37);cursor:pointer;opacity:.7;transition:opacity .15s}
-  .x:focus-visible,.chip:focus-visible,.send:focus-visible,.doc:focus-visible{outline:1.5px solid var(--accent);outline-offset:2px}
+  select.prj option{font-family:var(--mono);color:#23262B;background:#fff}
+  .x{flex:none;margin-left:8px;font:400 15px/1 var(--serif);color:var(--tx45);cursor:pointer;opacity:.7;transition:opacity .15s}
   .x:hover{opacity:1}
+  .x:focus-visible,.chip:focus-visible,.send:focus-visible{outline:1.5px solid var(--accent);outline-offset:2px}
 
   /* scroll region between header and the ask bar */
   .body{max-height:56vh;overflow-y:auto;overflow-x:hidden;margin:0 -2px;padding:0 2px;
     scrollbar-width:none}
   .body::-webkit-scrollbar{width:0}
 
-  .intro{margin:16px 0 0;font:300 15px/1.55 var(--serif);color:var(--ink)}
-  .kicker{margin:18px 0 8px;font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--ink37)}
+  .intro{margin:16px 0 0;font:300 15px/1.55 var(--serif);color:var(--tx)}
+  .kicker{margin:18px 0 8px;font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--tx45)}
   .chips{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
   .chips.wrap{flex-direction:row;flex-wrap:wrap}
-  .chip{font:300 13px/1.3 var(--serif);color:var(--ink);text-align:left;cursor:pointer;
-    padding:7px 13px 8px;border:1px solid rgba(255,255,255,.65);border-radius:9px;
-    background:linear-gradient(165deg,rgba(255,255,255,.42) 0%,rgba(255,255,255,.12) 55%,rgba(200,220,252,.2) 100%);
-    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 1px 3px rgba(80,105,170,.12),0 0 0 .5px rgba(120,140,170,.28);
-    transition:border-color .15s,background .15s}
-  .chip:hover{border-color:var(--accent);background:var(--accent-faint)}
+  .chip{font:300 13px/1.3 var(--serif);color:var(--tx);text-align:left;cursor:pointer;
+    padding:7px 13px 8px;border:1px solid var(--line-s);border-radius:10px;
+    background:rgba(255,255,255,.06);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
+    transition:border-color .18s ease,background .18s ease,transform .18s ease}
+  .chip:hover{border-color:var(--accent);background:var(--accent-faint);transform:translateY(-1px)}
 
   /* conversation */
-  .you{margin:16px 0 0;font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--ink37)}
-  .youq{margin:4px 0 0;font:italic 300 13.5px/1.4 var(--serif);color:var(--ink60)}
-  .ans{margin:12px 0 0;font:300 15px/1.55 var(--serif);color:var(--ink);overflow-wrap:anywhere}
+  .you{margin:16px 0 0;font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--tx45)}
+  .youq{margin:4px 0 0;font:italic 300 13.5px/1.4 var(--serif);color:var(--tx60)}
+  .ans{margin:12px 0 0;font:300 15px/1.55 var(--serif);color:var(--tx);overflow-wrap:anywhere}
   .ans .cite,.cite{font:600 11px/1 var(--mono);color:var(--link);text-decoration:none;
-    white-space:nowrap;border-bottom:1px solid rgba(42,120,214,.28)}
+    white-space:nowrap;border-bottom:1px solid rgba(169,198,250,.35)}
   a.cite{white-space:normal}
 
   /* decision record (the revision schedule) */
   .rec-head{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 0}
-  .rec-head span{font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--ink37)}
+  .rec-head span{font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--tx45)}
   .rec-body{margin:6px -24px 0;border-top:1px solid var(--line)}
   .rec-row{display:grid;grid-template-columns:7px 44px 1fr 58px;column-gap:9px;
-    padding:9px 24px 10px;border-bottom:1px solid var(--line);align-items:start}
+    padding:9px 24px 10px;border-bottom:1px solid var(--line);align-items:start;
+    transition:background .15s ease}
+  .rec-row:hover{background:rgba(255,255,255,.04)}
   .pdot{width:7px;height:7px;margin-top:5px}
-  .rid{font:600 10.5px/1.5 var(--mono);letter-spacing:.06em;color:var(--ink);white-space:nowrap}
-  .rst{font:300 13px/1.45 var(--serif);color:var(--ink)}
-  .rdt{font:600 9px/1.7 var(--mono);letter-spacing:.03em;color:var(--ink60);text-align:right;white-space:nowrap}
+  .rid{font:600 10.5px/1.5 var(--mono);letter-spacing:.06em;color:var(--tx);white-space:nowrap}
+  .rst{font:300 13px/1.45 var(--serif);color:var(--tx)}
+  .rdt{font:600 9px/1.7 var(--mono);letter-spacing:.03em;color:var(--tx60);text-align:right;white-space:nowrap}
   .legend{display:flex;flex-wrap:wrap;gap:13px;margin-top:10px}
-  .legend span{display:inline-flex;align-items:center;gap:5px;font:600 7.5px/1 var(--mono);letter-spacing:.14em;color:var(--ink37)}
+  .legend span{display:inline-flex;align-items:center;gap:5px;font:600 7.5px/1 var(--mono);letter-spacing:.14em;color:var(--tx45)}
   .legend i{width:6px;height:6px;border-radius:51% 49% 53% 47%/49% 54% 46% 51%}
 
   /* ask bar */
   .ask{display:flex;align-items:center;gap:10px;margin-top:16px}
   .ask input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid var(--line-s);
-    border-radius:0;padding:6px 2px 7px;font:300 14px/1.4 var(--serif);color:var(--ink);outline:none;transition:border-color .15s}
-  .ask input::placeholder{color:rgba(35,38,43,.32);font-style:italic}
+    border-radius:0;padding:6px 2px 7px;font:300 14px/1.4 var(--serif);color:var(--tx);outline:none;transition:border-color .15s}
+  .ask input::placeholder{color:var(--tx35);font-style:italic}
   .ask input:focus{border-bottom-color:var(--accent)}
   .send{flex:none;width:30px;height:27px;border:0;cursor:pointer;padding:0;text-align:center;
-    color:rgba(58,92,168,.9);font:600 12px/27px var(--mono);
+    color:#DCE8FD;font:600 12px/27px var(--mono);
     border-radius:50% 50% 46% 54%/56% 50% 52% 44%;
-    background:radial-gradient(circle at 38% 30%,rgba(255,255,255,.38) 0%,rgba(222,234,253,.16) 42%,rgba(150,185,248,.2) 78%,rgba(127,169,247,.32) 100%);
+    background:radial-gradient(circle at 38% 30%,rgba(255,255,255,.30) 0%,rgba(170,200,250,.18) 42%,rgba(143,180,248,.26) 78%,rgba(127,169,247,.38) 100%);
     -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),inset -2px -3px 5px rgba(88,124,200,.38),inset 2px 3px 5px rgba(255,255,255,.6),0 2px 5px rgba(80,105,170,.22);
-    transition:filter .15s}
-  .send:hover{filter:brightness(.96)}
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),inset -2px -3px 5px rgba(40,70,140,.45),inset 2px 3px 5px rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.3);
+    transition:filter .15s,transform .15s}
+  .send:hover{filter:brightness(1.08);transform:translateY(-1px)}
   .hide{display:none !important}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
 </head>
 <body>
-  <!-- hidden defs: liquid-glass drop gradients/filters + the torn-edge clip. The
-       widget is transparent and floats over the REAL drawing (workspace PDF /
-       desktop) — no baked-in fake plan. -->
+  <!-- hidden defs: liquid-glass drop gradients/filters. The widget is
+       transparent and floats over the REAL drawing (workspace PDF / desktop). -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
     <radialGradient id="dBody" cx="0.62" cy="0.38" r="0.58"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"></stop><stop offset="0.55" stop-color="#DCE9FD" stop-opacity="0.16"></stop><stop offset="0.85" stop-color="#AECBF9" stop-opacity="0.26"></stop><stop offset="1" stop-color="#8FB4F8" stop-opacity="0.4"></stop></radialGradient>
     <filter id="dBlur3" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.6"></feGaussianBlur></filter>
     <filter id="dBlur1" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="0.9"></feGaussianBlur></filter>
     <filter id="dBlur6" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5"></feGaussianBlur></filter>
     <linearGradient id="dRim" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"></stop><stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.12"></stop><stop offset="1" stop-color="#FFFFFF" stop-opacity="0.55"></stop></linearGradient>
-    <clipPath id="tornA" clipPathUnits="objectBoundingBox"><path d="M0,0.012 C0.04,0.006 0.09,0.016 0.14,0.010 C0.19,0.004 0.24,0.014 0.30,0.009 C0.36,0.004 0.42,0.015 0.48,0.010 C0.54,0.005 0.60,0.014 0.66,0.009 C0.72,0.004 0.78,0.013 0.84,0.008 C0.90,0.004 0.95,0.012 1,0.008 L1,0.988 C0.95,0.995 0.90,0.985 0.84,0.991 C0.78,0.997 0.72,0.986 0.66,0.992 C0.60,0.998 0.54,0.987 0.48,0.992 C0.42,0.997 0.36,0.986 0.30,0.991 C0.24,0.997 0.19,0.987 0.14,0.992 C0.09,0.997 0.04,0.990 0,0.994 Z"></path></clipPath>
   </defs></svg>
 
 
   <div class="stage">
     <div class="sheet hidden" id="sheet">
       <div class="paper">
-        <div class="grain"></div>
         <div class="pad">
           <div class="hdr">
             <span class="hdot"></span><span class="wordmark">TRACE</span><span class="sp"></span>
@@ -381,6 +387,7 @@
   }
   setInterval(pollNudge,2500);
 
+  try{if(window===window.top)document.body.classList.add("standalone");}catch(e){}
   renderChips("suggest",SUGGEST);
   loadState("");
 </script>

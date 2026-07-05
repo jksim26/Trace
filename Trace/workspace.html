@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Trace — workspace (simulated)</title>
 <style>
-  /* Same self-hosted type + token system as bubble.html — the workspace is the
-     drawing office that sheet floats over, not a different app. */
+  /* Self-hosted type (served by bubble.py at /fonts) — Newsreader for prose,
+     IBM Plex Mono for sheet numbers and labels. No external requests. */
   @font-face{font-family:'Newsreader';font-style:normal;font-weight:300;font-display:swap;
     src:url('/fonts/newsreader-latin-300.woff2') format('woff2')}
   @font-face{font-family:'Newsreader';font-style:italic;font-weight:300;font-display:swap;
@@ -19,70 +19,94 @@
   :root{
     --serif:'Newsreader',Georgia,'Times New Roman',serif;
     --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
-    --ink:#23262B; --ink60:rgba(35,38,43,.6); --ink45:rgba(35,38,43,.45); --ink37:rgba(35,38,43,.37);
-    --line:rgba(45,50,58,.14); --line-s:rgba(45,50,58,.28);
-    --accent:#8FB4F8; --accent-faint:rgba(143,180,248,.08); --link:#2a78d6;
-    --inforce:#55835B; --superseded:#C08A2D; --rejected:#B04A3E;
-    --paper:#F7F5EF; --paper-ruled:#EBE7DA;
-    --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.42 0 0 0 0 0.40 0 0 0 0.32 0'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)'/%3E%3C/svg%3E");
+    /* deep graphite base — the dark native PDF chrome now belongs to the room
+       instead of fighting it */
+    --base:#101318; --base-2:#14181F;
+    --tx:#E9ECF2; --tx60:rgba(233,236,242,.60); --tx40:rgba(233,236,242,.40); --tx28:rgba(233,236,242,.28);
+    --glass:rgba(255,255,255,.055); --glass-hi:rgba(255,255,255,.09);
+    --edge:rgba(255,255,255,.11); --edge-s:rgba(255,255,255,.17);
+    --accent:#8FB4F8; --accent-dim:rgba(143,180,248,.14);
+    --rejected:#D98177;
+    --shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 24px 60px rgba(0,0,0,.45);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
-  body{position:relative;display:flex;flex-direction:column;background:var(--paper);color:var(--ink);
-    font-family:var(--serif);-webkit-font-smoothing:antialiased}
-  body::before{content:"";position:fixed;inset:0;background-image:var(--grain);background-size:130px 130px;
-    opacity:.18;pointer-events:none;z-index:1}
+  body{position:relative;display:flex;flex-direction:column;background:var(--base);color:var(--tx);
+    font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden}
 
-  /* ── title block strip (the drawing sheet's own header, not a generic app bar) */
-  .bar{position:relative;z-index:2;display:flex;align-items:center;gap:14px;
-    padding:13px 22px;background:var(--paper);border-bottom:1px solid var(--line-s)}
-  .bar .proj{font:300 17px/1 var(--serif);color:var(--ink);white-space:nowrap}
-  .bar .meta{font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--ink45);white-space:nowrap}
-  .stamp{font:600 8px/1 var(--mono);letter-spacing:.14em;color:var(--rejected);
-    border:1px solid var(--rejected);border-radius:2px;padding:4px 8px;
-    transform:rotate(-2deg);opacity:.82;white-space:nowrap}
+  /* atmosphere: two soft glows + a faint drafting grid, all far below content */
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background:
+      radial-gradient(52% 44% at 18% -6%, rgba(143,180,248,.10), transparent 68%),
+      radial-gradient(44% 40% at 88% 108%, rgba(143,180,248,.06), transparent 70%)}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;
+    background:
+      linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px) 0 0/100% 44px,
+      linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px) 0 0/44px 100%}
+
+  /* ── top bar: one floating glass strip ─────────────────────────────────── */
+  .bar{position:relative;z-index:3;display:flex;align-items:baseline;gap:16px;
+    margin:14px 16px 0;padding:14px 22px;border-radius:14px;
+    background:var(--glass);border:1px solid var(--edge);
+    -webkit-backdrop-filter:blur(18px) saturate(1.15);backdrop-filter:blur(18px) saturate(1.15);
+    box-shadow:var(--shadow)}
+  .bar .proj{font:300 18px/1 var(--serif);letter-spacing:.01em;white-space:nowrap}
+  .bar .meta{font:600 8px/1 var(--mono);letter-spacing:.2em;color:var(--tx40);white-space:nowrap}
+  .stamp{font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--rejected);
+    border:1px solid rgba(217,129,119,.55);border-radius:3px;padding:4px 8px;opacity:.85;white-space:nowrap}
   .bar .sp{flex:1;min-width:12px}
-  .bar .note{font:italic 300 11.5px/1.5 var(--serif);color:var(--ink45);max-width:360px;text-align:right}
-  .bar .note code{font:400 10.5px/1 var(--mono);color:var(--ink45)}
+  .bar .note{font:italic 300 11.5px/1.5 var(--serif);color:var(--tx40);max-width:380px;text-align:right}
+  .bar .note code{font:400 10.5px/1 var(--mono);color:var(--tx40)}
 
-  .main{flex:1;display:flex;min-height:0;position:relative;z-index:2}
+  .main{flex:1;display:flex;gap:16px;min-height:0;position:relative;z-index:2;padding:14px 16px 16px}
 
-  /* ── drawing register (sidebar) — sheet numbers carry real information here,
-     so they earn their place as the visual anchor (unlike decorative 01/02/03) */
-  .files{width:236px;flex:none;border-right:1px solid var(--line-s);padding:18px 0;overflow-y:auto}
-  .files h2{font:600 8px/1 var(--mono);letter-spacing:.18em;color:var(--ink37);padding:0 18px 10px}
-  .reg{border-top:1px solid var(--line)}
-  .doc{display:grid;grid-template-columns:40px 1fr;column-gap:10px;align-items:baseline;
-    width:100%;padding:10px 18px;border:0;border-bottom:1px solid var(--line);
-    background:transparent;text-align:left;font-family:inherit;cursor:pointer;transition:background .12s}
-  .doc:hover{background:var(--accent-faint)}
-  .doc.open{background:var(--accent-faint);box-shadow:inset 2px 0 0 var(--accent)}
-  .doc .no{font:600 10px/1.6 var(--mono);letter-spacing:.02em;color:var(--ink37)}
-  .doc .ti{font:300 13px/1.45 var(--serif);color:var(--ink)}
+  /* ── drawing register: a glass panel, sheet numbers as the anchor ──────── */
+  .files{width:248px;flex:none;display:flex;flex-direction:column;border-radius:14px;
+    background:var(--glass);border:1px solid var(--edge);
+    -webkit-backdrop-filter:blur(18px) saturate(1.15);backdrop-filter:blur(18px) saturate(1.15);
+    box-shadow:var(--shadow);overflow:hidden}
+  .files h2{font:600 8px/1 var(--mono);letter-spacing:.22em;color:var(--tx40);padding:18px 18px 12px}
+  .reg{flex:1;overflow-y:auto;border-top:1px solid var(--edge);scrollbar-width:none}
+  .reg::-webkit-scrollbar{width:0}
+  .doc{display:grid;grid-template-columns:44px 1fr;column-gap:10px;align-items:baseline;
+    width:100%;padding:12px 18px;border:0;border-bottom:1px solid rgba(255,255,255,.06);
+    background:transparent;text-align:left;font-family:inherit;color:inherit;cursor:pointer;
+    transition:background .18s ease}
+  .doc:hover{background:var(--glass-hi)}
+  .doc.open{background:var(--accent-dim);box-shadow:inset 2px 0 0 var(--accent)}
+  .doc .no{font:600 10px/1.6 var(--mono);letter-spacing:.02em;color:var(--tx40)}
+  .doc.open .no{color:var(--accent)}
+  .doc .ti{font:300 13.5px/1.45 var(--serif);color:var(--tx)}
 
-  /* ── the light table the viewer sits on — the native PDF viewer's own dark
-     toolbar can't be restyled (it's the browser's, not ours), so it's contained
-     inside a matted, shadowed sheet instead of touching the screen's edges */
-  .viewer{flex:1;position:relative;padding:22px;
-    background:linear-gradient(var(--paper-ruled) 1px,transparent 1px) 0 0/100% 32px,var(--paper)}
-  .mat{position:absolute;inset:22px;background:#fff;border:1px solid var(--line-s);
-    box-shadow:0 1px 2px rgba(35,38,43,.05),0 14px 30px rgba(35,38,43,.10)}
-  .mat iframe{width:100%;height:100%;border:none;display:block}
+  /* ── the viewer: a glass frame; the browser's dark PDF chrome blends in ── */
+  .viewer{flex:1;position:relative;border-radius:14px;overflow:hidden;
+    background:var(--base-2);border:1px solid var(--edge);box-shadow:var(--shadow)}
+  .viewer iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:block;
+    animation:fadein .45s ease}
   .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
-  .empty p{font:300 15px/1.7 var(--serif);color:var(--ink45)}
-  .empty b{display:block;font-style:italic;font-weight:300;color:var(--ink60);margin-bottom:4px}
-  .empty code{font:400 11.5px/1 var(--mono);color:var(--ink45)}
+  .empty p{font:300 15.5px/1.8 var(--serif);color:var(--tx40)}
+  .empty b{display:block;font-style:italic;font-weight:300;font-size:19px;color:var(--tx60);margin-bottom:6px}
+  .empty code{font:400 11.5px/1 var(--mono);color:var(--tx40)}
 
   .bubbleframe{position:fixed;right:0;bottom:0;width:430px;height:660px;border:none;background:transparent;z-index:50}
+
+  /* entrance: quiet, staggered */
+  .bar,.files,.viewer{animation:rise .5s cubic-bezier(.22,.72,.1,1) both}
+  .files{animation-delay:.06s}.viewer{animation-delay:.12s}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
 
   :focus-visible{outline:1.5px solid var(--accent);outline-offset:2px}
 
   @media (max-width:760px){
     .bar .note{display:none}
-    .files{width:180px}
-    .doc .ti{font-size:12px}
+    .main{flex-direction:column}
+    .files{width:100%;max-height:38vh}
+    .bubbleframe{width:100vw;max-width:430px}
   }
-  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+  @media (prefers-reduced-motion:reduce){
+    *,.bar,.files,.viewer{animation:none !important;transition:none !important}
+  }
 </style>
 </head>
 <body>
@@ -98,11 +122,9 @@
       <h2>DRAWING REGISTER</h2>
       <div class="reg" id="docs"></div>
     </div>
-    <div class="viewer">
-      <div class="mat" id="mat">
-        <div class="empty" id="emptyState">
-          <p><b>Open a drawing.</b>Trace is watching — the way <code>watcher.py</code><br>would watch it on your own desktop.</p>
-        </div>
+    <div class="viewer" id="viewer">
+      <div class="empty" id="emptyState">
+        <p><b>Open a drawing.</b>Trace is watching — the way <code>watcher.py</code><br>would watch it on your own desktop.</p>
       </div>
     </div>
   </div>
@@ -127,7 +149,7 @@
   function openDoc(file, el){
     document.querySelectorAll('.doc').forEach(x => x.classList.remove('open'));
     el.classList.add('open');
-    document.getElementById('mat').innerHTML =
+    document.getElementById('viewer').innerHTML =
       `<iframe src="/drawings/${encodeURIComponent(file)}" title="${file}"></iframe>`;
     // The document-open event — the same signal watcher.py sends from a real
     // desktop. Trace's reaction (matcher -> live store -> nudge) is identical.
