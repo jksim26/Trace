@@ -262,11 +262,14 @@
         var c1=[117+2*Math.sin(t*0.33+p),61+1.4*Math.sin(t*0.47+p+0.8)];
         var wander=12*Math.sin(t*0.21+p+0.6);
         var c2=[36-0.35*wander,62+2.2*Math.sin(t*0.41+p+2)];
-        // a finger pulling the tail: c2 chases the pointer and swells, then
-        // (on release) eases back to its ambient wander over ~380ms — the
-        // metaball/twoCircles functions below already know how to pinch off
-        // into two separate drops once pulled far enough, so a hard yank
-        // snaps the tail free exactly like a real bead of liquid would.
+        // a finger pulling the tail: the whole drop leans into the pull (the
+        // big body follows at a fraction of the pull so it visibly reacts
+        // too, the tail follows in full so a stretched neck still shows
+        // between them), and swells, then (on release) eases back to ambient
+        // wander over ~380ms — the metaball/twoCircles functions below
+        // already know how to pinch off into two separate drops once pulled
+        // far enough, so a hard yank tears the WHOLE drop apart, body and
+        // tail both, exactly like a real bead of liquid would.
         if(d.pull){
           var pl=d.pull, e=1;
           if(pl.releasing){
@@ -276,9 +279,11 @@
           var mixDX=pl.releasing?lerp(pl.dx,0,e):pl.dx;
           var mixDY=pl.releasing?lerp(pl.dy,0,e):pl.dy;
           var mixGrow=pl.releasing?lerp(pl.grow,0,e):pl.grow;
+          var BODY_FOLLOW=0.34; // the body leans in at a third of the tail's travel
+          c1=[c1[0]+mixDX*BODY_FOLLOW,c1[1]+mixDY*BODY_FOLLOW];
           c2=[c2[0]+mixDX,c2[1]+mixDY];
           r2=r2+mixGrow;
-          r1=r1+Math.min(mixGrow*0.28,9);
+          r1=r1+Math.min(mixGrow*0.34,10);
         }
         var path=metaball(r1,r2,c1,c2)||twoCircles(r1,r2,c1,c2);
         for(var k=0;k<keys.length;k++)d[keys[k]].setAttribute("d",path);
@@ -376,6 +381,29 @@
       if(window.__dropRelease)window.__dropRelease(dropSvg);
     }
 
+    // dragging the whole widget across the screen sheds a trail of small
+    // beads along the path, like a wet glass dragged across a counter —
+    // reuses the same .mote material as the tap-open burst, just spawned
+    // one at a time, throttled to the widget's current position.
+    var lastTrailAt=0;
+    function spawnTrailDrop(){
+      if(reduced)return;
+      var now=performance.now();
+      if(now-lastTrailAt<55)return;
+      lastTrailAt=now;
+      var host=$("motes"), r=dropEl.getBoundingClientRect();
+      var el=document.createElement("div"); el.className="mote";
+      var size=5+Math.random()*9;
+      el.style.width=size+"px"; el.style.height=size+"px";
+      el.style.left=(r.left+r.width*0.5+(Math.random()*26-13)-size/2)+"px";
+      el.style.top=(r.top+r.height*0.4+(Math.random()*18-9)-size/2)+"px";
+      el.style.setProperty("--dx",Math.round(Math.random()*18-9)+"px");
+      el.style.setProperty("--dy",-Math.round(24+Math.random()*30)+"px");
+      el.style.setProperty("--dur",(0.55+Math.random()*0.35).toFixed(2)+"s");
+      host.appendChild(el);
+      setTimeout(function(){el.remove();},950);
+    }
+
     function onDown(e){
       if(e.target.closest("select,.x,input,.send,.chip"))return;
       handle=e.currentTarget;
@@ -397,6 +425,7 @@
         var r=stage.getBoundingClientRect();
         stage.style.left=clamp(origLeft+dx,0,window.innerWidth-r.width)+"px";
         stage.style.top=clamp(origTop+dy,0,window.innerHeight-r.height)+"px";
+        spawnTrailDrop();
       }else{
         updatePull(dx,dy);
       }
