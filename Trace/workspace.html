@@ -19,112 +19,116 @@
   :root{
     --serif:'Newsreader',Georgia,'Times New Roman',serif;
     --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
-    /* deep graphite base — the dark native PDF chrome now belongs to the room
-       instead of fighting it */
-    --base:#101318; --base-2:#14181F;
-    --tx:#E9ECF2; --tx60:rgba(233,236,242,.60); --tx40:rgba(233,236,242,.40); --tx28:rgba(233,236,242,.28);
-    --glass:rgba(255,255,255,.055); --glass-hi:rgba(255,255,255,.09);
-    --edge:rgba(255,255,255,.11); --edge-s:rgba(255,255,255,.17);
-    --accent:#8FB4F8; --accent-dim:rgba(143,180,248,.14);
-    --rejected:#D98177;
-    --shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 24px 60px rgba(0,0,0,.45);
+    --ink:#23262B; --ink60:rgba(35,38,43,.62); --ink45:rgba(35,38,43,.46); --ink30:rgba(35,38,43,.30);
+    --glass:rgba(255,255,255,.24); --glass-hi:rgba(255,255,255,.38);
+    --edge:rgba(255,255,255,.55); --edge-s:rgba(255,255,255,.75); --hair:rgba(35,38,43,.10);
+    --accent:#8FB4F8; --accent-dim:rgba(143,180,248,.16);
+    --rejected:#B04A3E;
+    --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.42 0 0 0 0 0.40 0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
-  body{position:relative;display:flex;flex-direction:column;background:var(--base);color:var(--tx);
-    font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden}
-
-  /* atmosphere: two soft glows + a faint drafting grid, all far below content */
-  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  body{position:relative;display:flex;color:var(--ink);
+    font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden;
+    /* CSS-only "sunlit room" — no image asset, fully self-contained/offline */
     background:
-      radial-gradient(52% 44% at 18% -6%, rgba(143,180,248,.10), transparent 68%),
-      radial-gradient(44% 40% at 88% 108%, rgba(143,180,248,.06), transparent 70%)}
-  body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;
-    background:
-      linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px) 0 0/100% 44px,
-      linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px) 0 0/44px 100%}
+      radial-gradient(46% 40% at 14% 8%, rgba(255,246,232,.85), transparent 62%),
+      radial-gradient(50% 46% at 88% 92%, rgba(151,181,240,.55), transparent 65%),
+      radial-gradient(70% 60% at 50% 100%, rgba(180,192,214,.35), transparent 70%),
+      linear-gradient(160deg,#EDEFF3 0%,#E2E5EC 55%,#DEE1E9 100%)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+    background-image:var(--grain);background-size:130px 130px;opacity:.05}
 
-  /* ── top bar: one floating glass strip ─────────────────────────────────── */
-  .bar{position:relative;z-index:3;display:flex;align-items:baseline;gap:16px;
-    margin:14px 16px 0;padding:14px 22px;border-radius:14px;
-    background:var(--glass);border:1px solid var(--edge);
-    -webkit-backdrop-filter:blur(18px) saturate(1.15);backdrop-filter:blur(18px) saturate(1.15);
-    box-shadow:var(--shadow)}
-  .bar .proj{font:300 18px/1 var(--serif);letter-spacing:.01em;white-space:nowrap}
-  .bar .meta{font:600 8px/1 var(--mono);letter-spacing:.2em;color:var(--tx40);white-space:nowrap}
-  .stamp{font:600 8px/1 var(--mono);letter-spacing:.16em;color:var(--rejected);
-    border:1px solid rgba(217,129,119,.55);border-radius:3px;padding:4px 8px;opacity:.85;white-space:nowrap}
+  /* ── the single glass shell — one pane, background visible all around ──── */
+  .shell{position:relative;z-index:2;margin:34px;flex:1;display:flex;flex-direction:column;
+    border-radius:26px;background:var(--glass);border:1px solid var(--edge);
+    -webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,.8),
+      0 0 0 1px rgba(255,255,255,.25),
+      0 0 46px rgba(143,180,248,.30),
+      0 30px 70px rgba(30,40,70,.20);
+    overflow:hidden}
+
+  .bar{flex:none;display:flex;align-items:baseline;gap:16px;padding:20px 26px 18px;
+    border-bottom:1px solid var(--hair)}
+  .bar .proj{font:300 19px/1 var(--serif);white-space:nowrap}
+  .bar .meta{font:600 8px/1 var(--mono);letter-spacing:.2em;color:var(--ink45);white-space:nowrap}
+  .stamp{font:600 8px/1 var(--mono);letter-spacing:.14em;color:var(--rejected);
+    border:1px solid rgba(176,74,62,.5);border-radius:3px;padding:4px 8px;
+    transform:rotate(-2deg);opacity:.82;white-space:nowrap}
   .bar .sp{flex:1;min-width:12px}
-  .bar .note{font:italic 300 11.5px/1.5 var(--serif);color:var(--tx40);max-width:380px;text-align:right}
-  .bar .note code{font:400 10.5px/1 var(--mono);color:var(--tx40)}
+  .bar .note{font:italic 300 11.5px/1.5 var(--serif);color:var(--ink45);max-width:360px;text-align:right}
+  .bar .note code{font:400 10.5px/1 var(--mono);color:var(--ink45)}
 
-  .main{flex:1;display:flex;gap:16px;min-height:0;position:relative;z-index:2;padding:14px 16px 16px}
+  .main{flex:1;display:flex;min-height:0}
 
-  /* ── drawing register: a glass panel, sheet numbers as the anchor ──────── */
-  .files{width:248px;flex:none;display:flex;flex-direction:column;border-radius:14px;
-    background:var(--glass);border:1px solid var(--edge);
-    -webkit-backdrop-filter:blur(18px) saturate(1.15);backdrop-filter:blur(18px) saturate(1.15);
-    box-shadow:var(--shadow);overflow:hidden}
-  .files h2{font:600 8px/1 var(--mono);letter-spacing:.22em;color:var(--tx40);padding:18px 18px 12px}
-  .reg{flex:1;overflow-y:auto;border-top:1px solid var(--edge);scrollbar-width:none}
+  /* ── drawing register: sheet numbers carry real information, no separate
+     glass card any more — it's a column inside the one shell ────────────── */
+  .files{width:238px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--hair)}
+  .files h2{font:600 8px/1 var(--mono);letter-spacing:.2em;color:var(--ink45);padding:18px 22px 10px}
+  .reg{flex:1;overflow-y:auto;scrollbar-width:none}
   .reg::-webkit-scrollbar{width:0}
-  .doc{display:grid;grid-template-columns:44px 1fr;column-gap:10px;align-items:baseline;
-    width:100%;padding:12px 18px;border:0;border-bottom:1px solid rgba(255,255,255,.06);
+  .doc{display:grid;grid-template-columns:40px 1fr;column-gap:10px;align-items:baseline;
+    width:100%;padding:11px 22px;border:0;border-bottom:1px solid var(--hair);
     background:transparent;text-align:left;font-family:inherit;color:inherit;cursor:pointer;
     transition:background .18s ease}
   .doc:hover{background:var(--glass-hi)}
-  .doc.open{background:var(--accent-dim);box-shadow:inset 2px 0 0 var(--accent)}
-  .doc .no{font:600 10px/1.6 var(--mono);letter-spacing:.02em;color:var(--tx40)}
-  .doc.open .no{color:var(--accent)}
-  .doc .ti{font:300 13.5px/1.45 var(--serif);color:var(--tx)}
+  .doc.open{background:var(--accent-dim);box-shadow:inset 3px 0 0 var(--accent)}
+  .doc .no{font:600 10px/1.6 var(--mono);letter-spacing:.02em;color:var(--ink45)}
+  .doc.open .no{color:#4a72c9}
+  .doc .ti{font:300 13.5px/1.45 var(--serif);color:var(--ink)}
 
-  /* ── the viewer: a glass frame; the browser's dark PDF chrome blends in ── */
-  .viewer{flex:1;position:relative;border-radius:14px;overflow:hidden;
-    background:var(--base-2);border:1px solid var(--edge);box-shadow:var(--shadow)}
-  .viewer iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:block;
-    animation:fadein .45s ease}
+  /* ── the viewer: an inset "screen" set into the glass counter — the native
+     dark PDF chrome reads as a device, not a foreign app ──────────────────  */
+  .viewer{flex:1;position:relative;padding:22px}
+  .mat{position:absolute;inset:22px;border-radius:14px;overflow:hidden;background:#181B21;
+    border:1px solid rgba(255,255,255,.5);
+    box-shadow:0 1px 0 rgba(255,255,255,.5),0 18px 40px rgba(20,26,40,.28)}
+  .mat iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:block;animation:fadein .45s ease}
   .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
-  .empty p{font:300 15.5px/1.8 var(--serif);color:var(--tx40)}
-  .empty b{display:block;font-style:italic;font-weight:300;font-size:19px;color:var(--tx60);margin-bottom:6px}
-  .empty code{font:400 11.5px/1 var(--mono);color:var(--tx40)}
+  .empty p{font:300 15px/1.8 var(--serif);color:rgba(233,236,242,.55)}
+  .empty b{display:block;font-style:italic;font-weight:300;font-size:18px;color:rgba(233,236,242,.8);margin-bottom:6px}
+  .empty code{font:400 11.5px/1 var(--mono);color:rgba(233,236,242,.55)}
 
   .bubbleframe{position:fixed;right:0;bottom:0;width:430px;height:660px;border:none;background:transparent;z-index:50}
 
-  /* entrance: quiet, staggered */
-  .bar,.files,.viewer{animation:rise .5s cubic-bezier(.22,.72,.1,1) both}
-  .files{animation-delay:.06s}.viewer{animation-delay:.12s}
+  .shell{animation:rise .5s cubic-bezier(.22,.72,.1,1) both}
   @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   @keyframes fadein{from{opacity:0}to{opacity:1}}
 
   :focus-visible{outline:1.5px solid var(--accent);outline-offset:2px}
 
   @media (max-width:760px){
+    .shell{margin:14px}
     .bar .note{display:none}
     .main{flex-direction:column}
-    .files{width:100%;max-height:38vh}
+    .files{width:100%;max-height:34vh;border-right:0;border-bottom:1px solid var(--hair)}
     .bubbleframe{width:100vw;max-width:430px}
   }
-  @media (prefers-reduced-motion:reduce){
-    *,.bar,.files,.viewer{animation:none !important;transition:none !important}
-  }
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
 </style>
 </head>
 <body>
-  <div class="bar">
-    <span class="proj">Tanglin Rise</span>
-    <span class="meta">PROJECT WORKSPACE</span>
-    <span class="stamp">SIMULATED</span>
-    <span class="sp"></span>
-    <span class="note">Demo drawings — Trace's reactions are live, through the same matcher <code>ambient.py</code> uses on a real desktop.</span>
-  </div>
-  <div class="main">
-    <div class="files">
-      <h2>DRAWING REGISTER</h2>
-      <div class="reg" id="docs"></div>
+  <div class="shell">
+    <div class="bar">
+      <span class="proj">Tanglin Rise</span>
+      <span class="meta">PROJECT WORKSPACE</span>
+      <span class="stamp">SIMULATED</span>
+      <span class="sp"></span>
+      <span class="note">Demo drawings — Trace's reactions are live, through the same matcher <code>ambient.py</code> uses on a real desktop.</span>
     </div>
-    <div class="viewer" id="viewer">
-      <div class="empty" id="emptyState">
-        <p><b>Open a drawing.</b>Trace is watching — the way <code>watcher.py</code><br>would watch it on your own desktop.</p>
+    <div class="main">
+      <div class="files">
+        <h2>DRAWING REGISTER</h2>
+        <div class="reg" id="docs"></div>
+      </div>
+      <div class="viewer">
+        <div class="mat" id="mat">
+          <div class="empty" id="emptyState">
+            <p><b>Open a drawing.</b>Trace is watching — the way <code>watcher.py</code><br>would watch it on your own desktop.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -149,7 +153,7 @@
   function openDoc(file, el){
     document.querySelectorAll('.doc').forEach(x => x.classList.remove('open'));
     el.classList.add('open');
-    document.getElementById('viewer').innerHTML =
+    document.getElementById('mat').innerHTML =
       `<iframe src="/drawings/${encodeURIComponent(file)}" title="${file}"></iframe>`;
     // The document-open event — the same signal watcher.py sends from a real
     // desktop. Trace's reaction (matcher -> live store -> nudge) is identical.

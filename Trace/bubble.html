@@ -42,10 +42,25 @@
     #101318}
 
 
-  .stage{position:fixed;right:26px;bottom:24px;z-index:2}
+  .stage{position:fixed;right:26px;bottom:24px;z-index:2;touch-action:none}
+  .stage.dragging{transition:none !important}
+  .stage.dragging .drop,.stage.dragging .hdr{cursor:grabbing}
+
+  /* the small bubbles that float up when the main drop is tapped */
+  .motes{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+  .mote{position:absolute;border-radius:50%;opacity:0;
+    background:radial-gradient(circle at 35% 30%,#FFFFFF 0%,#DCE9FD 42%,#8FB4F8 100%);
+    box-shadow:0 0 6px rgba(143,180,248,.55),inset -1px -1px 2px rgba(60,95,175,.35),inset 1px 1px 2px rgba(255,255,255,.65);
+    animation:moteRise var(--dur,2.4s) cubic-bezier(.22,.6,.36,1) forwards}
+  @keyframes moteRise{
+    0%{opacity:0;transform:translate(0,0) scale(.5)}
+    12%{opacity:.95}
+    65%{opacity:.6}
+    100%{opacity:0;transform:translate(var(--dx,0px),var(--dy,-420px)) scale(1)}
+  }
 
   /* ── the liquid-glass drop (idle) ───────────────────────────────────────── */
-  .drop{position:relative;width:120px;cursor:pointer;transition:opacity .4s ease,transform .4s ease;
+  .drop{position:relative;width:120px;cursor:grab;transition:opacity .4s ease,transform .4s ease;
     filter:drop-shadow(0 6px 14px rgba(20,30,55,.35))}
   .drop svg{width:120px;height:76px;display:block;overflow:visible}
   .drop .label{margin-top:2px;text-align:center;font:600 8px/1 var(--mono);letter-spacing:.26em;color:rgba(150,162,185,.85)}
@@ -65,8 +80,8 @@
       0 2px 6px rgba(0,0,0,.25),0 22px 48px rgba(0,0,0,.42)}
   .pad{position:relative;padding:22px 24px 24px}
 
-  /* header */
-  .hdr{display:flex;align-items:center;gap:8px}
+  /* header — the drag handle when the sheet is open (select/x stay clickable) */
+  .hdr{display:flex;align-items:center;gap:8px;cursor:grab}
   .hdot{width:12px;height:11px;flex:none;border-radius:52% 48% 50% 50%/56% 46% 58% 42%;
     background:radial-gradient(circle at 34% 28%,#EAF1FE 0%,var(--accent) 55%,#7FA9F7 100%);
     box-shadow:inset -1px -1.5px 2.5px rgba(88,124,200,.45),inset .8px 1px 2px rgba(255,255,255,.7),0 .5px 1.5px rgba(0,0,0,.35)}
@@ -150,7 +165,9 @@
   </defs></svg>
 
 
-  <div class="stage">
+  <div class="motes" id="motes"></div>
+
+  <div class="stage" id="stage">
     <div class="sheet hidden" id="sheet">
       <div class="paper">
         <div class="pad">
@@ -193,7 +210,7 @@
       </div>
     </div>
 
-    <div class="drop" id="drop" onclick="toggleSheet()" title="Trace">
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Open Trace" title="Trace (drag to move)">
       <span class="badge hide" id="badge">1</span>
       <svg data-drop="a" viewBox="0 0 190 120" aria-hidden="true"></svg>
       <div class="label">TRACE</div>
@@ -272,6 +289,86 @@
       return C(c1,r1)+" "+C(c2,r2);
     }
     if(document.readyState!=="loading")initDrops();else document.addEventListener("DOMContentLoaded",initDrops);
+  })();
+
+  /* ── drag-to-reposition + the click-spawned bubble burst ─────────────────
+     The widget can be picked up by the idle drop or (once open) the sheet's
+     header, and dropped anywhere within this iframe's own viewport — dragging
+     never crosses out of the box the host page gives it. A real drag is
+     distinguished from a tap by movement distance, so clicking still opens
+     the sheet and dragging never does. ───────────────────────────────────── */
+  (function(){
+    var stage=document.getElementById("stage"), reduced=false;
+    try{reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+    var dragging=false, moved=false, startX=0, startY=0, origLeft=0, origTop=0, activeId=null, handle=null;
+    var THRESH=6;
+
+    function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+    function toAbsolute(){
+      var r=stage.getBoundingClientRect();
+      stage.style.left=r.left+"px"; stage.style.top=r.top+"px";
+      stage.style.right="auto"; stage.style.bottom="auto";
+    }
+    function settle(){ // keep the widget on-screen if the host viewport resizes
+      if(stage.style.left===""||stage.style.left==null)return;
+      var r=stage.getBoundingClientRect();
+      stage.style.left=clamp(r.left,0,window.innerWidth-r.width)+"px";
+      stage.style.top=clamp(r.top,0,window.innerHeight-r.height)+"px";
+    }
+
+    function onDown(e){
+      if(e.target.closest("select,.x,input,.send,.chip"))return;
+      handle=e.currentTarget;
+      dragging=true; moved=false; activeId=e.pointerId;
+      var r=stage.getBoundingClientRect();
+      startX=e.clientX; startY=e.clientY; origLeft=r.left; origTop=r.top;
+      try{handle.setPointerCapture(activeId);}catch(err){}
+    }
+    function onMove(e){
+      if(!dragging||e.pointerId!==activeId)return;
+      var dx=e.clientX-startX, dy=e.clientY-startY;
+      if(!moved && Math.hypot(dx,dy)>THRESH){moved=true; toAbsolute(); stage.classList.add("dragging");}
+      if(!moved)return;
+      var r=stage.getBoundingClientRect();
+      stage.style.left=clamp(origLeft+dx,0,window.innerWidth-r.width)+"px";
+      stage.style.top=clamp(origTop+dy,0,window.innerHeight-r.height)+"px";
+    }
+    function onUp(e){
+      if(!dragging||e.pointerId!==activeId)return;
+      dragging=false; stage.classList.remove("dragging");
+      try{handle.releasePointerCapture(activeId);}catch(err){}
+      var wasClickOnDrop=!moved && handle===$("drop");
+      moved=false;
+      if(wasClickOnDrop){spawnBubbles();toggleSheet();}
+    }
+    [$("drop"),document.querySelector(".hdr")].forEach(function(el){
+      el.addEventListener("pointerdown",onDown);
+      el.addEventListener("pointermove",onMove);
+      el.addEventListener("pointerup",onUp);
+      el.addEventListener("pointercancel",onUp);
+    });
+    $("drop").addEventListener("keydown",function(e){
+      if(e.key==="Enter"||e.key===" "){e.preventDefault();spawnBubbles();toggleSheet();}
+    });
+    window.addEventListener("resize",settle);
+
+    window.spawnBubbles=function(){
+      if(reduced)return;
+      var host=$("motes"), r=$("drop").getBoundingClientRect();
+      var n=6+Math.floor(Math.random()*4);
+      for(var i=0;i<n;i++){
+        var el=document.createElement("div"); el.className="mote";
+        var size=6+Math.random()*15;
+        el.style.width=size+"px"; el.style.height=size+"px";
+        el.style.left=(r.left+r.width*0.5+(Math.random()*44-22)-size/2)+"px";
+        el.style.top=(r.top+r.height*0.32+(Math.random()*20-10)-size/2)+"px";
+        el.style.setProperty("--dx",Math.round(Math.random()*100-50)+"px");
+        el.style.setProperty("--dy",-Math.round(260+Math.random()*280)+"px");
+        el.style.setProperty("--dur",(1.7+Math.random()*1.3).toFixed(2)+"s");
+        host.appendChild(el);
+        (function(node){setTimeout(function(){node.remove();},3200);})(el);
+      }
+    };
   })();
 
   /* ── the widget, wired to the live engine ───────────────────────────────── */
