@@ -72,6 +72,9 @@ what it actually does (e.g. is invalidation LLM inference or keyword/rule matchi
 is "immutable" actually immutable? do the advertised retrieval components exist? are test counts accurate?).
 Audit the .research/ confidence tags — spot-check whether [verified] claims are plausible. Check docs/06-open-questions.md for admitted gaps and whether external confidence matches internal honesty.
 Also explicitly flag claims that ARE honest — you lose credibility in the debate if you only attack. Every accusation needs file:line evidence.`,
+    // The Skeptic is the most output-heavy persona (she catalogs every claim with file:line);
+    // without this guard her opening can overflow into an unparseable StructuredOutput blob and burn the retry cap.
+    outputGuard: `OUTPUT DISCIPLINE (critical): emit your entire answer in ONE StructuredOutput call whose top level has EXACTLY the required keys (persona, score, headline, opening_statement, strengths, weaknesses, key_claims). Do NOT wrap it in a "raw" string, do NOT send a bare {point, evidence} fragment, and do NOT split across multiple calls. Keep opening_statement to 300-450 words; keep each strengths/weaknesses "evidence" to a single file:line phrase; cap strengths, weaknesses, and key_claims at 6 items each. Favor completeness of the object over exhaustiveness of any one field.`,
   },
   {
     key: 'sol',
@@ -149,7 +152,7 @@ phase('Opening Statements')
 log(`Convening the council: 5 members reviewing ${REPO} independently${PRIOR ? ' (re-review vs ' + PRIOR + ')' : ''}`)
 const openings = await parallel(PERSONAS.map(p => () =>
   agent(
-    `${REPO_CONTEXT}\n\nYOU ARE: ${p.name}, "${p.title}", a member of a 5-person review council. The other members are: ${PERSONAS.filter(q => q.key !== p.key).map(q => q.name + ' (' + q.title + ')').join(', ')} — they are reviewing the same repo through different lenses and will attack weak claims in your statement.\n\nYOUR LENS:\n${p.lens}\n\nExplore the repo thoroughly with your tools (read the actual source, not just the README). Then produce your structured opening. Set persona to "${p.name}". Make key_claims specific and falsifiable — vague claims will be shredded in rebuttals.`,
+    `${REPO_CONTEXT}\n\nYOU ARE: ${p.name}, "${p.title}", a member of a 5-person review council. The other members are: ${PERSONAS.filter(q => q.key !== p.key).map(q => q.name + ' (' + q.title + ')').join(', ')} — they are reviewing the same repo through different lenses and will attack weak claims in your statement.\n\nYOUR LENS:\n${p.lens}\n\nExplore the repo thoroughly with your tools (read the actual source, not just the README). Then produce your structured opening. Set persona to "${p.name}". Make key_claims specific and falsifiable — vague claims will be shredded in rebuttals.${p.outputGuard ? '\n\n' + p.outputGuard : ''}`,
     { label: `opening:${p.name}`, phase: 'Opening Statements', schema: OPENING_SCHEMA, effort: 'high' }
   )
 ))
