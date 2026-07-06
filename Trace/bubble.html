@@ -249,6 +249,10 @@
       if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
       var tick=function(now){updateDrops(now/1000);raf=requestAnimationFrame(tick);};raf=requestAnimationFrame(tick);
     }
+    function easeOutCubic(x){return 1-Math.pow(1-x,3);}
+    function lerp(a,b,e){return a+(b-a)*e;}
+    function clampNum(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+
     function updateDrops(t){
       if(!drops)return;
       var keys=["clipPath","shadow","body","band","band2","edge","rim"];
@@ -258,6 +262,24 @@
         var c1=[117+2*Math.sin(t*0.33+p),61+1.4*Math.sin(t*0.47+p+0.8)];
         var wander=12*Math.sin(t*0.21+p+0.6);
         var c2=[36-0.35*wander,62+2.2*Math.sin(t*0.41+p+2)];
+        // a finger pulling the tail: c2 chases the pointer and swells, then
+        // (on release) eases back to its ambient wander over ~380ms — the
+        // metaball/twoCircles functions below already know how to pinch off
+        // into two separate drops once pulled far enough, so a hard yank
+        // snaps the tail free exactly like a real bead of liquid would.
+        if(d.pull){
+          var pl=d.pull, e=1;
+          if(pl.releasing){
+            e=easeOutCubic(clampNum((t*1000-pl.relStart)/pl.relMs,0,1));
+            if(e>=1)d.pull=null;
+          }
+          var mixDX=pl.releasing?lerp(pl.dx,0,e):pl.dx;
+          var mixDY=pl.releasing?lerp(pl.dy,0,e):pl.dy;
+          var mixGrow=pl.releasing?lerp(pl.grow,0,e):pl.grow;
+          c2=[c2[0]+mixDX,c2[1]+mixDY];
+          r2=r2+mixGrow;
+          r1=r1+Math.min(mixGrow*0.28,9);
+        }
         var path=metaball(r1,r2,c1,c2)||twoCircles(r1,r2,c1,c2);
         for(var k=0;k<keys.length;k++)d[keys[k]].setAttribute("d",path);
         var set=function(el,cx,cy,rx,ry,rot){el.setAttribute("cx",cx.toFixed(1));el.setAttribute("cy",cy.toFixed(1));el.setAttribute("rx",rx.toFixed(1));el.setAttribute("ry",ry.toFixed(1));el.setAttribute("transform","rotate("+rot+" "+cx.toFixed(1)+" "+cy.toFixed(1)+")");};
@@ -289,19 +311,41 @@
       return C(c1,r1)+" "+C(c2,r2);
     }
     if(document.readyState!=="loading")initDrops();else document.addEventListener("DOMContentLoaded",initDrops);
+
+    // Bridge for the drag handler below: it knows pointer coordinates, this
+    // IIFE owns the blob's render state — neither needs to know the other's
+    // internals beyond this pair of calls.
+    window.__dropPull=function(svg,dx,dy,grow){
+      if(!svg||!svg.__drop)return;
+      svg.__drop.pull={dx:dx,dy:dy,grow:grow,releasing:false};
+    };
+    window.__dropRelease=function(svg){
+      if(!svg||!svg.__drop||!svg.__drop.pull)return;
+      svg.__drop.pull.releasing=true;
+      svg.__drop.pull.relStart=performance.now();
+      svg.__drop.pull.relMs=380;
+    };
   })();
 
-  /* ── drag-to-reposition + the click-spawned bubble burst ─────────────────
-     The widget can be picked up by the idle drop or (once open) the sheet's
-     header, and dropped anywhere within this iframe's own viewport — dragging
-     never crosses out of the box the host page gives it. A real drag is
-     distinguished from a tap by movement distance, so clicking still opens
-     the sheet and dragging never does. ───────────────────────────────────── */
+  /* ── drag-to-reposition, press-and-pull-to-stretch, and the click-spawned
+     bubble burst ────────────────────────────────────────────────────────────
+     Three gestures share one pointerdown on the idle drop:
+       • a tap opens the sheet (and spawns the mote burst)
+       • an IMMEDIATE drag (moving before the hold threshold) repositions the
+         whole widget, exactly as before
+       • a PRESS-AND-HOLD then drag instead stretches the liquid-glass drop
+         itself — the tail chases your pointer and swells, snapping back on
+         release. The sheet's header (once open) only ever repositions; there
+         is no blob there to stretch.
+     Which of the two drags you get is decided the instant you cross the
+     movement threshold, based on how long you'd already been holding still.
+     Dragging never crosses out of the box the host page gives it. ───────── */
   (function(){
-    var stage=document.getElementById("stage"), reduced=false;
+    var stage=document.getElementById("stage"), dropEl=document.getElementById("drop"), reduced=false;
+    var dropSvg=document.querySelector(".drop svg[data-drop]");
     try{reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
-    var dragging=false, moved=false, startX=0, startY=0, origLeft=0, origTop=0, activeId=null, handle=null;
-    var THRESH=6;
+    var dragging=false, mode=null, startX=0, startY=0, origLeft=0, origTop=0, activeId=null, handle=null, downTime=0;
+    var THRESH=6, HOLD_MS=260;
 
     function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
     function toAbsolute(){
@@ -315,11 +359,27 @@
       stage.style.left=clamp(r.left,0,window.innerWidth-r.width)+"px";
       stage.style.top=clamp(r.top,0,window.innerHeight-r.height)+"px";
     }
+    function updatePull(dx,dy){
+      if(reduced||!dropSvg||!window.__dropPull)return;
+      var r=dropSvg.getBoundingClientRect();
+      if(!r.width||!r.height)return;
+      // damped: the SVG's own box is small on screen, so a 1:1 pixel->local
+      // mapping would separate the drop almost as soon as you touched it —
+      // SENS gives the "still connected, visibly stretching" zone some room
+      // before a harder pull actually pulls it apart.
+      var SENS=0.32;
+      var ldx=dx*(190/r.width)*SENS, ldy=dy*(120/r.height)*SENS;
+      var grow=Math.min(0.55*Math.hypot(ldx,ldy),16);
+      window.__dropPull(dropSvg,ldx,ldy,grow);
+    }
+    function releasePull(){
+      if(window.__dropRelease)window.__dropRelease(dropSvg);
+    }
 
     function onDown(e){
       if(e.target.closest("select,.x,input,.send,.chip"))return;
       handle=e.currentTarget;
-      dragging=true; moved=false; activeId=e.pointerId;
+      dragging=true; mode=null; activeId=e.pointerId; downTime=performance.now();
       var r=stage.getBoundingClientRect();
       startX=e.clientX; startY=e.clientY; origLeft=r.left; origTop=r.top;
       try{handle.setPointerCapture(activeId);}catch(err){}
@@ -327,27 +387,35 @@
     function onMove(e){
       if(!dragging||e.pointerId!==activeId)return;
       var dx=e.clientX-startX, dy=e.clientY-startY;
-      if(!moved && Math.hypot(dx,dy)>THRESH){moved=true; toAbsolute(); stage.classList.add("dragging");}
-      if(!moved)return;
-      var r=stage.getBoundingClientRect();
-      stage.style.left=clamp(origLeft+dx,0,window.innerWidth-r.width)+"px";
-      stage.style.top=clamp(origTop+dy,0,window.innerHeight-r.height)+"px";
+      if(mode===null){
+        if(Math.hypot(dx,dy)<=THRESH)return;
+        if(handle===dropEl && (performance.now()-downTime)>=HOLD_MS)mode="stretch";
+        else{mode="reposition"; toAbsolute();}
+        stage.classList.add("dragging");
+      }
+      if(mode==="reposition"){
+        var r=stage.getBoundingClientRect();
+        stage.style.left=clamp(origLeft+dx,0,window.innerWidth-r.width)+"px";
+        stage.style.top=clamp(origTop+dy,0,window.innerHeight-r.height)+"px";
+      }else{
+        updatePull(dx,dy);
+      }
     }
     function onUp(e){
       if(!dragging||e.pointerId!==activeId)return;
       dragging=false; stage.classList.remove("dragging");
       try{handle.releasePointerCapture(activeId);}catch(err){}
-      var wasClickOnDrop=!moved && handle===$("drop");
-      moved=false;
-      if(wasClickOnDrop){spawnBubbles();toggleSheet();}
+      if(mode==="stretch")releasePull();
+      else if(mode===null && handle===dropEl){spawnBubbles();toggleSheet();}
+      mode=null;
     }
-    [$("drop"),document.querySelector(".hdr")].forEach(function(el){
+    [dropEl,document.querySelector(".hdr")].forEach(function(el){
       el.addEventListener("pointerdown",onDown);
       el.addEventListener("pointermove",onMove);
       el.addEventListener("pointerup",onUp);
       el.addEventListener("pointercancel",onUp);
     });
-    $("drop").addEventListener("keydown",function(e){
+    dropEl.addEventListener("keydown",function(e){
       if(e.key==="Enter"||e.key===" "){e.preventDefault();spawnBubbles();toggleSheet();}
     });
     window.addEventListener("resize",settle);
