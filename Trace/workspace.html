@@ -20,57 +20,71 @@
     --serif:'Newsreader',Georgia,'Times New Roman',serif;
     --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
     --ink:#23262B; --ink60:rgba(35,38,43,.62); --ink45:rgba(35,38,43,.46); --ink30:rgba(35,38,43,.30);
-    --glass:rgba(255,255,255,.24); --glass-hi:rgba(255,255,255,.38);
-    --edge:rgba(255,255,255,.55); --edge-s:rgba(255,255,255,.75); --hair:rgba(35,38,43,.10);
+    --glass:rgba(252,253,255,.34); --glass-hi:rgba(255,255,255,.44);
+    --hair:rgba(35,38,43,.10);
+    /* the icy neon rim every pane wears in the reference */
+    --rim:rgba(196,224,255,.95);
+    --rim-glow:0 0 1px rgba(255,255,255,.9),0 0 10px rgba(150,200,255,.6),
+      0 0 26px rgba(140,190,255,.35),inset 0 0 1px rgba(255,255,255,.9),inset 0 0 12px rgba(190,220,255,.28);
     --accent:#8FB4F8; --accent-dim:rgba(143,180,248,.16);
     --rejected:#B04A3E;
-    --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.42 0 0 0 0 0.40 0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='130' height='130' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{position:relative;display:flex;color:var(--ink);
-    font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden;
-    /* CSS-only "sunlit room" — no image asset, fully self-contained/offline */
-    background:
-      radial-gradient(46% 40% at 14% 8%, rgba(255,246,232,.85), transparent 62%),
-      radial-gradient(50% 46% at 88% 92%, rgba(151,181,240,.55), transparent 65%),
-      radial-gradient(70% 60% at 50% 100%, rgba(180,192,214,.35), transparent 70%),
-      linear-gradient(160deg,#EDEFF3 0%,#E2E5EC 55%,#DEE1E9 100%)}
-  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
-    background-image:var(--grain);background-size:130px 130px;opacity:.05}
+    font-family:var(--serif);-webkit-font-smoothing:antialiased;overflow:hidden;background:#C9CDD4}
 
-  /* ── the single glass shell — one pane, background visible all around ──── */
-  .shell{position:relative;z-index:2;margin:34px;flex:1;display:flex;flex-direction:column;
-    border-radius:26px;background:var(--glass);border:1px solid var(--edge);
-    -webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);
-    box-shadow:
-      inset 0 1.5px 0 rgba(255,255,255,.8),
-      0 0 0 1px rgba(255,255,255,.25),
-      0 0 46px rgba(143,180,248,.30),
-      0 30px 70px rgba(30,40,70,.20);
-    overflow:hidden}
+  /* ── the defocused office behind the glass ────────────────────────────────
+     PHOTO SLOT: when the real photograph arrives, replace the painted layers
+     below with   .scene{background:url(data:image/jpeg;base64,....) center/cover}
+     and delete .scene > i. Everything else stays untouched. ─────────────── */
+  .scene{position:fixed;inset:-60px;z-index:0;filter:blur(34px) saturate(1.05);transform:translateZ(0)}
+  .scene i{position:absolute;border-radius:50%}
+  .scene .wall{inset:0;border-radius:0;background:linear-gradient(168deg,#DFE3E9 0%,#C7CCD5 46%,#AEB4BF 100%)}
+  .scene .win{left:-6%;top:-8%;width:46%;height:52%;background:radial-gradient(closest-side,#F4F6F9,rgba(244,246,249,0));opacity:.9}
+  .scene .lamp{left:34%;bottom:-14%;width:44%;height:52%;background:radial-gradient(closest-side,#FFE9C8,rgba(255,233,200,0));opacity:.95}
+  .scene .lampcore{left:46%;bottom:-6%;width:16%;height:18%;background:radial-gradient(closest-side,#FFF6E4,rgba(255,246,228,0))}
+  .scene .desk{left:-4%;bottom:-24%;width:110%;height:34%;border-radius:40% 40% 0 0;
+    background:linear-gradient(180deg,rgba(150,140,130,.55),rgba(120,112,105,.75))}
+  .scene .shelf{right:-8%;top:6%;width:34%;height:60%;border-radius:6%;
+    background:linear-gradient(200deg,rgba(158,166,178,.8),rgba(120,128,140,.5))}
+  .scene .plant{right:20%;bottom:2%;width:12%;height:26%;background:radial-gradient(closest-side,rgba(110,125,105,.55),rgba(110,125,105,0))}
 
-  .bar{flex:none;display:flex;align-items:baseline;gap:16px;padding:20px 26px 18px;
-    border-bottom:1px solid var(--hair)}
-  .bar .proj{font:300 19px/1 var(--serif);white-space:nowrap}
+  /* faint reflection of the sheet on the desk, so the glass "stands" there */
+  .refl{position:fixed;left:6%;right:6%;bottom:0;height:34px;z-index:1;pointer-events:none;
+    background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0));
+    filter:blur(6px);border-radius:50%/100% 100% 0 0;opacity:.6}
+
+  /* ── the single standing glass sheet ────────────────────────────────────── */
+  .shell{position:relative;z-index:2;margin:30px 34px 26px;flex:1;display:flex;flex-direction:column;
+    border-radius:24px;background:var(--glass);
+    border:1.5px solid var(--rim);
+    -webkit-backdrop-filter:blur(22px) saturate(1.35);backdrop-filter:blur(22px) saturate(1.35);
+    box-shadow:var(--rim-glow),0 30px 70px rgba(30,40,70,.22)}
+
+  .bar{flex:none;display:flex;align-items:baseline;gap:14px;margin:14px 16px 0;
+    padding:15px 22px;border-radius:14px;border:1.2px solid var(--rim);
+    background:rgba(255,255,255,.14);box-shadow:var(--rim-glow)}
+  .bar .proj{font:300 20px/1 var(--serif);white-space:nowrap}
   .bar .meta{font:600 8px/1 var(--mono);letter-spacing:.2em;color:var(--ink45);white-space:nowrap}
   .stamp{font:600 8px/1 var(--mono);letter-spacing:.14em;color:var(--rejected);
-    border:1px solid rgba(176,74,62,.5);border-radius:3px;padding:4px 8px;
-    transform:rotate(-2deg);opacity:.82;white-space:nowrap}
+    border:1px solid rgba(176,74,62,.5);border-radius:3px;padding:4px 8px;opacity:.82;white-space:nowrap}
   .bar .sp{flex:1;min-width:12px}
-  .bar .note{font:italic 300 11.5px/1.5 var(--serif);color:var(--ink45);max-width:360px;text-align:right}
+  .bar .note{font:italic 300 11.5px/1.5 var(--serif);color:var(--ink45);max-width:350px;text-align:right}
   .bar .note code{font:400 10.5px/1 var(--mono);color:var(--ink45)}
 
-  .main{flex:1;display:flex;min-height:0}
+  /* three outlined panes floating inside the sheet, like the reference */
+  .main{flex:1;display:flex;gap:14px;min-height:0;padding:14px 16px 16px}
+  .pane{border-radius:16px;border:1.2px solid var(--rim);background:rgba(255,255,255,.10);
+    box-shadow:var(--rim-glow);overflow:hidden;position:relative}
 
-  /* ── drawing register: sheet numbers carry real information, no separate
-     glass card any more — it's a column inside the one shell ────────────── */
-  .files{width:238px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--hair)}
-  .files h2{font:600 8px/1 var(--mono);letter-spacing:.2em;color:var(--ink45);padding:18px 22px 10px}
-  .reg{flex:1;overflow-y:auto;scrollbar-width:none}
+  /* ── pane 1: the drawing register ───────────────────────────────────────── */
+  .files{width:240px;flex:none;display:flex;flex-direction:column}
+  .files h2{font:600 8px/1 var(--mono);letter-spacing:.2em;color:var(--ink45);padding:16px 20px 10px}
+  .reg{flex:1;overflow-y:auto;border-top:1px solid var(--hair);scrollbar-width:none}
   .reg::-webkit-scrollbar{width:0}
   .doc{display:grid;grid-template-columns:40px 1fr;column-gap:10px;align-items:baseline;
-    width:100%;padding:11px 22px;border:0;border-bottom:1px solid var(--hair);
+    width:100%;padding:11px 20px;border:0;border-bottom:1px solid var(--hair);
     background:transparent;text-align:left;font-family:inherit;color:inherit;cursor:pointer;
     transition:background .18s ease}
   .doc:hover{background:var(--glass-hi)}
@@ -79,22 +93,44 @@
   .doc.open .no{color:#4a72c9}
   .doc .ti{font:300 13.5px/1.45 var(--serif);color:var(--ink)}
 
-  /* ── the viewer: its own glass pane inset into the counter. Empty, it stays
-     as light and translucent as the rest of the shell; only once a drawing
-     loads does the browser's own (unstylable) dark PDF chrome fill it — that
-     native chrome is a hard platform limit, not a choice, so it's accepted
-     as-is rather than fought with a matching dark frame around it. ──────── */
-  .viewer{flex:1;position:relative;padding:22px}
-  .mat{position:absolute;inset:22px;border-radius:14px;overflow:hidden;
-    background:rgba(255,255,255,.30);border:1px solid var(--edge-s);
-    -webkit-backdrop-filter:blur(20px) saturate(1.3);backdrop-filter:blur(20px) saturate(1.3);
-    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.85),0 0 0 1px rgba(255,255,255,.2),
-      0 0 30px rgba(143,180,248,.18),0 18px 40px rgba(30,40,70,.14)}
-  .mat iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:block;animation:fadein .45s ease}
+  /* ── pane 2: the viewer, with the specular light strip along its top ────── */
+  .viewer{flex:1}
+  .viewer::before{content:"";position:absolute;left:18%;right:30%;top:-1px;height:2px;z-index:3;
+    background:linear-gradient(90deg,rgba(255,255,255,0),#FFFFFF 30%,#FFFFFF 70%,rgba(255,255,255,0));
+    filter:drop-shadow(0 0 6px rgba(255,255,255,.9)) drop-shadow(0 0 14px rgba(190,220,255,.7))}
+  .viewer iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:block;animation:fadein .45s ease}
   .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
   .empty p{font:300 15px/1.8 var(--serif);color:var(--ink45)}
-  .empty b{display:block;font-style:italic;font-weight:300;font-size:18px;color:var(--ink60);margin-bottom:6px}
+  .empty b{display:block;font-style:italic;font-weight:300;font-size:19px;color:#3d5a94;margin-bottom:6px}
   .empty code{font:400 11.5px/1 var(--mono);color:var(--ink45)}
+
+  /* ── pane 3: the watcher's view of the desktop (Index of C:\) ───────────── */
+  .index{width:300px;flex:none;display:flex;flex-direction:column;padding:18px 0 110px}
+  .index h3{font:300 22px/1.2 var(--serif);padding:6px 22px 12px}
+  .irow{display:grid;grid-template-columns:1fr 62px 44px;column-gap:8px;align-items:baseline;
+    padding:3.5px 18px 3.5px 22px}
+  .irow.head{font:italic 300 12.5px/1.6 var(--serif);color:var(--ink60);
+    border-bottom:1px solid var(--hair);padding-bottom:7px;margin-bottom:3px}
+  .irow.head span:nth-child(2),.irow.head span:nth-child(3){text-align:right}
+  .index .scroll{flex:1;overflow-y:auto;scrollbar-width:none}
+  .index .scroll::-webkit-scrollbar{width:0}
+  .irow .nm{display:flex;align-items:center;gap:7px;min-width:0;
+    font:300 13px/1.3 var(--serif);color:var(--ink)}
+  .irow .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .irow .nm svg{flex:none;width:12px;height:11px;opacity:.75}
+  .irow .sz,.irow .dt{font:400 10px/1.5 var(--mono);color:var(--ink60);text-align:right;white-space:nowrap}
+
+  /* the TRACE corner box — fixed so it wraps the droplet, which lives at the
+     widget iframe's own bottom-right (right:26px bottom:24px, 120px wide) */
+  .tracebox{position:fixed;right:14px;bottom:12px;width:146px;height:102px;z-index:3;
+    border-radius:14px;border:1.2px solid var(--rim);background:rgba(255,255,255,.12);
+    box-shadow:var(--rim-glow)}
+
+  /* decorative glass beads resting on the sheet, as in the reference */
+  .bead{position:fixed;z-index:4;pointer-events:none;border-radius:50%;
+    background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.95) 0%,rgba(228,240,255,.55) 38%,rgba(170,200,245,.35) 72%,rgba(150,185,240,.5) 100%);
+    box-shadow:inset -2px -3px 6px rgba(90,130,200,.35),inset 2px 3px 6px rgba(255,255,255,.8),
+      0 3px 10px rgba(80,110,170,.25),0 0 0 1px rgba(255,255,255,.5)}
 
   .bubbleframe{position:fixed;right:0;bottom:0;width:430px;height:660px;border:none;background:transparent;z-index:50}
 
@@ -104,17 +140,24 @@
 
   :focus-visible{outline:1.5px solid var(--accent);outline-offset:2px}
 
+  @media (max-width:1180px){.index{display:none}}
   @media (max-width:760px){
     .shell{margin:14px}
     .bar .note{display:none}
     .main{flex-direction:column}
-    .files{width:100%;max-height:34vh;border-right:0;border-bottom:1px solid var(--hair)}
+    .files{width:100%;max-height:34vh}
     .bubbleframe{width:100vw;max-width:430px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
 </style>
 </head>
 <body>
+  <div class="scene" aria-hidden="true">
+    <i class="wall"></i><i class="win"></i><i class="shelf"></i>
+    <i class="lamp"></i><i class="lampcore"></i><i class="plant"></i><i class="desk"></i>
+  </div>
+  <div class="refl" aria-hidden="true"></div>
+
   <div class="shell">
     <div class="bar">
       <span class="proj">Tanglin Rise</span>
@@ -124,19 +167,32 @@
       <span class="note">Demo drawings — Trace's reactions are live, through the same matcher <code>ambient.py</code> uses on a real desktop.</span>
     </div>
     <div class="main">
-      <div class="files">
+      <div class="pane files">
         <h2>DRAWING REGISTER</h2>
         <div class="reg" id="docs"></div>
       </div>
-      <div class="viewer">
-        <div class="mat" id="mat">
-          <div class="empty" id="emptyState">
-            <p><b>Open a drawing.</b>Trace is watching — the way <code>watcher.py</code><br>would watch it on your own desktop.</p>
-          </div>
+      <div class="pane viewer" id="viewer">
+        <div class="empty" id="emptyState">
+          <p><b>Open a drawing.</b>Trace is watching — the way <code>watcher.py</code><br>would watch it on your own desktop.</p>
         </div>
+      </div>
+      <div class="pane index" aria-label="Simulated desktop the watcher sees">
+        <h3>Index of C:\</h3>
+        <div class="irow head"><span>Name</span><span>Size</span><span>Date</span></div>
+        <div class="scroll" id="cindex"></div>
       </div>
     </div>
   </div>
+  <div class="tracebox" aria-hidden="true"></div>
+
+  <!-- glass beads resting on / drifting off the sheet's right pane, as in the reference -->
+  <span class="bead" style="right:19.5%;top:2.5%;width:34px;height:34px"></span>
+  <span class="bead" style="right:17.2%;top:11%;width:15px;height:15px"></span>
+  <span class="bead" style="right:14.8%;top:14.5%;width:24px;height:24px"></span>
+  <span class="bead" style="right:11.5%;top:36%;width:11px;height:11px"></span>
+  <span class="bead" style="right:8.5%;top:51%;width:14px;height:14px"></span>
+  <span class="bead" style="right:13%;top:62%;width:9px;height:9px"></span>
+
   <iframe class="bubbleframe" src="/" title="Trace"></iframe>
 
 <script>
@@ -158,13 +214,32 @@
   function openDoc(file, el){
     document.querySelectorAll('.doc').forEach(x => x.classList.remove('open'));
     el.classList.add('open');
-    document.getElementById('mat').innerHTML =
+    document.getElementById('viewer').innerHTML =
       `<iframe src="/drawings/${encodeURIComponent(file)}" title="${file}"></iframe>`;
     // The document-open event — the same signal watcher.py sends from a real
     // desktop. Trace's reaction (matcher -> live store -> nudge) is identical.
     fetch('/nudge', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({title: file})}).catch(() => {});
   }
+
+  // The watcher's-eye view: a plausible architect's C:\ (folders first, then
+  // files), simulated — matching what watcher.py would actually be near.
+  const FOLDER = '<svg viewBox="0 0 24 20" fill="none" stroke="#8a90a4" stroke-width="2"><path d="M2 5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" fill="rgba(180,196,224,.35)"/></svg>';
+  const FILE = '<svg viewBox="0 0 20 24" fill="none" stroke="#8a90a4" stroke-width="2"><path d="M12 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z" fill="rgba(255,255,255,.4)"/><path d="M12 2v5h5"/></svg>';
+  const CINDEX = [
+    ["$Recycle.Bin/","","14.06"],["autodesk/","","16.05"],["Config.Msi/","","03.07"],
+    ["Documents and Settings/","","15.11"],["Drivers/","","10.06"],["inetpub/","","09.09"],
+    ["OneDriveTemp/","","08.12"],["PerfLogs/","","01.04"],["Program Files/","","21.06"],
+    ["Program Files (x86)/","","01.04"],["ProgramData/","","07.06"],["Projects — Tanglin Rise/","","22.08"],
+    ["Recovery/","","10.09"],["RevitPlugins/","","22.03"],["System Volume Information/","","05.07"],
+    ["temp/","","27.04"],["Users/","","14.03"],
+    ["DumpStack.log","12.0 KB","19.05"],["DumpStack.log.tmp","12.0 KB","13.06"],
+    ["hiberfil.sys","5.5 GB","06.07"],["pagefile.sys","13.6 GB","23.06"],
+  ];
+  document.getElementById('cindex').innerHTML = CINDEX.map(([n,s,d]) =>
+    `<div class="irow"><span class="nm">${n.endsWith('/')?FOLDER:FILE}<span>${n}</span></span>` +
+    `<span class="sz">${s}</span><span class="dt">${d}</span></div>`
+  ).join('');
 </script>
 </body>
 </html>
