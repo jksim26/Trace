@@ -11,6 +11,8 @@
     --blue:#6e9ef7; --blue-soft:#dbe7fd; --blue-faint:rgba(110,158,247,.16);
     --ok:#2fae7d; --no:#e05c72; --old:#d99a2b;
     --hair:#d8dae2;
+    --purple:#7b5cf0; --purple-soft:rgba(123,92,240,.16);
+    --orange:#ff6a00; --orange-soft:rgba(255,106,0,.14);
   }
   body{width:1600px;height:1000px;background:var(--paper);position:relative;overflow:hidden;
     font-family:-apple-system,"SF Pro Text","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
@@ -45,6 +47,9 @@
   .card .hd{padding:7px 11px 6px;border-bottom:.5px solid var(--hair);
     font-size:9.5px;font-weight:700;letter-spacing:.13em;color:var(--ink)}
   .card .hd small{float:right;font-weight:650;color:var(--blue);letter-spacing:.1em}
+  .card .hd small.qwen{color:var(--purple)}
+  .card .hd small.det{color:var(--ok)}
+  .card .hd small.infra{color:var(--orange)}
   .card .bd{padding:8px 11px 9px;font-size:11px;font-weight:300;line-height:1.5;color:var(--ink-soft)}
   .card .bd b{font-weight:650;color:var(--ink)}
   .card .bd .mono{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:10px;color:var(--ink-soft)}
@@ -63,6 +68,8 @@
   .card,.pill{z-index:2}
   .wire{stroke:var(--ink-soft);stroke-width:1.1;fill:none;marker-end:url(#ah)}
   .wire.blue{stroke:var(--blue);marker-end:url(#ahb)}
+  .wire.green{stroke:var(--ok);marker-end:url(#ahg)}
+  .wire.orange{stroke:var(--orange);marker-end:url(#aho)}
   .wire.dash{stroke-dasharray:4 4}
   .wl{font-size:8.5px;font-weight:650;letter-spacing:.09em;fill:var(--ink-faint)}
 
@@ -100,6 +107,10 @@
         <path d="M0,0 L7,3.5 L0,7 z" fill="#4a5064"/></marker>
       <marker id="ahb" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
         <path d="M0,0 L7,3.5 L0,7 z" fill="#6e9ef7"/></marker>
+      <marker id="ahg" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#2fae7d"/></marker>
+      <marker id="aho" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#ff6a00"/></marker>
     </defs>
     <!-- transcripts -> capture -->
     <path class="wire" d="M262,505 L318,505"/>
@@ -122,14 +133,12 @@
     <!-- recall -> surfaces (two) -->
     <path class="wire" d="M1298,520 L1322,520 L1322,462 L1344,462"/>
     <path class="wire" d="M1298,580 L1322,580 L1322,624 L1344,624"/>
-    <!-- surfaces -> cloud (deployed) -->
-    <path class="wire blue dash" d="M1440,700 L1440,782 L1084,782"/>
-    <!-- engine -> cloud API calls -->
-    <path class="wire dash" d="M450,572 L450,788 L516,788" />
-    <path class="wire dash" d="M1160,652 L1160,714 L1040,742"/>
-    <!-- store -> mcp server / audit log (read-only side channel) -->
-    <path class="wire" d="M760,524 L700,566"/>
-    <path class="wire" d="M880,524 L920,566"/>
+    <!-- ambient bubble -> hosted on Alibaba ECS -->
+    <path class="wire orange dash" d="M1440,700 L1440,764 L1084,764"/>
+    <text class="wl" x="1330" y="758" fill="#ff6a00">DEPLOYED ON ECS</text>
+    <!-- store -> mcp server / audit log (read-only verification channel) -->
+    <path class="wire green" d="M760,524 L700,566"/>
+    <path class="wire green" d="M880,524 L920,566"/>
   </svg>
 
   <!-- ==================== FORGET zone (top) ==================== -->
@@ -138,19 +147,19 @@
   </div>
 
   <div class="card" style="left:610px;top:140px;width:224px">
-    <div class="hd">RULE-PACK GATE <small>DETERMINISTIC</small></div>
+    <div class="hd">RULE-PACK GATE <small class="det">DETERMINISTIC</small></div>
     <div class="bd">4 SCDF fire rules <span class="mono">rules/fire.yaml</span><br>
       + pluggable UK pack <span class="mono">rules/uk/</span><br>
       <b>never mis-fires on camera</b></div>
   </div>
 
   <div class="card" style="left:356px;top:238px;width:218px">
-    <div class="hd">LLM PREMISE CHECK <small><svg class="logo"><use href="#qwen-mark"/></svg>QWEN</small></div>
+    <div class="hd">LLM PREMISE CHECK <small class="qwen"><svg class="logo"><use href="#qwen-mark"/></svg>QWEN</small></div>
     <div class="bd">reads each decision's <b>stored assumptions</b>; names the broken premise.</div>
   </div>
 
   <div class="card" style="left:1038px;top:118px;width:250px">
-    <div class="hd">DECISION COURT <small><svg class="logo"><use href="#qwen-mark"/></svg>3 QWEN ROLES</small></div>
+    <div class="hd">DECISION COURT <small class="qwen"><svg class="logo"><use href="#qwen-mark"/></svg>3 QWEN ROLES</small></div>
     <div class="bd">
       <div class="row"><span>Proposer — the commercial case</span></div>
       <div class="row"><span>Guardian — the compliance case</span></div>
@@ -165,8 +174,20 @@
       <span class="mono">demo/transcripts/</span><br>3 projects · SG + UK</div>
   </div>
 
+  <!-- ==================== legend ==================== -->
+  <div style="position:absolute;left:66px;top:610px;width:250px;z-index:2">
+    <div style="font-size:9px;font-weight:700;letter-spacing:.13em;color:var(--ink-faint);margin-bottom:8px">LEGEND — WHAT RUNS WHERE</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:flex-start;gap:8px"><span class="dot" style="background:var(--ink-soft);margin-top:4px"></span><span style="font-size:10.5px;font-weight:300;color:var(--ink-soft)">core write / read pipeline</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px"><span class="dot" style="background:var(--blue);margin-top:4px"></span><span style="font-size:10.5px;font-weight:300;color:var(--ink-soft)">active premise-invalidation · Track 1 pillars</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px"><span class="dot" style="background:var(--purple);margin-top:4px"></span><span style="font-size:10.5px;font-weight:300;color:var(--ink-soft)">Qwen AI inference (LLM call)</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px"><span class="dot" style="background:var(--ok);margin-top:4px"></span><span style="font-size:10.5px;font-weight:300;color:var(--ink-soft)">deterministic &amp; verifiable — no LLM</span></div>
+      <div style="display:flex;align-items:flex-start;gap:8px"><span class="dot" style="background:var(--orange);margin-top:4px"></span><span style="font-size:10.5px;font-weight:300;color:var(--ink-soft)">Alibaba Cloud infra — hosting / deployment</span></div>
+    </div>
+  </div>
+
   <div class="card" style="left:318px;top:438px;width:256px">
-    <div class="hd">CAPTURE — WRITE <small><svg class="logo"><use href="#qwen-mark"/></svg>QWEN-PLUS</small></div>
+    <div class="hd">CAPTURE — WRITE <small class="qwen"><svg class="logo"><use href="#qwen-mark"/></svg>QWEN-PLUS</small></div>
     <div class="bd">function-calling extraction → <b>decision + rationale + assumptions</b> + author + machine-checkable attributes</div>
   </div>
 
@@ -181,7 +202,7 @@
   </div>
 
   <div class="card" style="left:1038px;top:462px;width:260px">
-    <div class="hd">RECALL — READ <small>BUDGETED</small></div>
+    <div class="hd">RECALL — READ <small class="det">BUDGETED</small></div>
     <div class="bd">composite ranking (relevance + recency + importance) → <b>pack to token budget</b> → <svg class="logo"><use href="#qwen-mark"/></svg>cited Qwen answer<br>
       <b>honest abstention</b>: zero LLM calls when nothing is on record</div>
   </div>
@@ -194,24 +215,24 @@
   </div>
 
   <div class="card" style="left:1348px;top:552px;width:196px">
-    <div class="hd">AMBIENT BUBBLE <small>LIVE</small></div>
+    <div class="hd">AMBIENT BUBBLE <small class="infra">LIVE</small></div>
     <div class="bd">glass bubble over Revit / Acrobat / Edge · window-title matcher, no plugin · one agent, one memory across projects · <b>judges' testing link</b></div>
   </div>
 
   <!-- ==================== MCP + audit (new) ==================== -->
   <div class="card" style="left:516px;top:566px;width:250px">
-    <div class="hd">MCP SERVER <small>STANDALONE</small></div>
+    <div class="hd">MCP SERVER <small class="det">STANDALONE</small></div>
     <div class="bd">keyless, over stdio — <span class="mono">list_projects · decisions_asof · check_compliance · verify_audit_chain · court_records</span><br>any MCP client reads the same store directly</div>
   </div>
 
   <div class="card" style="left:786px;top:566px;width:250px">
-    <div class="hd">AUDIT LOG <small>SHA-256 CHAIN</small></div>
+    <div class="hd">AUDIT LOG <small class="det">SHA-256 CHAIN</small></div>
     <div class="bd">every write appends to a hash-chained <span class="mono">audit_log</span> table · <span class="mono">verify_audit_chain()</span> proves it untouched<br><b>never delete, only supersede</b>: enforced, not a slogan</div>
   </div>
 
   <!-- ==================== cloud strip ==================== -->
   <div class="card" style="left:516px;top:742px;width:568px">
-    <div class="hd"><svg class="logo ali"><use href="#alibaba-mark"/></svg>ALIBABA CLOUD — SINGAPORE <small><svg class="logo"><use href="#qwen-mark"/></svg>QWEN CLOUD</small></div>
+    <div class="hd"><svg class="logo ali"><use href="#alibaba-mark"/></svg>ALIBABA CLOUD — SINGAPORE <small class="qwen"><svg class="logo"><use href="#qwen-mark"/></svg>QWEN CLOUD</small></div>
     <div class="bd">
       <b>Model Studio / DashScope endpoint</b> — qwen-plus serves capture · premise check · court ×3 · recall<br>
       <b>ECS deployment</b> — <span class="mono">trace-bubble</span> systemd service, port 80, live through judging
