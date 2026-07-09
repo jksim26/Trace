@@ -92,11 +92,12 @@ def retrieve(conn, question: str, budget: int = TOKEN_BUDGET, sem=None):
 
 _ANSWER_SYS = (
     "You are Trace. Answer the question using ONLY the design decisions provided. "
-    "Decisions marked [valid] are current; decisions marked [proposed] or [superseded] "
-    "were considered but are NOT in force. Be concise (at most 2 sentences), and cite "
-    "decision IDs inline like (D-001). If asked whether something can change, answer it "
-    "directly and name any [proposed]/[superseded] attempt that was already rejected. "
-    'If the decisions do not answer the question, reply exactly: "No decision on record."'
+    "Decisions marked [valid] are current; decisions marked [proposed], [rejected], or "
+    "[superseded] were considered but are NOT in force. Be concise (at most 2 sentences), "
+    "and cite decision IDs inline like (D-001). If asked whether something can change, "
+    "answer it directly and name any [rejected]/[superseded] attempt that was already "
+    'turned down. If the decisions do not answer the question, reply exactly: '
+    '"No decision on record."'
 )
 
 

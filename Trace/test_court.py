@@ -1,8 +1,10 @@
 from types import SimpleNamespace
 
+import court
 from capture import Captured
 from court import convene, get_court_records, render_verdict
-from store import Decision, add_decision, connect, init_db
+from invalidate import Alert
+from store import Decision, add_decision, connect, get_decision, init_db
 
 
 def _fake_client(text="because SCDF Cl 3.5"):
@@ -61,3 +63,24 @@ def test_court_persists_allow_verdict_too():
     records = get_court_records(conn)
     assert len(records) == 1
     assert records[0]["verdict"] == "ALLOW"
+
+
+def test_court_persists_a_record_for_every_broken_premise_not_just_the_first(monkeypatch):
+    # A single new decision can break more than one prior premise at once —
+    # every one of them must land on the permanent record, not just alerts[0].
+    conn = _store_with_d001()
+    d001_row = get_decision(conn, "D-001")
+    d002 = add_decision(conn, Decision(statement="Sprinklers throughout", discipline="fire"))
+    captured = _combustible()
+    fake_alerts = [
+        Alert(captured.decision, "SCDF-Cl3.5", "rule A", "Cl 3.5.1", breaks=d001_row),
+        Alert(captured.decision, "SCDF-Cl6", "rule B", "Cl 6.1", breaks=d002),
+    ]
+    monkeypatch.setattr(court, "check_invalidation", lambda *a, **kw: fake_alerts)
+    v = convene(conn, captured, client=_fake_client())
+    assert v.breaks == "D-001"  # the primary verdict returned is still the first
+
+    records = get_court_records(conn)
+    assert len(records) == 2
+    assert {r["breaks_id"] for r in records} == {"D-001", d002.id}
+    assert all(r["verdict"] == "REJECT" for r in records)

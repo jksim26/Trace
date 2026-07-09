@@ -469,7 +469,7 @@
   })();
 
   /* ── the widget, wired to the live engine ───────────────────────────────── */
-  var DOTC={valid:"var(--inforce)",superseded:"var(--superseded)",proposed:"var(--rejected)"};
+  var DOTC={valid:"var(--inforce)",superseded:"var(--superseded)",proposed:"var(--superseded)",rejected:"var(--rejected)"};
   var RAD=["49% 51% 53% 47%/52% 48% 55% 45%","53% 47% 49% 51%/48% 55% 45% 52%","51% 49% 47% 53%/55% 45% 52% 48%"];
   var SUGGEST=["Why the non-combustible façade cladding?","Can we still switch to the cheaper panel?","Who signed off, and when?"];
   var FOLLOW=["Show me the exact fire-code clause","What’s still open on this project?"];
@@ -547,7 +547,7 @@
         $("proj").innerHTML='<option>Tanglin Rise · SG · 95 m</option>';
         fillRecord([
           {id:"D-001",status:"valid",statement:"Façade cladding = non-combustible mineral rainscreen",date:"12 JAN 26"},
-          {id:"D-002",status:"proposed",statement:"Swap to PE-core ACP (combustible)",date:"03 MAR 26"},
+          {id:"D-002",status:"rejected",statement:"Swap to PE-core ACP (combustible)",date:"03 MAR 26"},
           {id:"D-004",status:"superseded",statement:"Curtain-wall glazing (earlier revision)",date:"20 FEB 26"}
         ],"Tanglin Rise");
       });

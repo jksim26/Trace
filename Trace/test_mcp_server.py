@@ -19,7 +19,7 @@ def test_list_decisions_keeps_superseded_and_rejected():
     out = mcp_server.list_decisions("tanglin-rise")
     by = {d["id"]: d for d in out["decisions"]}
     assert by["D-001"]["status"] == "valid"
-    assert by["D-002"]["status"] == "proposed"        # the rejected VE proposal, preserved
+    assert by["D-002"]["status"] == "rejected"         # the rejected VE proposal, preserved
     assert by["D-004"]["status"] == "superseded"      # never deleted
     assert by["D-004"]["superseded_by"] == "D-006"
 

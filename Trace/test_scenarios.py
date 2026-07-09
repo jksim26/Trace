@@ -12,7 +12,7 @@ def test_every_project_gives_trace_something_to_remember():
         ds = get_all_decisions(conn)
         assert len(ds) >= 5, key
         statuses = {d.status for d in ds}
-        assert {"valid", "proposed", "superseded"} <= statuses, key
+        assert {"valid", "rejected", "superseded"} <= statuses, key
         records = get_court_records(conn)
         assert len(records) == 1 and records[0]["verdict"] == "REJECT", key
         assert all(d.assumptions for d in ds if d.status == "valid"), key
@@ -32,3 +32,20 @@ def test_retrieval_finds_the_right_memory_per_project():
     assert any("400 kVA" in d.statement or "400 kVA" in " ".join(d.assumptions) for d in packed)
     packed, _ = retrieve(build_store("maple-wharf"), "why the terracotta rainscreen facade")
     assert any(d.id == "D-001" for d in packed)
+
+
+def test_build_store_persists_to_disk_and_seeds_only_once(tmp_path):
+    db_path = str(tmp_path / "tanglin-rise.db")
+
+    first = build_store("tanglin-rise", db_path=db_path)
+    ids_after_seed = sorted(d.id for d in get_all_decisions(first))
+    assert ids_after_seed  # the demo data was written
+
+    # A brand-new connection reopening the SAME file must see the same rows —
+    # a live app restart should not lose what was already on disk.
+    reopened = build_store("tanglin-rise", db_path=db_path)
+    assert sorted(d.id for d in get_all_decisions(reopened)) == ids_after_seed
+
+    # And it must not have re-run the seed script on top of the existing rows
+    # (which would crash on duplicate primary keys or duplicate the story).
+    assert len(get_all_decisions(reopened)) == len(ids_after_seed)

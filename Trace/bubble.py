@@ -118,11 +118,13 @@ DEFAULT_PROJECT = "tanglin-rise"
 
 
 _STORES: dict = {}
+_DATA_DIR = Path(__file__).with_name("data")
 
 
 def _store_for(project: str):
     if project not in _STORES:
-        _STORES[project] = build_store(project)
+        _DATA_DIR.mkdir(exist_ok=True)
+        _STORES[project] = build_store(project, db_path=str(_DATA_DIR / f"{project}.db"))
     return _STORES[project]
 
 

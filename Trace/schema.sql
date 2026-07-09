@@ -14,16 +14,18 @@ CREATE TABLE IF NOT EXISTS decisions (
     superseded_at  TEXT,
     superseded_by  TEXT REFERENCES decisions(id),
     status         TEXT NOT NULL DEFAULT 'valid'
-                       CHECK (status IN ('valid','superseded','proposed')),
-    source_episode TEXT
+                       CHECK (status IN ('valid','superseded','proposed','rejected')),
+    source_episode TEXT,
+    resubmits      TEXT REFERENCES decisions(id)  -- an earlier REJECTED decision this one retries
 );
 
--- Tamper-evident audit chain: every write (add / supersede / verdict) appends
--- an event whose hash covers the previous event's hash — so any later edit to
--- the log breaks the chain and is detectable by verify_audit_chain().
+-- Tamper-evident audit chain: every write (add / supersede / verdict / status
+-- change) appends an event whose hash covers the previous event's hash — so
+-- any later edit to the log breaks the chain and is detectable by
+-- verify_audit_chain().
 CREATE TABLE IF NOT EXISTS audit_log (
     seq       INTEGER PRIMARY KEY AUTOINCREMENT,
-    event     TEXT NOT NULL CHECK (event IN ('add','supersede','verdict')),
+    event     TEXT NOT NULL CHECK (event IN ('add','supersede','verdict','status_change')),
     ref       TEXT,                 -- decision id the event concerns
     payload   TEXT NOT NULL,        -- canonical JSON of what was written
     at        TEXT NOT NULL,

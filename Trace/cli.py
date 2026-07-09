@@ -22,7 +22,7 @@ from capture import capture_decision
 from court import convene, render_verdict
 from invalidate import check_invalidation, render_alert
 from recall import recall_decisions
-from store import add_decision, connect, get_all_decisions, get_valid_asof, init_db
+from store import add_decision, connect, get_all_decisions, get_valid_asof, init_db, set_status
 
 try:
     from rich.console import Console
@@ -67,14 +67,19 @@ def _budget_bar(used: int, budget: int, width: int = 24) -> str:
     return "█" * filled + "░" * (width - filled) + f"   {used} / {budget} tokens"
 
 
-_STATUS = {"valid": "IN FORCE", "proposed": "PROPOSED · REJECTED", "superseded": "SUPERSEDED"}
+_STATUS = {
+    "valid": "IN FORCE", "proposed": "PROPOSED", "rejected": "REJECTED",
+    "superseded": "SUPERSEDED",
+}
 
 
 def _trail(conn) -> str:
     lines = ["Nothing is deleted — every version stays on the record:", ""]
     for d in get_all_decisions(conn):
-        if d.status == "proposed":
-            when = f"proposed {(d.valid_from or '')[:10]} · not adopted"
+        if d.status == "rejected":
+            when = f"rejected {(d.valid_from or '')[:10]} · not adopted"
+        elif d.status == "proposed":
+            when = f"proposed {(d.valid_from or '')[:10]} · pending review"
         elif d.valid_to:
             when = f"{(d.valid_from or '')[:10]} → {d.valid_to[:10]}  (superseded)"
         else:
@@ -83,13 +88,15 @@ def _trail(conn) -> str:
         lines.append(f"        {d.statement}")
         if d.superseded_by:
             lines.append(f"        superseded_by → {d.superseded_by}")
+        if d.resubmits:
+            lines.append(f"        resubmits → {d.resubmits}")
     return "\n".join(lines)
 
 
 def ambient_card(conn) -> str:
     everything = get_all_decisions(conn)
     valid = [d for d in everything if d.status == "valid"]
-    pending = [d for d in everything if d.status == "proposed"]
+    pending = [d for d in everything if d.status in ("proposed", "rejected")]
     return (
         f"2nd-storey facade  ·  {len(everything)} decision(s) on record\n"
         f"  • {len(valid)} currently valid\n"
@@ -129,13 +136,22 @@ def run(pause: bool = False, client=None):
                               recorded_at="2026-03-03T14:00Z", valid_from="2026-03-03T14:00Z",
                               client=client):
         alerts = check_invalidation(conn, c)
-        c.decision.status = "proposed"
-        add_decision(conn, c.decision)  # never delete — preserve the rejected proposal
+        c.decision.status = "proposed"          # placeholder until the court resolves it
+        add_decision(conn, c.decision)          # never delete — preserve every attempt
         for a in alerts:
             _panel(render_alert(a), title="!! INVALIDATION ALERT", style="red")
-        if alerts:
-            _panel(render_verdict(convene(conn, c, client=client)),
+        # The court now runs on EVERY captured decision, not only ones a
+        # pre-check already flagged — so ALLOW is a real, reachable verdict,
+        # not a branch that only exists on paper.
+        verdict = convene(conn, c, client=client)
+        if verdict.conflict:
+            set_status(conn, c.decision.id, "rejected")
+            _panel(render_verdict(verdict),
                    title="The decision court — 3 Qwen roles deliberate", style="red")
+        else:
+            set_status(conn, c.decision.id, "valid")
+            _panel(render_verdict(verdict),
+                   title="The decision court — 3 Qwen roles deliberate", style="green")
         _panel(_trail(conn) + "\n\n" + render_chain_status(conn),
                title="Never-delete trail (C4) — tamper-evident", style="yellow")
     _pause(pause)

@@ -25,7 +25,10 @@ def test_offline_demo_runs_end_to_end_with_no_network():
 
     decisions = {d.id: d for d in get_all_decisions(conn)}
     assert decisions["D-001"].status == "valid"
-    assert decisions["D-002"].status == "proposed"   # preserved, never deleted
+    assert decisions["D-002"].status == "rejected"   # preserved, never deleted
+    # The ALLOW branch is now reachable: nothing should be left stranded in
+    # the transient "proposed" placeholder once the court has resolved it.
+    assert not any(d.status == "proposed" for d in decisions.values())
 
     records = get_court_records(conn)
     assert len(records) == 1

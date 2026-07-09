@@ -67,6 +67,7 @@ class Decision:
     superseded_by: Optional[str] = None
     status: str = "valid"
     source_episode: str = ""
+    resubmits: Optional[str] = None
     id: Optional[str] = None
 
 
@@ -129,6 +130,7 @@ def _row_to_decision(row: sqlite3.Row) -> Decision:
         superseded_by=row["superseded_by"],
         status=row["status"],
         source_episode=row["source_episode"],
+        resubmits=row["resubmits"],
     )
 
 
@@ -143,14 +145,14 @@ def add_decision(conn: sqlite3.Connection, decision: Decision) -> Decision:
         """INSERT INTO decisions
              (id, statement, discipline, riba_stage, author, rationale, assumptions,
               brief_ref, importance, valid_from, valid_to, recorded_at, superseded_at,
-              superseded_by, status, source_episode)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+              superseded_by, status, source_episode, resubmits)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             decision.id, decision.statement, decision.discipline, decision.riba_stage,
             json.dumps(decision.author), decision.rationale, json.dumps(decision.assumptions),
             decision.brief_ref, decision.importance, decision.valid_from, decision.valid_to,
             decision.recorded_at, decision.superseded_at, decision.superseded_by,
-            decision.status, decision.source_episode,
+            decision.status, decision.source_episode, decision.resubmits,
         ),
     )
     _append_audit(conn, "add", decision.id, {
@@ -159,6 +161,7 @@ def add_decision(conn: sqlite3.Connection, decision: Decision) -> Decision:
         "author": decision.author, "importance": decision.importance,
         "valid_from": decision.valid_from, "recorded_at": decision.recorded_at,
         "status": decision.status, "source_episode": decision.source_episode,
+        "resubmits": decision.resubmits,
     })
     conn.commit()
     return decision
@@ -189,13 +192,14 @@ def get_valid_asof(conn: sqlite3.Connection, as_of: str) -> list[Decision]:
     a supersession recorded later, even with a backdated valid_from, must not
     erase what the record showed at the time ("what did you know, and when").
     Validity axis: valid_from <= as_of, and once the closure is known,
-    valid_to must still cover as_of. Excludes proposals (never valid).
+    valid_to must still cover as_of. Excludes proposals and rejected
+    proposals (neither was ever true in the world).
     `as_of` is an ISO-8601 timestamp string.
     """
     as_of = _normalize_ts(as_of)
     rows = conn.execute(
         """SELECT * FROM decisions
-              WHERE status != 'proposed'
+              WHERE status NOT IN ('proposed', 'rejected')
                 AND recorded_at <= ? AND valid_from <= ?
                 AND ( (superseded_at IS NOT NULL AND superseded_at > ?)
                       OR (valid_to IS NULL OR valid_to > ?) )
@@ -240,4 +244,37 @@ def get_history(conn: sqlite3.Connection, decision_id: str) -> list[Decision]:
     while current is not None:
         chain.append(current)
         current = get_decision(conn, current.superseded_by) if current.superseded_by else None
+    return chain
+
+
+_STATUSES = {"valid", "superseded", "proposed", "rejected"}
+
+
+def set_status(conn: sqlite3.Connection, decision_id: str, status: str) -> Decision:
+    """Resolve a decision to its outcome (e.g. the court's verdict promoting a
+    clean proposal to 'valid', or settling a broken one as 'rejected'). Every
+    transition is itself an audited event — a status flip is a write, not a
+    silent mutation."""
+    if status not in _STATUSES:
+        raise ValueError(f"unknown status {status!r}; must be one of {sorted(_STATUSES)}")
+    d = get_decision(conn, decision_id)
+    if d is None:
+        raise ValueError(f"No decision {decision_id} to update")
+    conn.execute("UPDATE decisions SET status = ? WHERE id = ?", (status, decision_id))
+    _append_audit(conn, "status_change", decision_id, {"from": d.status, "to": status})
+    conn.commit()
+    d.status = status
+    return d
+
+
+def get_resubmission_chain(conn: sqlite3.Connection, decision_id: str) -> list[Decision]:
+    """Walk a chain of retries backwards from `decision_id` through `resubmits`
+    links (latest attempt first) — so a rejected proposal that comes back with
+    new evidence stays traceable to what it's retrying, instead of looking like
+    an unrelated fresh proposal."""
+    chain: list[Decision] = []
+    current = get_decision(conn, decision_id)
+    while current is not None:
+        chain.append(current)
+        current = get_decision(conn, current.resubmits) if current.resubmits else None
     return chain

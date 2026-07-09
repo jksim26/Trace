@@ -22,7 +22,7 @@ def test_state_returns_project_record_and_project_list():
     s = json.loads(bubble.Api().state())
     statuses = {d["id"]: d["status"] for d in s["decisions"]}
     assert statuses["D-001"] == "valid"
-    assert statuses["D-002"] == "proposed"
+    assert statuses["D-002"] == "rejected"
     assert statuses["D-004"] == "superseded"      # the never-delete chain is visible
     assert s["project"] == "tanglin-rise"
     assert [p["key"] for p in s["projects"]] == ["tanglin-rise", "kranji-hub", "maple-wharf"]

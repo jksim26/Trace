@@ -38,7 +38,7 @@ def _tanglin(conn) -> None:
         recorded_at="2026-01-14T11:42Z", valid_from="2026-01-14T11:42Z"))
     add_decision(conn, Decision(  # D-002
         statement="VE proposal: swap facade cladding to polyethylene-core ACP under the 'or equivalent' clause",
-        discipline="facade", status="proposed", importance=5,
+        discipline="facade", status="rejected", importance=5,
         rationale="Cost plan over budget; largest single saving on the facade package. "
                   "REJECTED by the decision court: a PE core is combustible — breaches Cl 3.5.1.",
         assumptions=["PE-core ACP is an acceptable equivalent to the specified rainscreen"],
@@ -104,7 +104,7 @@ def _kranji(conn) -> None:
         recorded_at="2026-02-18T11:00Z", valid_from="2026-02-18T11:00Z"))
     add_decision(conn, Decision(  # D-003 — rejected proposal (LLM premise check story)
         statement="Tenant fit-out proposal: add a 900 m² cold room (process cooling) in phase 1",
-        discipline="mep", status="proposed", importance=4,
+        discipline="mep", status="rejected", importance=4,
         rationale="Anchor tenant requirement. REJECTED as proposed: process cooling breaks the "
                   "premise that phase-1 load is comfort-cooling only within the 400 kVA supply — "
                   "caught by Trace's LLM premise check (no fire rule involved).",
@@ -148,7 +148,7 @@ def _maple(conn) -> None:
         recorded_at="2026-01-09T10:00Z", valid_from="2026-01-09T10:00Z"))
     add_decision(conn, Decision(  # D-002
         statement="VE proposal: ACM panels with polyethylene core on the east elevation",
-        discipline="facade", status="proposed", importance=5,
+        discipline="facade", status="rejected", importance=5,
         rationale="Cost saving proposed by the facade subcontractor. REJECTED: PE-core ACM is "
                   "combustible — banned over 18 m by reg 7(2); would also fail Gateway 2 review.",
         assumptions=["ACM-PE is acceptable as a like-for-like alternative"],
@@ -216,8 +216,16 @@ PROJECTS = {
 }
 
 
-def build_store(project_key: str):
-    conn = connect(":memory:")
+def build_store(project_key: str, db_path: str = ":memory:"):
+    """Build (or reopen) a project's store. `db_path` defaults to an ephemeral
+    in-memory store (what tests and the CLI demo want: a fresh, isolated store
+    every call). Pass a real file path to persist a project across restarts —
+    the seed data is only written the first time a given file is opened, so
+    reopening an existing store never re-inserts the demo decisions or
+    clobbers anything a live session added since."""
+    conn = connect(db_path)
     init_db(conn)
-    PROJECTS[project_key]["build"](conn)
+    is_empty = conn.execute("SELECT 1 FROM decisions LIMIT 1").fetchone() is None
+    if is_empty:
+        PROJECTS[project_key]["build"](conn)
     return conn

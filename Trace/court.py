@@ -95,25 +95,34 @@ def get_court_records(conn) -> list[dict]:
 
 
 def convene(conn, captured, client=None, model: str = MODEL) -> Verdict:
+    """Convene the court over EVERY broken premise the new decision trips, not
+    just the first: each alert gets its own deliberation and its own persisted
+    court_records row, so a decision that breaks several prior premises at
+    once doesn't lose all-but-one of them off the permanent record. Returns
+    the primary (first) verdict for display; every verdict reached is on the
+    record regardless."""
     alerts = check_invalidation(conn, captured)  # deterministic evidence
     if not alerts:
         v = Verdict(False, "ALLOW", rationale="No prior premise is broken.")
         _persist(conn, captured, v)
         return v
-    alert = alerts[0]
     client = client or OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
-    case = _case(captured, alert)
-    proposer = _role(client, model, _PROPOSER, case)
-    guardian = _role(client, model, _GUARDIAN, case)
-    rationale = _role(client, model, _JUDGE, f"{case}\n\nPROPOSER ARGUES: {proposer}\nGUARDIAN ARGUES: {guardian}")
-    v = Verdict(
-        conflict=True, verdict="REJECT",
-        breaks=alert.breaks.id if alert.breaks else None,
-        citation=alert.citation, for_argument=proposer,
-        against_argument=guardian, rationale=rationale,
-    )
-    _persist(conn, captured, v)
-    return v
+    verdicts = []
+    for alert in alerts:
+        case = _case(captured, alert)
+        proposer = _role(client, model, _PROPOSER, case)
+        guardian = _role(client, model, _GUARDIAN, case)
+        rationale = _role(client, model, _JUDGE,
+                          f"{case}\n\nPROPOSER ARGUES: {proposer}\nGUARDIAN ARGUES: {guardian}")
+        v = Verdict(
+            conflict=True, verdict="REJECT",
+            breaks=alert.breaks.id if alert.breaks else None,
+            citation=alert.citation, for_argument=proposer,
+            against_argument=guardian, rationale=rationale,
+        )
+        _persist(conn, captured, v)
+        verdicts.append(v)
+    return verdicts[0]
 
 
 def render_verdict(v: Verdict) -> str:

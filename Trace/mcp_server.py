@@ -38,17 +38,22 @@ from scenarios import PROJECTS, build_store
 
 _UK_RULES = Path(rulepack.__file__).with_name("rules") / "uk"
 
-# One built store per project, cached. Each is a fresh in-memory bi-temporal
-# store whose audit chain is populated as the scenario is built — deterministic,
-# so verify_audit_chain is meaningful the moment it is read.
+# One built store per project, cached, and persisted to disk under data/ so a
+# server restart doesn't lose anything a live session recorded — the seed
+# scenario is only written the first time a project's file is created, so
+# reopening never re-inserts the demo decisions. The audit chain is populated
+# as the scenario is built (or already sits on disk), so verify_audit_chain is
+# meaningful the moment it is read.
 _STORES: dict = {}
+_DATA_DIR = Path(__file__).with_name("data")
 
 
 def _store(project: str):
     if project not in PROJECTS:
         raise KeyError(project)
     if project not in _STORES:
-        _STORES[project] = build_store(project)
+        _DATA_DIR.mkdir(exist_ok=True)
+        _STORES[project] = build_store(project, db_path=str(_DATA_DIR / f"{project}.db"))
     return _STORES[project]
 
 
@@ -59,6 +64,7 @@ def _dec(d) -> dict:
         "rationale": d.rationale, "assumptions": d.assumptions, "author": d.author,
         "valid_from": d.valid_from, "valid_to": d.valid_to,
         "recorded_at": d.recorded_at, "superseded_by": d.superseded_by,
+        "resubmits": d.resubmits,
     }
 
 
@@ -77,8 +83,8 @@ def list_projects() -> list[dict]:
 def list_decisions(project: str, status: Optional[str] = None) -> dict:
     """Every decision on record for a project (never-delete: superseded and
     rejected decisions are included, not erased). Optionally filter by status
-    ('valid', 'proposed', or 'superseded'). Returns id, statement, rationale,
-    assumptions, author, and both validity clocks."""
+    ('valid', 'proposed', 'rejected', or 'superseded'). Returns id, statement,
+    rationale, assumptions, author, and both validity clocks."""
     try:
         conn = _store(project)
     except KeyError:
