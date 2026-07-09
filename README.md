@@ -2,7 +2,7 @@
 
 > **Name:** *Trace.* A *trace* is the unbroken line from every design decision back to *why* it was made. Trace keeps that line intact, and reasons along it: the moment a new decision breaks the premise an older one stood on, it argues the case and records the verdict.
 
-**Hackathon:** Global AI Hackathon Series with Qwen Cloud (Alibaba Cloud / Devpost). **Track 1: MemoryAgent.** Hard deadline **20 July 2026, 14:00 PDT.** Team target: **submit 7 July.**
+**Hackathon:** Global AI Hackathon Series with Qwen Cloud (Alibaba Cloud / Devpost). **Track 1: MemoryAgent.** Hard deadline **20 July 2026, 14:00 PDT.** Team target: **submit 19 July.**
 
 ---
 
