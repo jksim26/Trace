@@ -16,8 +16,8 @@ def test_real_window_titles_match():
     assert m and m.project == "tanglin-rise" and "fire plan" in m.context
     m = match_title("Tanglin Rise - Floor Plan: Level 1 - Autodesk Revit 2026")
     assert m and m.project == "tanglin-rise"
-    m = match_title("Maple-Wharf_East-Elevation.pdf - Microsoft Edge")
-    assert m and m.project == "maple-wharf"
+    m = match_title("Pearl-Vista_North-Elevation.pdf - Microsoft Edge")
+    assert m and m.project == "pearl-vista"
 
 
 def test_allowlist_ignores_everything_else():
@@ -30,9 +30,9 @@ def test_nudge_is_built_live_from_the_store():
     nudge = bubble.build_nudge("Tanglin-Rise_L01_Fire-Plan.pdf - Adobe Acrobat")
     assert nudge is not None
     ids = [d["id"] for d in nudge["decisions"]]
-    assert "D-001" in ids                       # the live facade constraint
+    assert "408213-D-001" in ids                # the live facade constraint
     statuses = {d["id"]: d["status"] for d in nudge["decisions"]}
-    assert statuses["D-001"] == "valid"         # statuses come from SQLite, not strings
+    assert statuses["408213-D-001"] == "valid"  # statuses come from SQLite, not strings
     assert nudge["project"] == "tanglin-rise"
     # A different drawing -> a different project's memory. Same brain, live data.
     nudge2 = bubble.build_nudge("Kranji-Hub_GF_Switchboard-Layout.pdf")

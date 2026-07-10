@@ -36,7 +36,9 @@ import store
 from court import get_court_records
 from scenarios import PROJECTS, build_store
 
-_UK_RULES = Path(rulepack.__file__).with_name("rules") / "uk"
+# The second Singapore code-authority pack (BCA Periodic Façade Inspection) —
+# proof that rule-packs are pluggable per authority, same engine.
+_BCA_RULES = Path(rulepack.__file__).with_name("rules") / "sg-bca"
 
 # One built store per project, cached. Each is a fresh in-memory bi-temporal
 # store whose audit chain is populated as the scenario is built — deterministic,
@@ -74,15 +76,20 @@ def list_projects() -> list[dict]:
     ]
 
 
+_STATUSES = ("valid", "proposed", "rejected", "superseded")
+
+
 def list_decisions(project: str, status: Optional[str] = None) -> dict:
     """Every decision on record for a project (never-delete: superseded and
     rejected decisions are included, not erased). Optionally filter by status
-    ('valid', 'proposed', or 'superseded'). Returns id, statement, rationale,
-    assumptions, author, and both validity clocks."""
+    ('valid', 'proposed', 'rejected', or 'superseded'). Returns id, statement,
+    rationale, assumptions, author, and both validity clocks."""
     try:
         conn = _store(project)
     except KeyError:
         return {"error": f"unknown project '{project}'; call list_projects"}
+    if status and status not in _STATUSES:
+        return {"error": f"unknown status '{status}'; one of {list(_STATUSES)}"}
     ds = store.get_all_decisions(conn)
     if status:
         ds = [d for d in ds if d.status == status]
@@ -91,8 +98,9 @@ def list_decisions(project: str, status: Optional[str] = None) -> dict:
 
 def get_decision(project: str, decision_id: str) -> dict:
     """One decision in full, plus its supersession history — the chain of what
-    replaced it (or what it replaced), each link preserved. `decision_id` looks
-    like 'D-001'."""
+    replaced it (or what it replaced), each link preserved. `decision_id` is
+    project-coded, e.g. '408213-D-001' (the prefix names the project, so a
+    cross-project mixup is a detectable error, not a silently wrong record)."""
     try:
         conn = _store(project)
     except KeyError:
@@ -124,25 +132,32 @@ def decisions_asof(project: str, as_of: str) -> dict:
 def check_compliance(
     height_m: Optional[float] = None,
     boundary_distance_m: Optional[float] = None,
+    age_years: Optional[float] = None,
     cladding_combustible: Optional[bool] = None,
     cladding_class_0: Optional[bool] = None,
     is_composite: Optional[bool] = None,
     core_class0_or_b: Optional[bool] = None,
-    jurisdiction: str = "SG",
+    inspection_within_cycle: Optional[bool] = None,
+    inspection_competent_person: Optional[bool] = None,
+    pack: str = "scdf",
 ) -> dict:
-    """Run a proposed facade/building context against the deterministic fire-code
+    """Run a proposed facade/building context against a deterministic Singapore
     rule-pack — the gate that makes Trace's invalidation alert never mis-fire.
     Returns each violation with its rule id, rationale, the clause it cites, the
-    downstream blast-radius, and the official source URL. `jurisdiction` is 'SG'
-    (SCDF Fire Code) or 'UK' (Building Regulations reg 7(2))."""
+    downstream blast-radius, and the official source URL. `pack` selects the code
+    authority: 'scdf' (SCDF Fire Code 2023) or 'bca' (BCA Periodic Façade
+    Inspection) — rule-packs are pluggable per authority."""
     context: dict = {}
     b = {}
     if height_m is not None:
         b["height_m"] = height_m
     if boundary_distance_m is not None:
         b["boundary_distance_m"] = boundary_distance_m
+    if age_years is not None:
+        b["age_years"] = age_years
     if b:
         context["building"] = b
+    facade = {}
     clad = {}
     if cladding_combustible is not None:
         clad["combustible"] = cladding_combustible
@@ -153,14 +168,25 @@ def check_compliance(
     if core_class0_or_b is not None:
         clad["core_class0_or_b"] = core_class0_or_b
     if clad:
-        context["facade"] = {"cladding": clad}
+        facade["cladding"] = clad
+    insp = {}
+    if inspection_within_cycle is not None:
+        insp["within_cycle"] = inspection_within_cycle
+    if inspection_competent_person is not None:
+        insp["competent_person"] = inspection_competent_person
+    if insp:
+        facade["inspection"] = insp
+    if facade:
+        context["facade"] = facade
 
-    juris = (jurisdiction or "SG").upper()
-    rules = rulepack.load_rules(_UK_RULES) if juris == "UK" else rulepack.load_rules()
+    chosen = (pack or "scdf").lower()
+    if chosen not in ("scdf", "bca"):
+        return {"error": f"unknown pack '{pack}'; one of ['scdf', 'bca']"}
+    rules = rulepack.load_rules(_BCA_RULES) if chosen == "bca" else rulepack.load_rules()
     by_id = {r.id: r for r in rules}
     viols = rulepack.check(context, rules)
     return {
-        "jurisdiction": juris,
+        "pack": chosen,
         "context": context,
         "compliant": not viols,
         "violations": [
@@ -174,11 +200,12 @@ def check_compliance(
 
 
 def get_code_provision(query: str = "") -> list[dict]:
-    """The code registry: fire-code provisions curated from primary sources at
-    authoring time, each with its official link — 'automation, not a tool', so the
-    clause comes to you instead of sending you to search a statutes portal.
-    Optionally filter by a substring of the citation, provision, or rule id."""
-    rules = rulepack.load_rules() + rulepack.load_rules(_UK_RULES)
+    """The code registry: provisions curated from primary sources at authoring
+    time (SCDF fire code + BCA façade inspection), each with its official link —
+    'automation, not a tool', so the clause comes to you instead of sending you
+    to search a statutes portal. Optionally filter by a substring of the
+    citation, provision, or rule id."""
+    rules = rulepack.load_rules() + rulepack.load_rules(_BCA_RULES)
     out = [{"rule_id": r.id, "citation": r.citation, "provision": r.provision, "url": r.url}
            for r in rules if r.provision or r.url]
     if query:
@@ -188,7 +215,7 @@ def get_code_provision(query: str = "") -> list[dict]:
 
 
 def verify_audit_chain(project: str) -> dict:
-    """Verify the tamper-evident golden thread: recompute the whole SHA-256
+    """Verify the tamper-evident audit chain: recompute the whole SHA-256
     hash-chained audit log for a project. Returns intact=true with the event
     count, or intact=false with the first sequence number whose hash does not
     reconcile (any edit, insert or deletion anywhere breaks every hash after it)."""

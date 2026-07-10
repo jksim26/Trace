@@ -28,7 +28,8 @@ def test_asof_before_anything_recorded_is_empty():
 
 
 def test_asof_retroactive_supersession_shows_what_was_known():
-    """The golden-thread question itself: a supersession recorded on 1 Mar but
+    """The liability question itself ('what did you know, and when' — Building
+    Control Act s.9 turns on it): a supersession recorded on 1 Mar but
     BACKDATED (valid_from 1 Feb — the norm in AEC, where decisions are minuted
     after the fact) must not erase what the record showed mid-February.
     """

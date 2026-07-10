@@ -92,10 +92,12 @@ def retrieve(conn, question: str, budget: int = TOKEN_BUDGET, sem=None):
 
 _ANSWER_SYS = (
     "You are Trace. Answer the question using ONLY the design decisions provided. "
-    "Decisions marked [valid] are current; decisions marked [proposed] or [superseded] "
-    "were considered but are NOT in force. Be concise (at most 2 sentences), and cite "
-    "decision IDs inline like (D-001). If asked whether something can change, answer it "
-    "directly and name any [proposed]/[superseded] attempt that was already rejected. "
+    "Decisions marked [valid] are current; [rejected] was refused by the decision court, "
+    "[superseded] was replaced, and [proposed] is pending — none of those three is in "
+    "force. Be concise (at most 2 sentences), and cite decision IDs inline, exactly as "
+    "given, like (D-001) or (408213-D-001). "
+    "If asked whether something can change, answer it directly and name any [rejected] or "
+    "[superseded] attempt that was already tried. "
     'If the decisions do not answer the question, reply exactly: "No decision on record."'
 )
 
@@ -107,7 +109,11 @@ def _fmt(d: Decision) -> str:
 def recall_decisions(conn, question: str, budget: int = TOKEN_BUDGET, client=None,
                      model: str = MODEL, embedder=None) -> RecallResult:
     valid = get_valid_decisions(conn)
-    others = [d for d in get_all_decisions(conn) if d.status != "valid"]
+    # History = everything not currently in force, keyed by id (not by status:
+    # a status-'valid' row whose validity window has closed must still be
+    # recallable as history, not invisible to both sets).
+    in_force = {d.id for d in valid}
+    others = [d for d in get_all_decisions(conn) if d.id not in in_force]
 
     # Hybrid retrieval: blend lexical overlap with Qwen-embedding cosine. The
     # embedder rides the same client; with no key / no client it stays None and

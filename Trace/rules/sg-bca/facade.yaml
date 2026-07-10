@@ -1,0 +1,43 @@
+# Trace rule-pack — BCA Periodic Façade Inspection (Singapore).
+#
+# A SEPARATE code-authority pack: rules/ loads only its own top-level *.yaml by
+# default (the SCDF fire pack); load this one explicitly with
+# load_rules("rules/sg-bca") for a PFI-regime project. Same engine, different
+# authority — rule-packs are pluggable per code authority (SCDF, BCA, …).
+#
+# Source: the Periodic Façade Inspection regime under the Building Control Act
+# (Building Control (Amendment) Act passed 6 Mar 2020, in force 1 Jan 2022):
+# buildings taller than 13 m, once over 20 years old, must have their façade
+# inspected every 7 years by an appointed Competent Person. Approved drone (UAS)
+# surveys may assist the visual inspection but only under the Competent Person's
+# direction — footage alone does not discharge the duty.
+
+- id: BCA-PFI-7yr-cycle
+  citation: "Building Control Act — Periodic Façade Inspection (in force 1 Jan 2022)"
+  rationale: "A building taller than 13 m and over 20 years old must complete a façade inspection every 7 years — deferring past the cycle is a breach of the owner's statutory duty."
+  provision: "A building exceeding 13 m in height shall, once over 20 years old, undergo a façade inspection at least once every 7 years, conducted by a competent person appointed by the building owner. (curated from the primary source)"
+  url: "https://www1.bca.gov.sg/safety-and-standards/periodic-building-inspections/periodic-facade-inspection/"
+  when:
+    building.height_m: {gt: 13}
+    building.age_years: {gt: 20}
+  require:
+    facade.inspection.within_cycle: {eq: true}
+  blast_radius:
+    - "the building owner's statutory PFI duty"
+    - "occupant and public safety below the façade"
+    - "insurance and MCST liability exposure"
+
+- id: BCA-PFI-competent-person
+  citation: "Building Control Act — Periodic Façade Inspection (in force 1 Jan 2022)"
+  rationale: "The façade inspection must be conducted by an appointed Competent Person — an unsupervised visual-only survey (e.g. contractor drone footage alone) does not discharge the duty."
+  provision: "The periodic façade inspection shall be carried out by a competent person; unmanned aircraft systems may assist the visual inspection only under the competent person's direction and supervision. (curated from the primary source)"
+  url: "https://www1.bca.gov.sg/safety-and-standards/periodic-building-inspections/periodic-facade-inspection/"
+  when:
+    building.height_m: {gt: 13}
+    building.age_years: {gt: 20}
+  require:
+    facade.inspection.competent_person: {eq: true}
+  blast_radius:
+    - "validity of the inspection cycle just paid for"
+    - "close-range follow-up of visual defects"
+    - "the Competent Person's professional sign-off"

@@ -469,7 +469,7 @@
   })();
 
   /* ── the widget, wired to the live engine ───────────────────────────────── */
-  var DOTC={valid:"var(--inforce)",superseded:"var(--superseded)",proposed:"var(--rejected)"};
+  var DOTC={valid:"var(--inforce)",superseded:"var(--superseded)",rejected:"var(--rejected)",proposed:"var(--rejected)"};
   var RAD=["49% 51% 53% 47%/52% 48% 55% 45%","53% 47% 49% 51%/48% 55% 45% 52%","51% 49% 47% 53%/55% 45% 52% 48%"];
   var SUGGEST=["Why the non-combustible façade cladding?","Can we still switch to the cheaper panel?","Who signed off, and when?"];
   var FOLLOW=["Show me the exact fire-code clause","What’s still open on this project?"];
@@ -478,7 +478,7 @@
 
   function $(id){return document.getElementById(id);}
   function esc(t){return (t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-  function cite(t){return t.replace(/\((D-\d+)\)/g,"(<span class=\"cite\">$1</span>)");}
+  function cite(t){return t.replace(/\(((?:\d{6}-)?D-\d+)\)/g,"(<span class=\"cite\">$1</span>)");}
   function linkify(t){return t.replace(/(https?:\/\/[^\s<)]+)/g,"<a href=\"$1\" target=\"_blank\" rel=\"noopener\" class=\"cite\">$1</a>");}
   function render(t){return linkify(cite(esc(t)));}   // escape FIRST — model/user text never becomes markup
 
@@ -546,9 +546,9 @@
         PROJECT="tanglin-rise";
         $("proj").innerHTML='<option>Tanglin Rise · SG · 95 m</option>';
         fillRecord([
-          {id:"D-001",status:"valid",statement:"Façade cladding = non-combustible mineral rainscreen",date:"12 JAN 26"},
-          {id:"D-002",status:"proposed",statement:"Swap to PE-core ACP (combustible)",date:"03 MAR 26"},
-          {id:"D-004",status:"superseded",statement:"Curtain-wall glazing (earlier revision)",date:"20 FEB 26"}
+          {id:"408213-D-001",status:"valid",statement:"Façade cladding = non-combustible mineral rainscreen",date:"12 JAN 26"},
+          {id:"408213-D-002",status:"rejected",statement:"Swap to PE-core ACP (combustible)",date:"03 MAR 26"},
+          {id:"408213-D-004",status:"superseded",statement:"Curtain-wall glazing (earlier revision)",date:"20 FEB 26"}
         ],"Tanglin Rise");
       });
   }

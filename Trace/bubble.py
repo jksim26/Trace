@@ -35,7 +35,7 @@ def _code_registry() -> str:
     """Provisions curated from primary sources at rulepack-authoring time —
     'automation, not a tool': the clause comes to the user, with its official
     link, instead of the user hunting a statutes portal."""
-    rules = load_rules() + load_rules(Path(rulepack.__file__).with_name("rules") / "uk")
+    rules = load_rules() + load_rules(Path(rulepack.__file__).with_name("rules") / "sg-bca")
     return "\n".join(
         f"{r.citation} — {r.provision} Official source: {r.url}"
         for r in rules if r.provision or r.url
@@ -96,8 +96,9 @@ _ASSISTANT_SYS = (
     "and say which project you are answering about.\n"
     "- Interpret questions charitably: tolerate typos and shorthand, and use the "
     "conversation history to resolve follow-ups like 'that clause' or 'who decided it'.\n"
-    "- Cite decision ids inline like (D-001) whenever you state something from a record "
-    "(ids repeat across projects — the project name disambiguates).\n"
+    "- Cite decision ids inline, exactly as they appear in the record, like "
+    "(408213-D-001) — the six-digit prefix is the project code, so the id itself "
+    "names the project.\n"
     "- If asked about a design decision that is NOT in any record, reply exactly: "
     '"No decision on record; not yet decided."\n'
     "- If asked for a clause or provision, quote it from the CODE REGISTRY (curated "
@@ -202,9 +203,12 @@ class Api:
             _HISTORY.extend([{"role": "user", "content": question},
                              {"role": "assistant", "content": answer}])
             del _HISTORY[:-_HISTORY_LIMIT]
-            known = {d.id for k in PROJECTS for d in get_all_decisions(_store_for(k))}
+            # Project-coded ids make this a REAL cross-project hallucination
+            # check: an id cited against the wrong project cannot pass, because
+            # the six-digit prefix is part of the id itself.
+            known = {d.id: k for k in PROJECTS for d in get_all_decisions(_store_for(k))}
             cited, seen = [], set()
-            for did in re.findall(r"D-\d{3}", answer):
+            for did in re.findall(r"(?:\d{6}-)?D-\d{3}", answer):
                 if did in known and did not in seen:
                     seen.add(did)
                     cited.append(did)

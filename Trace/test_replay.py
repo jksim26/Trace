@@ -25,7 +25,7 @@ def test_offline_demo_runs_end_to_end_with_no_network():
 
     decisions = {d.id: d for d in get_all_decisions(conn)}
     assert decisions["D-001"].status == "valid"
-    assert decisions["D-002"].status == "proposed"   # preserved, never deleted
+    assert decisions["D-002"].status == "rejected"   # the court's fate, preserved — never deleted
 
     records = get_court_records(conn)
     assert len(records) == 1

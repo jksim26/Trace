@@ -31,9 +31,9 @@ load_dotenv()
 MODEL = "qwen-plus"
 BASE_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
 
-# Tanglin Rise project constants (the demo building: 95 m, ~7.5 m to boundary,
-# so the Cl 3.5.1 height limb applies and the boundary limb does not).
-PROJECT_CONTEXT = {"building": {"height_m": 95, "boundary_distance_m": 7.5}}
+# Every project carries its OWN building context (scenarios.PROJECTS[...]["context"]);
+# checks run against the context passed in, never a hardcoded building — a 95 m
+# tower's height rules must not fire on a two-storey logistics shed.
 
 # Machine-checkable capture attributes -> rule-context paths.
 _ATTR_PATHS = {
@@ -73,8 +73,8 @@ def _new_decision_words(captured: Captured) -> set:
     )
 
 
-def _rule_context(captured: Captured) -> dict:
-    ctx = {"building": dict(PROJECT_CONTEXT["building"])}
+def _rule_context(captured: Captured, context: Optional[dict] = None) -> dict:
+    ctx = {"building": dict((context or {}).get("building", {}))}
     for key, val in captured.attributes.items():
         path = _ATTR_PATHS.get(key)
         if path is None or val is None:
@@ -108,11 +108,13 @@ def _pick_breaks(conn, captured: Captured) -> tuple[Optional[Decision], Optional
 
 
 def check_invalidation(conn, captured: Captured, rules=None, client=None,
-                       model: str = MODEL) -> list[Alert]:
+                       model: str = MODEL, context: Optional[dict] = None) -> list[Alert]:
     """Rule-pack first (deterministic, gates the demo). If the rules are silent
-    and a client is provided, fall back to the general LLM premise check."""
+    and a client is provided, fall back to the general LLM premise check.
+    `context` is the PROJECT's building context (e.g. height, boundary distance)
+    — pass the right project's, never another building's."""
     rules = rules if rules is not None else load_rules()
-    violations = check(_rule_context(captured), rules)
+    violations = check(_rule_context(captured, context), rules)
     if violations:
         breaks, premise = _pick_breaks(conn, captured)
         return [

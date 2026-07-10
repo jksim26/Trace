@@ -31,8 +31,13 @@ def _combustible_facade():
     )
 
 
+# The demo building's context — the rule-pack judges THIS project's facts, not
+# a hardcoded building baked into the engine.
+CTX = {"building": {"height_m": 95, "boundary_distance_m": 7.5}}
+
+
 def test_combustible_facade_fires_alert_naming_prior():
-    alerts = check_invalidation(_store_with_d001(), _combustible_facade())
+    alerts = check_invalidation(_store_with_d001(), _combustible_facade(), context=CTX)
     assert len(alerts) == 1
     a = alerts[0]
     assert a.rule_id == "SCDF-Cl3.5-noncombustible"
@@ -45,16 +50,16 @@ def test_compliant_change_fires_no_alert():
         Decision(statement="Keep non-combustible rainscreen", discipline="facade"),
         {"cladding_combustible": False},
     )
-    assert check_invalidation(_store_with_d001(), ok) == []
+    assert check_invalidation(_store_with_d001(), ok, context=CTX) == []
 
 
 def test_no_attribute_no_alert():
     unrelated = Captured(Decision(statement="Core moved east", discipline="architecture"), {})
-    assert check_invalidation(_store_with_d001(), unrelated) == []
+    assert check_invalidation(_store_with_d001(), unrelated, context=CTX) == []
 
 
 def test_render_alert_has_key_facts():
-    text = render_alert(check_invalidation(_store_with_d001(), _combustible_facade())[0])
+    text = render_alert(check_invalidation(_store_with_d001(), _combustible_facade(), context=CTX)[0])
     assert "INVALIDATION ALERT" in text
     assert "PE-core ACP" in text
     assert "D-001" in text
@@ -80,7 +85,7 @@ def test_breaks_is_premise_aware_not_positional():
         discipline="facade",
         assumptions=["gantry loads are within the slab capacity"],
         recorded_at="2026-02-01T00:00Z"))
-    alerts = check_invalidation(conn, _combustible_facade())
+    alerts = check_invalidation(conn, _combustible_facade(), context=CTX)
     assert len(alerts) == 1
     assert alerts[0].breaks.id == "D-001"
     assert alerts[0].broken_premise == "combustible external cladding is prohibited over 15 m"
@@ -120,7 +125,7 @@ def test_llm_premise_check_negative_verdict_is_silent():
 
 def test_rule_hit_short_circuits_the_llm():
     # client=object() proves the LLM is never consulted when the rule-pack fires.
-    alerts = check_invalidation(_store_with_d001(), _combustible_facade(), client=object())
+    alerts = check_invalidation(_store_with_d001(), _combustible_facade(), client=object(), context=CTX)
     assert len(alerts) == 1
     assert alerts[0].source == "rule"
 
@@ -129,3 +134,9 @@ def test_llm_premise_check_skips_decisions_without_keyword_overlap():
     # Candidate narrowing: nothing shares a content word -> no LLM call at all.
     new = Captured(Decision(statement="Lobby terrazzo pattern approved", discipline="architecture"), {})
     assert llm_premise_check(_store_with_power_budget(), new, client=object()) == []
+
+
+def test_no_context_means_building_rules_stay_silent():
+    # A project with no stated building context must not inherit another
+    # building's height: the fire rules simply do not engage.
+    assert check_invalidation(_store_with_d001(), _combustible_facade()) == []

@@ -27,6 +27,10 @@ load_dotenv()
 BASE_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
 _conn = None
 
+# The shared demo store follows the Tanglin Rise building (95 m, ~7.5 m to
+# boundary) — the context the rule-pack checks proposals against.
+PROJECT_CONTEXT = {"building": {"height_m": 95, "boundary_distance_m": 7.5}}
+
 
 def _get_conn():
     global _conn
@@ -57,8 +61,15 @@ class CaptureDecision(BaseTool):
         conn = _get_conn()
         captured = []
         for c in _capture(_args(params)["transcript"]):
+            # Gate BEFORE storing: a capture that breaks a live premise enters
+            # as a 'proposed' row for the court — never straight into force,
+            # where recall and future premise checks would treat it as live.
+            conflict = bool(_check(conn, c, context=PROJECT_CONTEXT))
+            if conflict:
+                c.decision.status = "proposed"
             d = add_decision(conn, c.decision)
-            captured.append({"id": d.id, "statement": d.statement, "attributes": c.attributes})
+            captured.append({"id": d.id, "statement": d.statement, "status": d.status,
+                             "conflict": conflict, "attributes": c.attributes})
         return json.dumps({"captured": captured})
 
 
@@ -79,7 +90,7 @@ class CheckInvalidation(BaseTool):
             Decision(statement=a["statement"], discipline="facade"),
             {"cladding_combustible": a["cladding_combustible"]},
         )
-        alerts = _check(_get_conn(), cap)
+        alerts = _check(_get_conn(), cap, context=PROJECT_CONTEXT)
         return json.dumps({"conflict": bool(alerts), "alerts": [render_alert(x) for x in alerts]})
 
 

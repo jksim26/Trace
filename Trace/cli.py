@@ -67,14 +67,21 @@ def _budget_bar(used: int, budget: int, width: int = 24) -> str:
     return "█" * filled + "░" * (width - filled) + f"   {used} / {budget} tokens"
 
 
-_STATUS = {"valid": "IN FORCE", "proposed": "PROPOSED · REJECTED", "superseded": "SUPERSEDED"}
+_STATUS = {"valid": "IN FORCE", "proposed": "PROPOSED", "rejected": "REJECTED",
+           "superseded": "SUPERSEDED"}
+
+# Tanglin Rise building context (95 m, ~7.5 m to boundary): the rule-pack checks
+# THIS project's facts — Cl 3.5.1's height limb applies, its boundary limb doesn't.
+PROJECT_CONTEXT = {"building": {"height_m": 95, "boundary_distance_m": 7.5}}
 
 
 def _trail(conn) -> str:
     lines = ["Nothing is deleted — every version stays on the record:", ""]
     for d in get_all_decisions(conn):
         if d.status == "proposed":
-            when = f"proposed {(d.valid_from or '')[:10]} · not adopted"
+            when = f"proposed {(d.valid_from or '')[:10]} · pending the court"
+        elif d.status == "rejected":
+            when = f"proposed {(d.valid_from or '')[:10]} · rejected by the court"
         elif d.valid_to:
             when = f"{(d.valid_from or '')[:10]} → {d.valid_to[:10]}  (superseded)"
         else:
@@ -90,10 +97,11 @@ def ambient_card(conn) -> str:
     everything = get_all_decisions(conn)
     valid = [d for d in everything if d.status == "valid"]
     pending = [d for d in everything if d.status == "proposed"]
+    rejected = [d for d in everything if d.status == "rejected"]
     return (
         f"2nd-storey facade  ·  {len(everything)} decision(s) on record\n"
         f"  • {len(valid)} currently valid\n"
-        f"  • {len(pending)} pending / rejected proposal(s)\n"
+        f"  • {len(pending)} pending proposal(s) · {len(rejected)} rejected\n"
         f"  • live constraint: D-001 non-combustible facade (> 15 m, SCDF Cl 3.5)"
     )
 
@@ -128,13 +136,15 @@ def run(pause: bool = False, client=None):
     for c in capture_decision(t2, source_episode="transcript-2026-03-03",
                               recorded_at="2026-03-03T14:00Z", valid_from="2026-03-03T14:00Z",
                               client=client):
-        alerts = check_invalidation(conn, c)
+        alerts = check_invalidation(conn, c, context=PROJECT_CONTEXT)
         c.decision.status = "proposed"
-        add_decision(conn, c.decision)  # never delete — preserve the rejected proposal
+        add_decision(conn, c.decision)  # never delete — the proposal stays on the record
         for a in alerts:
             _panel(render_alert(a), title="!! INVALIDATION ALERT", style="red")
         if alerts:
-            _panel(render_verdict(convene(conn, c, client=client)),
+            # The court's verdict is a real state transition: REJECT marks the
+            # proposal `rejected` on the record; ALLOW would adopt it instead.
+            _panel(render_verdict(convene(conn, c, client=client, context=PROJECT_CONTEXT)),
                    title="The decision court — 3 Qwen roles deliberate", style="red")
         _panel(_trail(conn) + "\n\n" + render_chain_status(conn),
                title="Never-delete trail (C4) — tamper-evident", style="yellow")

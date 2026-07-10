@@ -20,7 +20,7 @@
   context: "Ground floor · switchboard"
   keywords: "switchboard power supply kVA flood basement"
 
-- pattern: "Maple[-_ ]?Wharf.*(Elevation|Facade|East)"
-  project: maple-wharf
-  context: "East elevation · facade"
-  keywords: "facade terracotta rainscreen cladding ACM"
+- pattern: "Pearl[-_ ]?Vista.*(Elevation|Facade|North|PFI)"
+  project: pearl-vista
+  context: "North elevation · façade inspection"
+  keywords: "facade inspection spalling render netting repair competent person"

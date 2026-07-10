@@ -69,20 +69,28 @@ def test_every_rule_carries_its_provision_and_official_source():
         assert r.url.startswith("https://"), r.id
 
 
-def test_uk_pack_loads_separately_and_fires_over_18m():
-    # A different jurisdiction is a different rule-pack, same engine.
+def test_bca_pack_loads_separately_and_fires_for_old_tall_buildings():
+    # A different code authority is a different rule-pack, same engine.
     import rulepack
     from pathlib import Path
-    uk = load_rules(Path(rulepack.__file__).with_name("rules") / "uk")
-    context = {"building": {"height_m": 62}, "facade": {"cladding": {"combustible": True}}}
-    assert [v.rule_id for v in check(context, uk)] == ["UK-Reg7-2-combustible-ban"]
-    assert check({"building": {"height_m": 16}, "facade": {"cladding": {"combustible": True}}}, uk) == []
+    bca = load_rules(Path(rulepack.__file__).with_name("rules") / "sg-bca")
+    context = {"building": {"height_m": 78, "age_years": 27},
+               "facade": {"inspection": {"competent_person": False}}}
+    assert [v.rule_id for v in check(context, bca)] == ["BCA-PFI-competent-person"]
+    # Not yet 20 years old: the PFI regime does not engage.
+    young = {"building": {"height_m": 78, "age_years": 10},
+             "facade": {"inspection": {"competent_person": False}}}
+    assert check(young, bca) == []
+    # Deferring past the 7-year cycle trips the other limb.
+    deferred = {"building": {"height_m": 78, "age_years": 27},
+                "facade": {"inspection": {"within_cycle": False}}}
+    assert [v.rule_id for v in check(deferred, bca)] == ["BCA-PFI-7yr-cycle"]
 
 
-def test_uk_pack_is_not_loaded_by_default():
-    # The default (Singapore) pack must not pick up subdirectory packs, or the
+def test_bca_pack_is_not_loaded_by_default():
+    # The default (SCDF) pack must not pick up subdirectory packs, or the
     # demo's one-rule invariant breaks.
-    assert all(not r.id.startswith("UK-") for r in load_rules())
+    assert all(not r.id.startswith("BCA-") for r in load_rules())
 
 
 def test_demo_context_still_fires_exactly_one_rule():

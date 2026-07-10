@@ -74,6 +74,9 @@ def test_court_verdicts_are_on_the_chain():
             message=SimpleNamespace(content="reasoning"))]))))
     ok_before, n_before = verify_audit_chain(conn)
     convene(conn, Captured(Decision(statement="Swap to PE-core ACP", discipline="facade"),
-                           {"cladding_combustible": True}), client=fake)
+                           {"cladding_combustible": True}), client=fake,
+            context={"building": {"height_m": 95, "boundary_distance_m": 7.5}})
     ok, n = verify_audit_chain(conn)
-    assert ok is True and n == n_before + 1  # the verdict event chained on
+    # The whole ruling is on the chain: the judged proposal's add, its
+    # rejection, and the verdict itself.
+    assert ok is True and n == n_before + 3
