@@ -55,6 +55,23 @@ RECORD_DECISION_TOOL = {
                         "non-combustible (e.g. A1 / mineral-core). Otherwise null."
                     ),
                 },
+                "inspection_competent_person": {
+                    "type": ["boolean", "null"],
+                    "description": (
+                        "Only if this decision concerns the periodic facade inspection: false if "
+                        "it skips or removes the appointed Competent Person (e.g. relies on "
+                        "contractor drone footage alone), true if a Competent Person conducts "
+                        "the inspection. Otherwise null."
+                    ),
+                },
+                "inspection_within_cycle": {
+                    "type": ["boolean", "null"],
+                    "description": (
+                        "Only if this decision schedules the periodic facade inspection: false if "
+                        "it defers the inspection beyond the statutory 7-year cycle, true if it "
+                        "stays within the cycle. Otherwise null."
+                    ),
+                },
             },
             "required": ["statement", "discipline", "rationale", "assumptions", "author"],
         },
@@ -93,8 +110,9 @@ def parse_tool_calls(tool_calls, *, source_episode="", recorded_at=None, valid_f
             valid_from=valid_from,
         )
         attributes = {}
-        if a.get("cladding_combustible") is not None:
-            attributes["cladding_combustible"] = a["cladding_combustible"]
+        for key in ("cladding_combustible", "inspection_competent_person", "inspection_within_cycle"):
+            if a.get(key) is not None:
+                attributes[key] = a[key]
         out.append(Captured(decision, attributes))
     return out
 

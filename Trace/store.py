@@ -324,13 +324,14 @@ def adopt_decision(
     adopted_at: Optional[str] = None,
 ) -> Decision:
     """The court said ALLOW: promote the proposal to an in-force decision.
-    Validity starts at adoption — a proposal was never in force while pending."""
+    Validity starts at adoption (or the explicit `adopted_at`) — a proposal was
+    never in force while pending, so it must not backdate to its filing date."""
     d = get_decision(conn, decision_id)
     if d is None:
         raise ValueError(f"No decision {decision_id} to adopt")
     if d.status != "proposed":
         raise ValueError(f"only a 'proposed' decision can be adopted; {decision_id} is '{d.status}'")
-    when = _normalize_ts(adopted_at) or d.valid_from or _now()
+    when = _normalize_ts(adopted_at) or _now()
     conn.execute(
         "UPDATE decisions SET status = 'valid', valid_from = ? WHERE id = ?",
         (when, decision_id),

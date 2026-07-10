@@ -42,6 +42,8 @@ _ATTR_PATHS = {
     "cladding_is_composite": "facade.cladding.is_composite",
     "cladding_core_class0_or_b": "facade.cladding.core_class0_or_b",
     "boundary_distance_m": "building.boundary_distance_m",
+    "inspection_competent_person": "facade.inspection.competent_person",
+    "inspection_within_cycle": "facade.inspection.within_cycle",
 }
 
 _STOP = {

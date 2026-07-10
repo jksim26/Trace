@@ -51,3 +51,32 @@ def test_supersede_tool_preserves_chain():
         {"old_id": "D-001", "new_statement": "Facade = fibre-cement panel (non-combustible)"})))
     assert out["new_id"] == "D-002"
     assert [c["id"] for c in out["chain"]] == ["D-001", "D-002"]
+
+
+def test_capture_tool_gates_a_conflicting_capture_as_proposed(monkeypatch):
+    # The regression that mattered: a capture that breaks a live premise must
+    # enter as 'proposed' — never straight into the in-force set.
+    from capture import Captured
+    from store import get_valid_decisions
+    _seed_d001()
+    fake = [Captured(Decision(statement="Swap facade to PE-core ACP", discipline="facade"),
+                     {"cladding_combustible": True})]
+    monkeypatch.setattr(mcp_tools, "_capture", lambda transcript: fake)
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)  # no key: gate only, no court
+    out = json.loads(CaptureDecision().call(json.dumps({"transcript": "…"})))
+    cap = out["captured"][0]
+    assert cap["conflict"] is True and cap["status"] == "proposed"
+    assert cap["id"] not in {d.id for d in get_valid_decisions(mcp_tools._get_conn())}
+
+
+def test_capture_tool_stores_nonconflicting_capture_in_force(monkeypatch):
+    from capture import Captured
+    from store import get_valid_decisions
+    _seed_d001()
+    fake = [Captured(Decision(statement="Keep the mineral rainscreen", discipline="facade"),
+                     {"cladding_combustible": False})]
+    monkeypatch.setattr(mcp_tools, "_capture", lambda transcript: fake)
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
+    out = json.loads(CaptureDecision().call(json.dumps({"transcript": "…"})))
+    assert out["captured"][0]["status"] == "valid"
+    assert out["captured"][0]["id"] in {d.id for d in get_valid_decisions(mcp_tools._get_conn())}

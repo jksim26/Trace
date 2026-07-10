@@ -136,15 +136,19 @@ def run(pause: bool = False, client=None):
     for c in capture_decision(t2, source_episode="transcript-2026-03-03",
                               recorded_at="2026-03-03T14:00Z", valid_from="2026-03-03T14:00Z",
                               client=client):
-        alerts = check_invalidation(conn, c, context=PROJECT_CONTEXT)
-        c.decision.status = "proposed"
-        add_decision(conn, c.decision)  # never delete — the proposal stays on the record
+        # The client rides along so the LLM premise check (the general half)
+        # can fire when the rule-pack is silent; a rule hit short-circuits it.
+        alerts = check_invalidation(conn, c, client=client, context=PROJECT_CONTEXT)
+        if alerts:
+            c.decision.status = "proposed"  # gated: a conflicting capture is never stored in force
+        add_decision(conn, c.decision)      # never delete — the proposal stays on the record
         for a in alerts:
             _panel(render_alert(a), title="!! INVALIDATION ALERT", style="red")
         if alerts:
             # The court's verdict is a real state transition: REJECT marks the
             # proposal `rejected` on the record; ALLOW would adopt it instead.
-            _panel(render_verdict(convene(conn, c, client=client, context=PROJECT_CONTEXT)),
+            _panel(render_verdict(convene(conn, c, client=client, context=PROJECT_CONTEXT,
+                                          alerts=alerts)),
                    title="The decision court — 3 Qwen roles deliberate", style="red")
         _panel(_trail(conn) + "\n\n" + render_chain_status(conn),
                title="Never-delete trail (C4) — tamper-evident", style="yellow")

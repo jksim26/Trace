@@ -21,6 +21,9 @@ bubble's one-brain chat, MCP clients, and court records.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
+import rulepack
 from capture import Captured
 from court import Verdict, _persist
 from store import (
@@ -28,16 +31,30 @@ from store import (
     set_project_code, supersede_decision,
 )
 
+_RULES_DIR = Path(rulepack.__file__).with_name("rules")
+
+
+def project_rules(project_key: str) -> list:
+    """The loaded rule-pack list a project's invalidation checks run against —
+    the SCDF fire pack for every building, plus each extra pack the project's
+    registry entry names (e.g. pearl-vista adds the BCA PFI pack)."""
+    rules = rulepack.load_rules()
+    for pack in PROJECTS[project_key].get("packs", []):
+        rules += rulepack.load_rules(_RULES_DIR / pack)
+    return rules
+
 
 def _record_court(conn, proposal_id: str, breaks_id: str, citation: str,
                   for_arg: str, against_arg: str, rationale: str,
                   rejected_at: str) -> None:
     """Seed a court REJECT the way the live court applies one: the verdict is
-    persisted AND the proposal's fate lands on its row (proposed -> rejected)."""
-    reject_decision(conn, proposal_id, rejected_at=rejected_at)
+    persisted first (the chain shows the ruling before the transition it
+    authorizes), then the proposal's fate lands on its row (proposed -> rejected)."""
     _persist(conn, Captured(Decision(statement="", id=proposal_id)), Verdict(
         conflict=True, verdict="REJECT", breaks=breaks_id, citation=citation,
-        for_argument=for_arg, against_argument=against_arg, rationale=rationale))
+        for_argument=for_arg, against_argument=against_arg, rationale=rationale),
+        created_at=rejected_at)
+    reject_decision(conn, proposal_id, rejected_at=rejected_at)
 
 
 def _tanglin(conn) -> None:
@@ -236,6 +253,7 @@ PROJECTS = {
     "pearl-vista": {
         "title": "Pearl Vista · 78 m residential (1999) · Singapore",
         "code": "629481",
+        "packs": ["sg-bca"],  # a SECOND code authority's pack gates this project's invalidation
         "context": {"building": {"height_m": 78, "age_years": 27, "boundary_distance_m": 12}},
         "blurb": "Project: Pearl Vista — a 24-storey, 78 m residential tower in Singapore, "
                  "completed 1999 (Veritas Façade Consultants for the MCST). Past its 20th year, "

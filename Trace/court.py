@@ -48,6 +48,7 @@ class Verdict:
     for_argument: str = ""
     against_argument: str = ""
     rationale: str = ""
+    superseded: Optional[str] = None  # the id an ALLOW actually displaced (set only when linked)
 
 
 _PROPOSER = ("You are recording the contractor's position. In ONE sentence, restate the proposal's STATED "
@@ -99,7 +100,7 @@ def _parse_judgment(text: str) -> dict:
         return {}
 
 
-def _persist(conn, captured, v: Verdict) -> None:
+def _persist(conn, captured, v: Verdict, created_at: Optional[str] = None) -> None:
     """Record the verdict on the trail — the court's 'defensible record' must
     itself be on the record, not just printed."""
     conn.execute(
@@ -108,7 +109,7 @@ def _persist(conn, captured, v: Verdict) -> None:
               against_argument, rationale, created_at)
            VALUES (?,?,?,?,?,?,?,?)""",
         (captured.decision.id, v.breaks, v.verdict, v.citation,
-         v.for_argument, v.against_argument, v.rationale, _now()),
+         v.for_argument, v.against_argument, v.rationale, created_at or _now()),
     )
     _append_audit(conn, "verdict", captured.decision.id, {
         "verdict": v.verdict, "breaks": v.breaks, "citation": v.citation,
@@ -122,39 +123,58 @@ def get_court_records(conn) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def _chain_tail(conn, decision_id: str):
+    """Follow superseded_by links to the newest version of a decision."""
+    d = get_decision(conn, decision_id)
+    while d is not None and d.superseded_by:
+        d = get_decision(conn, d.superseded_by)
+    return d
+
+
 def _apply(conn, captured, v: Verdict) -> None:
-    """Make the verdict true on the record: REJECT marks the proposal rejected;
-    ALLOW adopts it and, if it displaces a conflicting decision, supersedes that
-    decision with it. The court record itself is persisted either way."""
+    """Make the verdict true on the record. The verdict is persisted FIRST —
+    the audit chain must show the ruling before the state transition it
+    authorizes — then REJECT marks the proposal rejected; ALLOW adopts it and,
+    if it displaces a conflicting in-force decision, supersedes that decision
+    (resolved to its chain tail) with it."""
+    _persist(conn, captured, v)
     pid = captured.decision.id
     if v.verdict == "REJECT":
         reject_decision(conn, pid)
-    else:
-        adopted = adopt_decision(conn, pid)
-        if v.breaks and get_decision(conn, v.breaks) and \
-                get_decision(conn, v.breaks).status == "valid":
-            link_supersession(conn, v.breaks, adopted.id)
-    _persist(conn, captured, v)
+        return
+    adopted = adopt_decision(conn, pid)
+    if v.breaks:
+        # The alert's `breaks` may point mid-chain (a future-effective
+        # supersession keeps an old version in force): link the chain tail,
+        # and only claim a supersession that actually happened.
+        target = _chain_tail(conn, v.breaks)
+        if target is not None and target.status == "valid" and target.id != adopted.id:
+            link_supersession(conn, target.id, adopted.id)
+            v.superseded = target.id
 
 
-def convene(conn, captured, client=None, model: str = MODEL, context: Optional[dict] = None) -> Verdict:
+def convene(conn, captured, client=None, model: str = MODEL, context: Optional[dict] = None,
+            rules=None, alerts=None) -> Verdict:
     # The proposal under judgment must itself be on the record BEFORE the court
     # rules, so the verdict's proposal_id is real and the fate lands on that row.
     if captured.decision.id is None or get_decision(conn, captured.decision.id) is None:
         captured.decision.status = "proposed"
         add_decision(conn, captured.decision)
 
-    # The evidence check gets the client too: when the rule-pack is silent, the
-    # LLM premise check IS the general half — without it, every rule-silent
-    # premise break would sail through the court unexamined.
-    alerts = check_invalidation(conn, captured, client=client, context=context)
+    # The evidence check needs the client BEFORE it runs: when the rule-pack is
+    # silent, the LLM premise check IS the general half — without it, every
+    # rule-silent premise break would sail through the court unexamined. Build
+    # the default client only when a key exists, so offline stays offline.
+    if client is None and os.getenv("DASHSCOPE_API_KEY"):
+        client = OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
+    if alerts is None:  # a caller that already ran the check passes its alerts in
+        alerts = check_invalidation(conn, captured, client=client, context=context, rules=rules)
     if not alerts:
         v = Verdict(False, "ALLOW", rationale="No prior premise is broken.")
         _apply(conn, captured, v)
         return v
 
     alert = alerts[0]
-    client = client or OpenAI(api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=BASE_URL)
     case = _case(captured, alert)
     proposer = _role(client, model, _PROPOSER, case)
     guardian = _role(client, model, _GUARDIAN, case)
@@ -189,7 +209,8 @@ def render_verdict(v: Verdict) -> str:
              f"FOR  (Proposer): {v.for_argument}",
              f"AGAINST (Guardian): {v.against_argument}",
              f"JUDGE'S RATIONALE: {v.rationale}"]
-    if v.breaks:
-        label = "BREAKS" if v.verdict == "REJECT" else "SUPERSEDES"
-        lines.append(f"{label}: {v.breaks}  ·  {v.citation}")
+    if v.superseded:  # only claim a supersession that was actually performed
+        lines.append(f"SUPERSEDES: {v.superseded}  ·  {v.citation}")
+    elif v.breaks:
+        lines.append(f"BREAKS: {v.breaks}  ·  {v.citation}")
     return "\n".join(lines)

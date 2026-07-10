@@ -152,8 +152,14 @@ class Api:
         lines = []
         for d in get_all_decisions(conn):
             span = f"valid from {(d.valid_from or '')[:10]}"
-            if d.valid_to:
-                span += f" to {d.valid_to[:10]} (superseded by {d.superseded_by})"
+            if d.status == "rejected":
+                span = f"proposed {(d.valid_from or '')[:10]}, rejected {(d.valid_to or '')[:10]}"
+            elif d.status == "proposed":
+                span = f"proposed {(d.valid_from or '')[:10]}, pending the court"
+            elif d.superseded_by:
+                span += f" to {(d.valid_to or '')[:10]} (superseded by {d.superseded_by})"
+            elif d.valid_to:
+                span += f" to {d.valid_to[:10]}"
             lines.append(f"{d.id} [{d.status}] {d.statement}")
             if d.rationale:
                 lines.append(f"   rationale: {d.rationale}")

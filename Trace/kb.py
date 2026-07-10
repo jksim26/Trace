@@ -59,16 +59,17 @@ def _row_sha(d: Decision) -> str:
 
 def _fm(lines: list[tuple[str, object]]) -> str:
     """Deterministic YAML frontmatter (hand-rendered: stable key order, no
-    dependency on dumper quirks)."""
+    dependency on dumper quirks). Values are JSON-string-escaped — valid YAML
+    double-quoted style — so quotes/backslashes in statements can't break it."""
     out = ["---"]
     for key, val in lines:
         if val is None or val == "" or val == []:
             continue
         if isinstance(val, list):
             out.append(f"{key}:")
-            out.extend(f'  - "{v}"' for v in val)
+            out.extend(f"  - {json.dumps(str(v))}" for v in val)
         else:
-            out.append(f'{key}: "{val}"')
+            out.append(f"{key}: {json.dumps(str(val))}")
     out.append("---")
     return "\n".join(out)
 
@@ -150,8 +151,25 @@ def _index_note(conn, project: str, title: str) -> str:
     fm = _fm([("project", project), ("type", "index"), ("generated-by", "trace")])
     rows = ["| id | status | decision |", "|---|---|---|"]
     for d in get_all_decisions(conn):
-        rows.append(f"| [[{d.id}]] | {d.status} | {d.statement[:80]} |")
+        cell = d.statement.replace("|", "\\|").replace("\n", " ")[:80]
+        rows.append(f"| [[{d.id}]] | {d.status} | {cell} |")
     return "\n".join([fm, "", f"# {title} — decision record", "", BANNER, ""] + rows) + "\n"
+
+
+def _is_trace_note(p: Path) -> bool:
+    try:
+        return 'generated-by: "trace"' in p.read_text(encoding="utf-8")
+    except OSError:
+        return False
+
+
+def _clear_projections(folder: Path) -> None:
+    """Remove only OUR previous projections — a user-authored file that found
+    its way into a projection folder is never deleted."""
+    folder.mkdir(parents=True, exist_ok=True)
+    for old in folder.glob("*.md"):
+        if _is_trace_note(old):
+            old.unlink()
 
 
 def export_vault(conn, project: str, root: Optional[Path] = None, title: str = "") -> list[Path]:
@@ -167,27 +185,21 @@ def export_vault(conn, project: str, root: Optional[Path] = None, title: str = "
     supersedes = {d.superseded_by: d.id for d in decisions if d.superseded_by}
 
     ddir = base / "decisions"
-    ddir.mkdir(parents=True, exist_ok=True)
-    for old in ddir.glob("*.md"):
-        old.unlink()
+    _clear_projections(ddir)
     for d in decisions:
         p = ddir / f"{d.id}.md"
         p.write_text(_decision_note(d, project, supersedes.get(d.id)), encoding="utf-8")
         written.append(p)
 
     cdir = base / "court"
-    cdir.mkdir(parents=True, exist_ok=True)
-    for old in cdir.glob("*.md"):
-        old.unlink()
+    _clear_projections(cdir)
     for r in get_court_records(conn):
         p = cdir / f"COURT-{r['proposal_id']}.md"
         p.write_text(_court_note(r, project), encoding="utf-8")
         written.append(p)
 
     edir = base / "episodes"
-    edir.mkdir(parents=True, exist_ok=True)
-    for old in edir.glob("*.md"):
-        old.unlink()
+    _clear_projections(edir)
     for e in get_episodes(conn):
         p = edir / f"{e.id}.md"
         p.write_text(_episode_note(e, project), encoding="utf-8")
@@ -200,21 +212,23 @@ def export_vault(conn, project: str, root: Optional[Path] = None, title: str = "
 
 
 def verify_vault(conn, project: str, root: Optional[Path] = None) -> list[str]:
-    """The vault-level analogue of verify_audit_chain: compare each decision
-    note's stored record_sha256 against the live store row. Returns the ids
-    whose projection diverges (edited, stale, or missing) — empty means the
-    vault faithfully mirrors the record."""
+    """The vault-level analogue of verify_audit_chain: re-render each decision's
+    expected note (the export is deterministic) and compare the FULL text
+    against the file on disk, so any edit — frontmatter or body — is caught.
+    Returns the ids whose projection diverges (edited, stale, or missing) —
+    empty means the vault faithfully mirrors the record."""
     root = Path(root) if root else KB_ROOT
     ddir = root / project / "decisions"
+    decisions = get_all_decisions(conn)
+    supersedes = {d.superseded_by: d.id for d in decisions if d.superseded_by}
     bad: list[str] = []
-    for d in get_all_decisions(conn):
+    for d in decisions:
         p = ddir / f"{d.id}.md"
         if not p.is_file():
             bad.append(d.id)
             continue
-        text = p.read_text(encoding="utf-8")
-        want = f'record_sha256: "{_row_sha(d)}"'
-        if want not in text:
+        expected = _decision_note(d, project, supersedes.get(d.id))
+        if p.read_text(encoding="utf-8") != expected:
             bad.append(d.id)
     return bad
 

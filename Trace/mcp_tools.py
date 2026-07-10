@@ -14,11 +14,12 @@ import os
 from dotenv import load_dotenv
 from qwen_agent.tools.base import BaseTool, register_tool
 
-from capture import Captured, capture_decision as _capture
+from capture import Captured, capture_decision as _capture, _client as _capture_client
+from court import convene as _convene
 from invalidate import check_invalidation as _check, render_alert
 from recall import recall_decisions as _recall
 from store import (
-    Decision, add_decision, connect, get_history, init_db,
+    Decision, add_decision, connect, get_decision, get_history, init_db,
     supersede_decision as _supersede,
 )
 
@@ -26,6 +27,12 @@ load_dotenv()
 
 BASE_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
 _conn = None
+
+
+def _llm_client():
+    """A DashScope client when a key exists, else None — the deterministic
+    rule-pack half still gates without one."""
+    return _capture_client() if os.getenv("DASHSCOPE_API_KEY") else None
 
 # The shared demo store follows the Tanglin Rise building (95 m, ~7.5 m to
 # boundary) — the context the rule-pack checks proposals against.
@@ -59,17 +66,26 @@ class CaptureDecision(BaseTool):
 
     def call(self, params, **kwargs) -> str:
         conn = _get_conn()
+        client = _llm_client()  # present iff a key is set; enables the LLM premise half
         captured = []
         for c in _capture(_args(params)["transcript"]):
             # Gate BEFORE storing: a capture that breaks a live premise enters
             # as a 'proposed' row for the court — never straight into force,
             # where recall and future premise checks would treat it as live.
-            conflict = bool(_check(conn, c, context=PROJECT_CONTEXT))
-            if conflict:
+            alerts = _check(conn, c, context=PROJECT_CONTEXT, client=client)
+            if alerts:
                 c.decision.status = "proposed"
             d = add_decision(conn, c.decision)
+            verdict = None
+            if alerts and client is not None:
+                # Adjudicate immediately — a gated proposal must not strand
+                # pending with no path to a fate.
+                verdict = _convene(conn, c, client=client, context=PROJECT_CONTEXT,
+                                   alerts=alerts).verdict
+                d = get_decision(conn, d.id)  # re-read: the verdict changed its status
             captured.append({"id": d.id, "statement": d.statement, "status": d.status,
-                             "conflict": conflict, "attributes": c.attributes})
+                             "conflict": bool(alerts), "verdict": verdict,
+                             "attributes": c.attributes})
         return json.dumps({"captured": captured})
 
 

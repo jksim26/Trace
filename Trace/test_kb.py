@@ -169,7 +169,9 @@ def test_watch_ingests_a_dropped_note_and_reexports(tmp_path):
     conn = build_store("tanglin-rise")
     inbox = tmp_path / "tanglin-rise" / "inbox"
     inbox.mkdir(parents=True)
-    (inbox / "meeting.md").write_text(NOTE, encoding="utf-8")
+    (inbox / "meeting.md").write_text(
+        "---\nproject: tanglin-rise\ndate: 2026-02-01\n---\n## Site meeting\n"
+        "We will repair the lobby soffit.\n", encoding="utf-8")
     client = _capture_client([{"statement": "Repair the lobby soffit",
                                "discipline": "architecture", "rationale": "leak",
                                "assumptions": ["scope agreed"], "author": ["K. Lim"]}])
@@ -180,3 +182,58 @@ def test_watch_ingests_a_dropped_note_and_reexports(tmp_path):
     assert 'status: "valid"' in note                # the vault reflects the ingest
     episode = (tmp_path / "tanglin-rise" / "episodes" / "408213-E-001.md").read_text(encoding="utf-8")
     assert "Site meeting" in episode                # the source is readable provenance
+
+
+def test_export_never_deletes_a_user_authored_file(tmp_path):
+    conn = build_store("kranji-hub")
+    export_vault(conn, "kranji-hub", tmp_path)
+    mine = tmp_path / "kranji-hub" / "decisions" / "my-own-commentary.md"
+    mine.write_text("# my note\nlinks [[517294-D-001]]\n", encoding="utf-8")
+    export_vault(conn, "kranji-hub", tmp_path)          # regeneration
+    assert mine.is_file()                                # user file untouched
+
+
+def test_verify_vault_detects_a_body_edit_even_with_intact_sha_line(tmp_path):
+    conn = build_store("kranji-hub")
+    export_vault(conn, "kranji-hub", tmp_path)
+    p = tmp_path / "kranji-hub" / "decisions" / "517294-D-001.md"
+    p.write_text(p.read_text(encoding="utf-8").replace(
+        "## Why", "## Why (doctored)"), encoding="utf-8")  # sha line left intact
+    assert verify_vault(conn, "kranji-hub", tmp_path) == ["517294-D-001"]
+
+
+def test_frontmatter_escapes_quotes_in_statements(tmp_path):
+    conn = _fresh()
+    add_decision(conn, Decision(statement='Facade spec per "or equivalent" clause \\ rev B'))
+    export_vault(conn, "demo", tmp_path)
+    import yaml as _yaml
+    text = (tmp_path / "demo" / "decisions" / "D-001.md").read_text(encoding="utf-8")
+    fm = _yaml.safe_load(text.split("---")[1])
+    assert fm["id"] == "D-001"                           # frontmatter still parses
+
+
+def test_ingest_skips_a_note_addressed_to_another_project():
+    conn = _fresh()
+    misdropped = "---\nproject: tanglin-rise\n---\nMeeting note."
+    assert ingest_note(conn, misdropped, project="pearl-vista", client=None) is None
+    assert conn.execute("SELECT COUNT(*) AS n FROM episodes").fetchone()["n"] == 0
+
+
+def test_pearl_vista_ingest_is_gated_by_the_bca_pack():
+    # The claim on the tin: pearl-vista's invalidation is gated by the SECOND
+    # Singapore authority's pack. A note proposing to skip the Competent Person
+    # must trip BCA-PFI-competent-person and reach the court.
+    from scenarios import PROJECTS, project_rules
+    conn = build_store("pearl-vista")
+    client = _capture_client(
+        [{"statement": "Skip the Competent Person this cycle; use contractor drone footage",
+          "discipline": "facade", "rationale": "cost", "assumptions": [],
+          "author": ["managing agent"], "inspection_competent_person": False}],
+        extra_texts=["proposer prose", "guardian prose", "judge prose"])
+    out = ingest_note(conn, "## MCST meeting\nSkip the CP appointment.",
+                      project="pearl-vista", context=PROJECTS["pearl-vista"]["context"],
+                      client=client, rules=project_rules("pearl-vista"))
+    assert out["alerts"] and "BCA" in out["alerts"][0] or "Competent Person" in out["alerts"][0]
+    assert out["verdicts"]                               # the court convened
+    from store import get_decision as _get
+    assert _get(conn, out["captured"][0]["id"]).status == "rejected"

@@ -12,9 +12,11 @@ graph.
 
 Notes may carry YAML frontmatter: `date:` becomes the decisions' valid_from
 (recorded_at stays the ingest time — bi-temporal honesty: "what did you know,
-and when"), `project:` can route the note. Files whose frontmatter says
-`generated-by: trace` are projections and are never ingested — that is the
-loop-guard that keeps sources and projections one-way.
+and when"), and a `project:` key that names a DIFFERENT project makes the
+watcher skip the note (a guard against notes dropped into the wrong inbox).
+Files whose frontmatter says `generated-by: trace` are projections and are
+never ingested — that is the loop-guard that keeps sources and projections
+one-way.
 
 Run:  python vault_watcher.py pearl-vista   (needs DASHSCOPE_API_KEY for capture)
 """
@@ -55,13 +57,17 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
 
 
 def ingest_note(conn, text: str, path: str = "", project: str = "",
-                context: Optional[dict] = None, client=None) -> Optional[dict]:
+                context: Optional[dict] = None, client=None, rules=None) -> Optional[dict]:
     """Ingest ONE note through the full pipeline. Returns a summary dict, or
-    None when the note is a Trace projection (never ingest our own output).
-    Dedupe is content-addressed: re-ingesting identical text is a no-op that
-    returns the existing episode with no new decisions."""
+    None when the note must not be ingested: a Trace projection (never ingest
+    our own output), or a note whose frontmatter `project:` names a different
+    project (wrong inbox). Dedupe is content-addressed: re-ingesting identical
+    text is a no-op that returns the existing episode with no new decisions.
+    `rules` is the project's rule-pack list (defaults to the SCDF pack)."""
     fm, body = parse_frontmatter(text)
     if str(fm.get("generated-by", "")).lower() == "trace":
+        return None
+    if project and fm.get("project") and str(fm["project"]) != project:
         return None
 
     episode = Episode(body=text, path=path, frontmatter=fm)
@@ -81,12 +87,14 @@ def ingest_note(conn, text: str, path: str = "", project: str = "",
                "captured": [], "alerts": [], "verdicts": []}
     for c in capture_decision(body, source_episode=episode.id,
                               valid_from=valid_from, client=client):
-        alerts = check_invalidation(conn, c, context=context, client=client)
+        alerts = check_invalidation(conn, c, context=context, client=client, rules=rules)
         if alerts:
             c.decision.status = "proposed"
             add_decision(conn, c.decision)
             summary["alerts"].extend(render_alert(a) for a in alerts)
-            v = convene(conn, c, client=client, context=context)
+            # The evidence pass ran once, above — the court rules on THOSE
+            # alerts (no second, possibly-disagreeing premise check).
+            v = convene(conn, c, client=client, context=context, alerts=alerts)
             summary["verdicts"].append(render_verdict(v))
         else:
             add_decision(conn, c.decision)
@@ -99,11 +107,17 @@ def ingest_note(conn, text: str, path: str = "", project: str = "",
 def watch(project: str, conn=None, root: Optional[Path] = None, client=None,
           poll: float = POLL_SECONDS, max_polls: Optional[int] = None) -> None:
     """The polling loop. `max_polls` bounds the loop for tests; None = forever."""
-    from scenarios import PROJECTS, build_store
+    import os
+    from scenarios import PROJECTS, build_store, project_rules
     if project not in PROJECTS:
         raise SystemExit(f"unknown project '{project}'; one of {list(PROJECTS)}")
     meta = PROJECTS[project]
     conn = conn or build_store(project)
+    rules = project_rules(project)
+    if client is None and os.getenv("DASHSCOPE_API_KEY"):
+        # One shared client so capture AND the LLM premise half both run live.
+        from capture import _client
+        client = _client()
     root = Path(root) if root else KB_ROOT
     inbox = root / project / "inbox"
     inbox.mkdir(parents=True, exist_ok=True)
@@ -123,7 +137,7 @@ def watch(project: str, conn=None, root: Optional[Path] = None, client=None,
             seen_mtimes[f] = mtime
             text = f.read_text(encoding="utf-8")
             out = ingest_note(conn, text, path=f"inbox/{f.name}", project=project,
-                              context=meta.get("context"), client=client)
+                              context=meta.get("context"), client=client, rules=rules)
             if out is None or out["duplicate"]:
                 continue
             print(f"\n⚡ ingested {f.name} as {out['episode']}")

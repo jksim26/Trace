@@ -2,7 +2,7 @@ import json
 from types import SimpleNamespace
 
 from capture import Captured
-from court import convene, get_court_records, render_verdict
+from court import Verdict, convene, get_court_records, render_verdict
 from store import Decision, add_decision, connect, get_decision, get_valid_decisions, init_db
 
 # The demo building context the rule-pack judges against (95 m tower).
@@ -156,3 +156,43 @@ def test_unparseable_open_ruling_falls_back_to_reject():
     v = convene(conn, cap, client=client)
     assert v.verdict == "REJECT"
     assert get_decision(conn, cap.decision.id).status == "rejected"
+
+
+def test_judge_and_premise_parsers_strip_code_fences():
+    # The real Qwen contract can wrap JSON in ```json fences — the parsers must
+    # accept fenced and bare payloads identically.
+    from court import _parse_judgment
+    from invalidate import _parse_premise_json
+    fenced = '```json\n{"verdict": "ALLOW", "rationale": "ok"}\n```'
+    assert _parse_judgment(fenced) == {"verdict": "ALLOW", "rationale": "ok"}
+    fenced_premise = '```json\n{"breaks": true, "premise": "p", "why": "w"}\n```'
+    assert _parse_premise_json(fenced_premise) == {"breaks": True, "premise": "p", "why": "w"}
+
+
+def test_adoption_does_not_backdate_validity():
+    # A proposal pending since February that the court ALLOWs today was never
+    # in force in the pending window.
+    from store import get_valid_asof
+    conn = _store_with_power_budget()
+    cap = Captured(Decision(statement="Increase chiller plant to 600 kVA now that the supply "
+                                      "upgrade is committed", discipline="mep",
+                            recorded_at="2026-02-01T00:00Z", valid_from="2026-02-01T00:00Z"), {})
+    client = _scripted_client([
+        json.dumps({"breaks": True, "premise": "site power budget is 400 kVA", "why": "sized on it"}),
+        "proposer", "guardian",
+        json.dumps({"verdict": "ALLOW", "rationale": "upgrade committed"}),
+    ])
+    v = convene(conn, cap, client=client)
+    assert v.verdict == "ALLOW"
+    # Mid-pending window: only the old decision was in force.
+    assert [d.id for d in get_valid_asof(conn, "2026-03-01T00:00Z")] == ["D-001"]
+
+
+def test_allow_never_claims_a_supersession_it_did_not_perform():
+    # `breaks` can point at a decision that is not linkable; the verdict text
+    # must then say BREAKS, not SUPERSEDES.
+    v = Verdict(conflict=True, verdict="ALLOW", breaks="D-001", citation="c",
+                for_argument="f", against_argument="a", rationale="r")
+    assert "SUPERSEDES" not in render_verdict(v)
+    v.superseded = "D-001"
+    assert "SUPERSEDES: D-001" in render_verdict(v)
