@@ -10,7 +10,7 @@
 
 Tanglin Rise is a fictional **28-storey residential condominium, 95 m tall**, in Singapore. Because it exceeds **15 m**, **SCDF Fire Code 2023 Cl 3.5** requires its external walls to be **wholly non-combustible** `[verified — Cl 3.5; use 15 m]`. And under **Building Control Act s.9**, the design **QP** — a *named individual* architect — carries **personal, non-delegable, criminal** accountability for that compliance `[verified — s.9 due-diligence duty]`. Yet the law gives that QP only **fragmented, structural-only, paper-era records** (Building Control Regs reg 22) to defend themselves with.
 
-> Say it out loud: *Singapore didn't legislate a "golden thread" — it made an individual personally and criminally liable. Trace is the attributable, immutable decision memory the law already assumes that QP can produce.*
+> Say it out loud: *Singapore doesn't mandate a decision record — it made an individual personally and criminally liable, and assumed the record would exist. Trace is the attributable, immutable decision memory the law already assumes that QP can produce.*
 
 ---
 
@@ -41,7 +41,7 @@ Contractor: the cost plan's over budget; the biggest soft target is the façade 
 > ⚠ **CONFLICT** — Proposed VE substitution **D-002** (PE-core ACP) contradicts the live premise of **D-001** (14 Jan · K. Lim / M. Ong).
 > D-001's rationale: *"wholly non-combustible mandated because building exceeds 15 m."* A PE core is combustible — **NOT an "equivalent" under SCDF Fire Code Cl 3.5.**
 > Accepting it would (1) render the external wall **non-compliant over 15 m**, (2) expose the **named QP (K. Lim) to personal criminal liability under Building Control Act s.9**, (3) require **re-submission of the fire-safety plan to SCDF**, and (4) fail the recurring **Periodic Façade Inspection** `[verified — PFI regime]`.
-> **Real-world echo:** the **Toh Guan Road fire (4 May 2017, 1 fatality)**, where visually similar compliant and PE-core panels were mixed; SCDF later found **40 buildings** with potentially non-compliant cladding `[verified — 40 buildings; preceded Grenfell]`.
+> **Real-world echo:** the **Toh Guan Road fire (4 May 2017, 1 fatality)**, where visually similar compliant and PE-core panels were mixed; SCDF later found **40 buildings** with potentially non-compliant cladding `[verified — 40 buildings]`.
 > **Downstream rework:** façade support steel · fixings · fire-stopping · fire-engineering re-approval.
 
 Contractor: *"…I didn't know that decision existed."*
@@ -69,7 +69,7 @@ Then, to demonstrate **abstention**, AM asks: *"did we ever decide the sky-terra
 
 ## CLOSE (15 sec)
 
-> *"Clash detection catches two ducts hitting a beam. We catch the moment a budget decision quietly breaks a fire-safety decision someone made seven weeks ago — before it becomes an RFI, a failed submission, a personally-liable QP, or a tragedy. The UK criminalised losing this record after Grenfell; in Singapore the QP is already personally liable — Trace is the defensible decision memory the law assumes they can produce."* `[verified — Grenfell 14 Jun 2017]`
+> *"Clash detection catches two ducts hitting a beam. We catch the moment a budget decision quietly breaks a fire-safety decision someone made seven weeks ago — before it becomes an RFI, a failed submission, a personally-liable QP, or a tragedy. In Singapore the QP is personally, criminally liable for every design decision — Trace is the defensible decision memory the law already assumes they can produce."* `[verified — Building Control Act s.9]`
 
 Cut to the architecture diagram. End.
 

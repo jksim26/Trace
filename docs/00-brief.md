@@ -12,12 +12,12 @@ On a building project, the **design brief is a living thing** — it changes acr
 So three failures happen on every project:
 
 1. **The brief silently goes stale.** A decision made in January assumes the building stays a certain way. In March, a value-engineering decision quietly contradicts that assumption — and nobody connects the two until it surfaces months later as an RFI, a clash, a change order, or a failed regulatory gateway.
-2. **The "why" evaporates.** Six months later someone asks *"why did we choose terracotta?"* and the answer — *"because it's a higher-risk building and combustible cladding is illegal over 18 m"* — is gone. The team re-litigates a settled decision, or worse, reverses it without knowing what it was protecting.
+2. **The "why" evaporates.** Six months later someone asks *"why the non-combustible rainscreen?"* and the answer — *"because the tower is over 15 m and SCDF Fire Code Cl 3.5.1 mandates wholly non-combustible external walls"* — is gone. The team re-litigates a settled decision, or worse, reverses it without knowing what it was protecting.
 3. **There is no defensible record.** When a dispute or a safety review comes, there is no immutable, attributable trail of who decided what, when, and why.
 
 These compound at **handover.** When a senior leaves, the rationale walks out the door with them — a clean one-to-two-month handover is rarely possible, and the incoming lead inherits live decisions with no idea what they were protecting. Because Trace captures decisions *as they are made* — consensual capture-as-you-go, never surveillance — the handover record builds itself continuously instead of being reconstructed under pressure at the end. `[inference]`
 
-This is not a niche annoyance. It is the **information-management failure that every architecture and engineering firm actually faces**, and — uniquely for our wedge — the UK government has already **legislated** that it must be fixed (see §4).
+This is not a niche annoyance. It is the **information-management failure that every architecture and engineering firm actually faces**, and — uniquely for our wedge — Singapore's building law already makes a **named individual criminally accountable** for exactly the decisions this record would defend (see §4).
 
 ## 2. What Trace is
 
@@ -37,19 +37,19 @@ Under the hood that is a **five-part memory architecture** — a short-term conv
 ## 3. Who it's for
 
 - **Primary user (build & demo for this one):** the **design team** — architect / lead designer, project architect, and the discipline consultants (structural, MEP, fire, facade) — plus the project's **Information Manager / BIM manager** who owns the record. They feel the rework pain and carry the professional-liability risk.
-- **Secondary buyers:** the **principal designer / principal contractor** (statutory dutyholders under UK CDM/BSA), and the **client/owner** who needs a defensible decision trail for disputes and claims.
+- **Secondary buyers:** the **developer / main contractor** (who carry the programme and rework cost), the **MCST / building owner** (who carries statutory duties like the Periodic Façade Inspection), and the **client/owner** who needs a defensible decision trail for disputes and claims.
 
 ## 4. Why now — the wedge that makes this mandatory, not optional
 
-> **🇸🇬 Singapore note (added 2026-06-28):** You're a Singapore team facing APAC judges. Singapore has **no** golden thread — but its **Qualified Person regime makes a named architect/engineer personally and criminally liable** for design decisions while giving them only fragmented structural paper to defend themselves. That's a *home-market* wedge, arguably sharper than the UK frame. **Recommended lead = Singapore (QP liability) + China (lifelong quality responsibility) + UK golden thread as a one-line precedent.** Full analysis and the exact rewrite list: **[07-singapore-angle.md](07-singapore-angle.md)**. Don't rewrite this section until you've locked the framing (decision #2 in [06](06-open-questions.md)).
+*(Framing locked 2026-07-10: **Singapore-only.** The former UK/golden-thread framing is retired — we build, demo and pitch on the home market's law. Full analysis: [07-singapore-angle.md](07-singapore-angle.md).)*
 
-After the Grenfell Tower fire (2017, 72 deaths), Dame Judith Hackitt's review *Building a Safer Future* (2018) named our exact problem in its own words:
+Singapore's building law already assumes this record exists — it just never built the tool:
 
-> *"Why design and construction decisions were made, and by whom, may not be recorded, and the final records of the design may not reflect what has actually been built."* `[web search — gov.uk Hackitt report]`
+- **A named individual is criminally accountable.** Under **Building Control Act s.9**, the design **Qualified Person** (a registered architect or professional engineer) must take all reasonable steps to ensure the works are designed to the Act and regulations, and must notify the Commissioner of any contravention they know **"or ought reasonably to know."** The duty is personal and non-delegable. `[verified — s.9 verbatim, see 07]`
+- **The only prescribed record is not a defence.** Building Control Regulations **reg 22(e)** requires just "a record of all the departures or deviations relating to the structural elements" — structural-only, deviation-only, site-based, paper-era, with **no falsification detection**: nothing flags when a later decision quietly invalidates the premise an earlier one relied on. `[verified — reg 22(e) verbatim]`
+- **The stakes are already on the record.** The **Toh Guan Road fire** (4 May 2017, 1 fatality) led SCDF to find **40 buildings** with potentially non-compliant cladding; the **Periodic Façade Inspection** regime (in force 1 Jan 2022: >13 m, >20 years old, every 7 years, ~30,000 buildings) and the **Fire Safety (Amendment) Act 2019** supply-chain liability followed. `[verified — see 07 §5]`
 
-That finding became law. The **Building Safety Act 2022** mandates a **"golden thread of information"** for **higher-risk buildings** (≥ 18 m or ≥ 7 storeys with ≥ 2 dwellings). The golden thread must show **who did what, when, and why**, and every entry must be **attributable to a named user, timestamped, and immutable** (historical states preserved, not overwritten). `[web search — ICE, Construction Leadership Council guidance]`
-
-**Read that data model again — *named user, timestamped, immutable, with the why* — it is Trace's schema, line for line.** This is what turns the project from "a cool memory demo" into infrastructure a whole class of buildings is now *legally required* to maintain, and it generalises beyond the UK as a professional-liability defence everywhere. This is the highest-confidence, highest-impact claim we have, and it should lead every judge-facing surface.
+**Trace is the missing record.** In a BCA investigation or a PEB/BOA inquiry the QP must prove *what was decided, why, on what assumptions, and when.* Trace supplies an **attributable, timestamped, tamper-evident** decision memory — and its **premise-falsification alerts operationalise the s.9 "ought reasonably to know" standard** by surfacing the moment a new decision undermines a safety-critical assumption, before it becomes a defect. For APAC scale, China's **"lifelong quality responsibility"** system rests on the same principle: permanent personal accountability for the five responsible parties — a China judge already believes the premise; Trace operationalises it. This is the highest-confidence, highest-impact claim we have, and it should lead every judge-facing surface.
 
 ## 5. Why this is the *right* Track-1 entry (not a stretch)
 

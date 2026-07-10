@@ -55,8 +55,8 @@
 
 ## D. Decisions to confirm (only the human team can settle these)
 
-- [ ] **D1 · Final demo storyline = "Tanglin Rise" (Singapore)** — locked 30 Jun (SCDF Fire Code 2023 Cl 3.5 non-combustible **> 15 m**; **Building Control Act s.9** QP personal criminal liability; **Toh Guan Road** fire precedent; UK golden thread as a one-line close). Confirm it stays locked; the legacy "Maple Wharf" UK framing is being migrated out. `[team decision — per 06 §A5/§C2, anchors per 07]`
-- [ ] **D2 · Jurisdiction doc-rewrites timing** — execute the [07-singapore-angle.md](07-singapore-angle.md) §6 rewrites now, or after the team aligns? `[open — per 06 §C2]`
+- [x] **D1 · Final demo storyline = "Tanglin Rise" (Singapore)** — locked 30 Jun; **completed 10 Jul: the legacy "Maple Wharf" UK framing is fully removed** (code, rules, drawing, docs — replaced by "Pearl Vista" under the BCA Periodic Façade Inspection pack; the pitch is Singapore-only, no UK close). `[team decision — per 06 §A5/§C2, anchors per 07]`
+- [x] **D2 · Jurisdiction doc-rewrites** — executed 10 Jul across README / docs 00-06, 10 / demo script / diagram, Singapore-only framing. `[done — per 06 §C2]`
 - [ ] **D3 · Division of labour (2-person team)** — confirm the split of [03](03-hackathon-strategy.md) §6 into two parallel workstreams along the function-contract interface (memory core ↔ agent/demo). `[open — per 06 §C1]`
 - [ ] **D4 · Demo medium** — CLI + TUI panel (fast, films fine) vs thin web UI (prettier, costs time). Recommend starting CLI, upgrade only if time allows. `[open — per 06 §C5]`
 - [ ] **D5 · On-prem / open-weight Qwen — roadmap only, keep OFF the 7-Jul demo.** Confirm this is a post-hackathon decision, not a demo claim. Caveat: flagship **qwen3.7-max is API-only**, so an on-prem build runs a smaller open-weight Qwen. `[web search / general knowledge — not independently verified]`

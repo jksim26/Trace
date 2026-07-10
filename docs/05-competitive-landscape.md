@@ -19,7 +19,7 @@ The closest *conceptual* analogue isn't in AEC at all — it's the software **Ar
 | Tool | Category | Does | Does **NOT** do |
 |---|---|---|---|
 | **Revizto** | AEC clash + issue tracking | Real-time clash detection, auto issue creation, spatially-anchored issues, full audit trail | Capture *why* a choice was made; detect that a new decision invalidates an earlier one |
-| **Newforma Konekt** (ex-BIM Track) | AEC coordination/PM | Issue tracking in Revit/Navisworks, "golden thread" project info | Per-decision rationale/assumptions; decision-dependency graph; active invalidation alerts |
+| **Newforma Konekt** (ex-BIM Track) | AEC coordination/PM | Issue tracking in Revit/Navisworks, audit-trail project information record | Per-decision rationale/assumptions; decision-dependency graph; active invalidation alerts |
 | **BIMcollab** | OpenBIM issue mgmt (BCF) | BCF issues, rule-based model checking, clash detection | Stores comments+screenshots on elements, not decision rationale; no temporal invalidation |
 | **Autodesk Construction Cloud / BIM 360** | CDE + issues/RFIs | Clash→issue conversion, Issue↔RFI linking, traceable workflow status | Reasoning behind decisions; engine to detect a superseded/invalidated *decision* |
 | **Oracle Aconex** | Document control / CDE | Versioned docs, structured RFI/submittal mail, full audit trails | Decision-rationale graph; downstream-decision invalidation |
@@ -52,7 +52,7 @@ The capability we need is **split across four groups, owned whole by none:**
 
 **Use:** *"Clash detection answers: do two objects occupy the same space right now? — geometric, single point in time, intent-blind. Trace answers: does this new decision contradict the assumptions a prior decision relied on? — semantic, across time, rationale-aware. We're the temporal/semantic analogue of clash detection."*
 
-**Guardrail (say this on stage to stay credible):** generic contradiction detection already exists (Alhena/Fini), and ADRs already have manual "superseded." The novelty is **NOT** "detecting conflicts" in the abstract — it is the **AEC decision-dependency graph + automatic premise-invalidation + rationale capture + golden-thread-native record**, which no reviewed competitor ships together.
+**Guardrail (say this on stage to stay credible):** generic contradiction detection already exists (Alhena/Fini), and ADRs already have manual "superseded." The novelty is **NOT** "detecting conflicts" in the abstract — it is the **AEC decision-dependency graph + automatic premise-invalidation + rationale capture + tamper-evident attributable record**, which no reviewed competitor ships together.
 
 ---
 

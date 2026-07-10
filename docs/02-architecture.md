@@ -8,7 +8,7 @@
 ## 1. Design principles (each maps to a Track-1 requirement)
 
 1. **Decisions are first-class objects, not chat history.** A decision is a node carrying rationale + assumptions, not a buried message. → *"efficient memory storage"*
-2. **Never delete — invalidate.** Superseded decisions are kept with a validity range and a `superseded_by` link. This is both the correct memory design *and* the golden-thread legal requirement. → *"timely forgetting of outdated information"* (forgetting = demoting the superseded from active recall, while preserving the trail)
+2. **Never delete — invalidate.** Superseded decisions are kept with a validity range and a `superseded_by` link. This is both the correct memory design *and* the audit record a personally-liable QP (Building Control Act s.9) needs years later. → *"timely forgetting of outdated information"* (forgetting = demoting the superseded from active recall, while preserving the trail)
 3. **Active push, not passive pull.** Every new decision is checked against the graph on ingest; conflicts are pushed as alerts. This is the one thing no competitor does.
 4. **Recall to a budget.** Retrieval ranks by relevance + recency + importance, filters to currently-valid, and packs only the top-k that fit a token budget. → *"recalling critical memories within limited context windows"*
 5. **Deterministic where it matters.** The demo's centrepiece alert is gated on an explicit rule check, not pure LLM judgement, so it never misfires on stage. `[inference — risk mitigation]`
@@ -27,7 +27,7 @@
 | **Extraction → Update with explicit ops** | **Mem0** (arXiv 2504.19413) | The ingest shape (extract candidate facts, then decide ADD/UPDATE/SUPERSEDE/NOOP). We replace Mem0's destructive DELETE with SUPERSEDE to keep the audit trail. |
 | **Contextual hybrid retrieval** | **Anthropic Contextual Retrieval** (Sept 2024) | Prepend chunk-specific context before embedding + BM25; add rerank. Reported retrieval-failure cuts: 35% → 49% → 67%. |
 
-**Why a graph at all, vs. flat vector memory:** flat fact stores (Mem0) and append-only streams (Generative Agents) cannot answer *"what did this decision assume, and what depends on it?"* — and Mem0's DELETE destroys the very history the golden thread requires. A bi-temporal decision graph is the only pattern that gives auditable, queryable supersession. `[inference, grounded in verified papers]`
+**Why a graph at all, vs. flat vector memory:** flat fact stores (Mem0) and append-only streams (Generative Agents) cannot answer *"what did this decision assume, and what depends on it?"* — and Mem0's DELETE destroys the very history a liability defence requires. A bi-temporal decision graph is the only pattern that gives auditable, queryable supersession. `[inference, grounded in verified papers]`
 
 ---
 
@@ -67,7 +67,7 @@ Decision {
 **SQLite + a vector index, *not* Neo4j.** For a single project's decisions, graph traversal is a cheap BFS over a small table; SQLite is zero-ops and trivially packaged in an open-source repo. Cite Neo4j + Alibaba **DashVector** as the production path in the deck. Don't burn hackathon days standing up a graph DB.
 
 The **three stores** (Graphiti-style subgraphs, simplified):
-- **Episodic log** — append-only raw transcript chunks (provenance + re-extraction source).
+- **Episodic log** — append-only raw source notes/transcripts (provenance + re-extraction source). **Implemented 10 Jul** as the `episodes` table (content-hash-deduped, on the audit chain via an `ingest` event) + the `kb/` vault: `vault_watcher.py` ingests dropped notes, `kb.py` projects episodes back as readable provenance notes.
 - **Semantic decision graph** — the `Decision` nodes + edges above (the system of record).
 - **Vector index** — embeddings of decision statements + rationale, for retrieval.
 
@@ -175,7 +175,7 @@ The contradiction engine has two halves. The **LLM premise check** is general bu
   applies_if: building.is_HRB == true        # >18m or >=7 storeys
   constraint: facade.cladding.rating in [A1, A2-s1d0]
   rationale: "Approved Document B prohibits combustible cladding over 18m"
-  blast_radius: [structural.support, fire.cavity_barriers, partL.energy, gateway2.resubmit]
+  blast_radius: [structural.support, fire.cavity_barriers, energy.model, fire_safety.replan]
 ```
 
 When a new decision (ACM cladding) violates a constraint a prior decision (D-047) relied on, the alert is **certain**. The rule-pack doubles as proof of AEC domain depth to judges. Keep it tiny — one or two rules covering the demo storyline; everything else falls through to the LLM check.

@@ -60,29 +60,31 @@ Design errors and omissions are a leading driver of architect/engineer professio
 
 ---
 
-## 2. The golden thread — the wedge that makes Trace matter
+## 2. The QP regime — the wedge that makes Trace matter
 
-> **🇸🇬 Singapore note (added 2026-06-28):** The golden thread is a **UK** regime — Singapore has **no** equivalent. For a Singapore team, the home-market wedge is the **Qualified Person (QP) regime** (Building Control Act s.9: a named designer is personally + criminally liable; the only existing decision-record, reg 22(e), is structural-only with no falsification detection). Treat the UK golden thread below as a **global precedent / credibility multiplier**, not the core market. See **[07-singapore-angle.md](07-singapore-angle.md)** for the Singapore subsection to slot in here.
+*(Framing locked 2026-07-10: **Singapore-only**. The former UK golden-thread frame is retired from the pitch; the full Singapore analysis is in [07-singapore-angle.md](07-singapore-angle.md).)*
 
 This is the single most powerful frame in the whole project. Lead with it.
 
-**The chain of causation:**
-Grenfell Tower fire (June 2017, 72 deaths) → Hackitt's independent review *Building a Safer Future* (2018) recommends a **"golden thread of information"** → the **Building Safety Act 2022** makes it **law** for higher-risk buildings. `[web search — multiple]`
+**The chain of accountability:**
+Every plan submitted to BCA goes through a **named Qualified Person** — a registered architect or professional engineer. Under **Building Control Act s.9** that individual must take all reasonable steps to ensure the works are designed to the Act and regulations, and must notify the Commissioner of any contravention they know **"or ought reasonably to know."** Personal. Non-delegable. Criminal. `[verified — s.9 verbatim, see 07]`
 
-**What the golden thread legally requires** (and how it maps to our schema):
+**What the law assumes the QP can produce** (and how it maps to our schema):
 
-| Golden-thread requirement `[web search]` | Trace field |
+| What a defensible record needs | Trace field |
 |---|---|
-| Attributable to a **named user** | `author` |
-| **Timestamped** | `recorded_at`, `valid_from` |
-| **Immutable** — historical states preserved, not overwritten | never-delete; `valid_to` + `superseded_by` chain |
-| Records **who did what, when, and why** | `decision` + `author` + `valid_from` + `rationale` |
-| All fire-safety design decisions recorded (e.g. master design risk register) | the decision graph itself |
-| **Gateways** hard-stop the project if information is incomplete (notably **Gateway 2**, before construction) | the "Gateway-2 dossier" recall scenario in the demo |
+| Attributable to a **named person** | `author` |
+| **Timestamped** — decided when, known when | `recorded_at`, `valid_from` (bi-temporal) |
+| **Immutable** — historical states preserved, not overwritten | never-delete; `valid_to` + `superseded_by` chain; SHA-256 audit chain |
+| Records **who decided what, when, and why** | `decision` + `author` + `valid_from` + `rationale` |
+| The **premises** each decision rests on | `assumptions` — what the s.9 "ought reasonably to know" standard turns on |
+| Proof the record wasn't doctored after the fact | `verify_audit_chain()` — tamper-evidence, on demand |
 
-**Why this is gold for the hackathon (the 25% Problem-Value criterion):** most Track-1 entries will pitch a *nice-to-have*. Trace pitches a capability a whole class of buildings is **legally required** to maintain — and whose statutory data model is *identical* to the agent's. No other likely Track-1 entrant has a regulator mandating their product. `[inference]`
+Yet the only record the law actually prescribes — Building Control Regulations **reg 22(e)** — is a record of "departures or deviations relating to the structural elements": structural-only, deviation-only, paper-era, with **no falsification detection** — nothing flags when a later decision quietly invalidates the premise an earlier one relied on. **That four-part gap is exactly what Trace fills.** `[verified — reg 22(e) verbatim]`
 
-> **Honesty guardrail for the pitch:** the golden thread is a UK regime. Say so. Then make the global generalisation explicitly: *the same immutable, attributable, reasoned decision record is a professional-liability defence in any jurisdiction*. Don't imply it's a worldwide law.
+**Why this is gold for the hackathon (the 25% Problem-Value criterion):** most Track-1 entries will pitch a *nice-to-have*. Trace pitches the record a **personally, criminally liable professional** needs on the day of the inquiry — in the team's home market, and resting on a legal principle (permanent personal accountability) that China's **"lifelong quality responsibility"** system shares, so an APAC judge already believes the premise. `[inference]`
+
+> **Honesty guardrail for the pitch:** say "no Singapore statute mandates this record" — the claim is that s.9 liability *assumes* the QP can produce it, not that it is prescribed. The absence is the gap, and the gap is the product.
 
 ---
 
@@ -116,26 +118,26 @@ These are the demo fuel. In each, the model eventually updates — but the *deci
 ### A — Parking count 200 → 150 (budget / revised transport statement) · *RIBA 2–3*
 Invalidates: basement parking layout (possibly deletes a whole basement level); ramp geometry, cycle store (planning often demands *more* cycle spaces in exchange); **structural** foundations/retaining walls if a level goes; **MEP** car-park ventilation & EV-charging counts; **fire** smoke-extract strategy; **QS** GIA → area schedule → cost plan → appraisal; **planning** transport-statement condition → *re-approval risk*.
 
-### B — Facade material change (terracotta/A2 → ACM, or combustible → non-combustible) · *RIBA 4* — **the demo centrepiece**
-Invalidates: **structural** dead load → support steel/brackets, slab-edge, fixings (wind load re-check); **fire** combustibility rating (A1/A2-s1,d0 over 18 m), cavity barriers, fire-stopping → **Building Control / Gateway 2 re-submission** + golden-thread update; **building physics** U-value, condensation, Part L energy model re-run; **architecture** setting-out, reveals, window schedule; **QS/programme** cost (cladding ≈ 1.5–2×), new specialist package, lead times, warranties.
+### B — Facade material change (mineral rainscreen → PE-core ACP, or combustible → non-combustible) · *RIBA 4* — **the demo centrepiece**
+Invalidates: **structural** dead load → support steel/brackets, slab-edge, fixings (wind load re-check); **fire** combustibility rating (SCDF Fire Code Cl 3.5.1: wholly non-combustible over 15 m; Cl 3.15.13 ACP core), cavity barriers, fire-stopping → **fire-safety plan re-approval** + the named QP's s.9 exposure; **building physics** U-value, condensation, energy model re-run; **architecture** setting-out, reveals, window schedule; **QS/programme** cost (cladding ≈ 1.5–2×), new specialist package, lead times, warranties.
 
 ### C — Floor-to-floor height change (3.6 m → 4.0 m for services, or reduced to meet a height cap) · *RIBA 3*
 Invalidates: **planning** overall height → massing, daylight/sunlight, height condition → *re-approval risk* (if total height is capped, a whole floor may be lost); **brief/finance** lost floor → NIA → appraisal; **structural** column lengths, stability, core/stairs; **architecture/Regs** stair riser count (Part K), lift travel/shaft; **facade** panel module, extra row → cost; **MEP** riser heights, duct drops, ceiling-void re-coordination.
 
 ### D — Core relocation (move lifts/stairs/risers to improve lettable floorplate) · *RIBA 2–3* — highest single-decision blast radius
-Invalidates: **structural** the core *is* the lateral-stability system → stability re-design, transfer structure if it no longer stacks; **brief/finance** floorplate efficiency, NIA/GIA, lettable area → the financial model (the very reason for the move must be re-proven); **MEP** all vertical risers re-routed; **fire** escape routes, travel distances, firefighting shaft, pressurisation → Approved Doc B / Gateway re-check; **architecture/Regs** lift strategy, Part M accessibility, every floor's RDS.
+Invalidates: **structural** the core *is* the lateral-stability system → stability re-design, transfer structure if it no longer stacks; **brief/finance** floorplate efficiency, NIA/GIA, lettable area → the financial model (the very reason for the move must be re-proven); **MEP** all vertical risers re-routed; **fire** escape routes, travel distances, firefighting shaft, pressurisation → fire-code re-check (SCDF Ch 2/4); **architecture/Regs** lift strategy, accessibility (BCA Code on Accessibility), every floor's RDS.
 
 ---
 
 ## 5. Glossary the agent (and pitch) must get right
 
-RIBA Plan of Work · AIA phases (SD/DD/CD/CA) · Information Exchange · Project Brief / Employer's Requirements (ER) · Schedule of Accommodation · GIA / NIA / net-to-gross efficiency · Room Data Sheet (RDS) · performance vs prescriptive spec · design freeze / baseline · change control · **RFI** · Change Order / Variation · CCD · Design Change Notice · Value Engineering (VE) · **derogation / concession** · NCR · transmittal · **Decision Log / ADR** · **ISO 19650** · EIR · BEP · MIDP/TIDP · **CDE** (WIP/Shared/Published/Archived) · **Golden Thread** · **HRB** (≥18 m or ≥7 storeys, ≥2 dwellings) · **Gateways** (1 planning, 2 pre-construction, 3 pre-occupation) · clash detection (hard/soft/time) · CDM / Principal Designer / Principal Contractor · **ADB B4** (combustible cladding prohibited > 18 m) · A1 / A2-s1,d0 (non-combustible fire ratings).
+RIBA Plan of Work · AIA phases (SD/DD/CD/CA) · Information Exchange · Project Brief / Employer's Requirements (ER) · Schedule of Accommodation · GIA / NIA / net-to-gross efficiency · Room Data Sheet (RDS) · performance vs prescriptive spec · design freeze / baseline · change control · **RFI** · Change Order / Variation · CCD · Design Change Notice · Value Engineering (VE) · **derogation / concession** · NCR · transmittal · **Decision Log / ADR** · **ISO 19650** · EIR · BEP · MIDP/TIDP · **CDE** (WIP/Shared/Published/Archived) · **QP** (Qualified Person — Building Control Act s.9) · **SCDF Fire Code** (Cl 3.5.1 non-combustible > 15 m; Cl 3.15.13 ACP core) · **PFI** (Periodic Façade Inspection: >13 m, >20 yrs, every 7 yrs, Competent Person) · **CORENET X** / **IDD** · clash detection (hard/soft/time) · A1 / A2-s1,d0 / Class 0 (non-combustible fire ratings).
 
 ---
 
 ## 6. What to verify before quoting numbers to a judge
 
-- HIGH confidence: Hackitt quote + golden-thread statutory requirement; McKinsey $1.6 T; the fragmentation/personnel-churn narrative. **Lead with these.**
+- HIGH confidence: Building Control Act s.9 + reg 22(e) (verbatim, primary source); SCDF Cl 3.5 (>15 m); PFI regime facts; Toh Guan Road (40 buildings); McKinsey $1.6 T; the fragmentation/personnel-churn narrative. **Lead with these.**
 - MEDIUM: FMI $177 B/$31 B/48% (reported via Autodesk, primary PDF not opened); CII ~5%; GIRI ~21%; Navigant RFI figures; the ITcon "what not why" finding. **Present as "industry-reported."**
 - LOW: scope-creep overrun %s; "70% of RFIs from design errors"; tribal-knowledge 42%/70%. **Use sparingly, hedge.**
 

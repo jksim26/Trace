@@ -90,7 +90,7 @@ whether the AEC vertical choice is strategically smart vs generic memory demos. 
     lens: `Thirty years across architecture practice and building-compliance consulting. Evaluate domain truth:
 Does the framing (design decisions lost across meetings, a cost decision silently breaking a fire decision, handover when a senior engineer leaves) match how AEC actually fails?
 Is Trace/rules/fire.yaml plausible as a fire-code rulepack — are the rules real-shaped or toy, and do they faithfully encode their cited clauses? Do demo/transcripts/*.md read like real design meetings or like screenplay?
-Is the UK Building Safety Act "golden thread" wedge legally accurate as characterized (docs/01-aec-direction.md)? Is the Singapore QP personal-liability angle (docs/07-singapore-angle.md) sound?
+Is the Singapore QP personal-liability wedge (Building Control Act s.9 + reg 22(e), docs/01-aec-direction.md and docs/07-singapore-angle.md) legally accurate as characterized? Is the BCA Periodic Façade Inspection rule-pack (Trace/rules/sg-bca/) faithful to the regime (>13 m, >20 years, 7-year cycle, Competent Person)?
 What would a real firm need before adopting this (BIM/CDE integration? liability of a false invalidation alert? who types the decisions in?), and does the roadmap acknowledge those honestly?`,
   },
 ]
