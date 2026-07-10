@@ -374,7 +374,8 @@ def add_episode(conn: sqlite3.Connection, episode: Episode) -> Episode:
     episode.ingested_at = _normalize_ts(episode.ingested_at) or _now()
     conn.execute(
         "INSERT INTO episodes (id, path, frontmatter, body, sha256, ingested_at) VALUES (?,?,?,?,?,?)",
-        (episode.id, episode.path, json.dumps(episode.frontmatter),
+        # default=str: YAML frontmatter yields date objects for bare dates
+        (episode.id, episode.path, json.dumps(episode.frontmatter, default=str),
          episode.body, episode.sha256, episode.ingested_at),
     )
     _append_audit(conn, "ingest", episode.id, {
