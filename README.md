@@ -33,6 +33,7 @@ The end-to-end loop is built and tested on a real Qwen stack, TDD throughout, wi
 | Module | What it does |
 |---|---|
 | `store.py` | The **foundation spine**: a never-delete, bi-temporal SQLite decision store. Supersession closes `valid_to` and links `superseded_by` (never a `DELETE`). Every write appends to a **SHA-256 hash-chained audit log** (`verify_audit_chain()` detects any alteration). Ships `get_valid_asof` for **time-travel**. |
+| `listen.py` | **The missing first mile.** Turns a recorded meeting into the same plain-text transcript `capture.py` already reads — `transcribe_audio()` on an existing audio file (via Qwen Cloud speech-to-text), or `record_from_mic()` straight from a microphone (optional `sounddevice` dependency). Nothing downstream changes: `listen_and_capture()` produces the exact same `Captured` decisions capture.py does, just sourced from audio instead of typed minutes. |
 | `capture.py` | **Capture.** Qwen (`qwen-plus`) function-calling reads a meeting transcript and extracts each decision with its rationale, assumptions, and author. |
 | `rulepack.py`, `rules/fire.yaml` | The deterministic **SCDF rule-pack** — four rules from the primary-source research (Cl 3.5.1 height **and** boundary limbs, Cl 3.5.4 low-rise Class 0, Cl 3.15.13 ACP core): the gate that keeps the invalidation alert reliable on camera. |
 | `invalidate.py` | **Invalidation alert**, the centrepiece — premise-aware: it names the *specific stored assumption* the new decision breaks, and when the rule-pack is silent, an **LLM premise check** reads each prior decision's assumptions as the general fallback. |
@@ -64,6 +65,8 @@ python mcp_tools.py      # a Qwen-Agent Assistant autonomously calling the tools
 python mcp_server.py     # the deterministic, keyless MCP server (stdio) — register with any MCP client
 # then open http://127.0.0.1:8765/workspace — open a drawing, watch the ambient nudge fire
 python watcher.py        # (Windows) the real desktop watcher — same matcher, real window titles
+python listen.py meeting.wav      # turn a recorded meeting into captured decisions
+python listen.py --record 60      # or record 60s from the mic first (needs: pip install sounddevice)
 ```
 
 - **`cli.py`**: Scene 1 capture, then Scene 2 the red invalidation alert plus the **decision court**'s REJECT verdict (the rejected proposal is preserved, never deleted), then Scene 3 recall-to-budget with the token meter plus abstention, then Scene 4 **bi-temporal time-travel**, then the staged ambient card. Capture and the court make real Qwen calls; the alert and abstention are deterministic.

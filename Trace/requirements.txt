@@ -15,5 +15,11 @@ python-dateutil
 # Harmless / skipped on non-Windows.
 pip-system-certs; platform_system == "Windows"
 
+# Optional — only needed for listen.py's record_from_mic() (live microphone
+# capture). Not installed by default: PortAudio can be finicky on some
+# machines, and everything else in listen.py works on any audio file you
+# already have. `pip install sounddevice` if you want to record live.
+# sounddevice
+
 # Dev
 pytest>=8.0
