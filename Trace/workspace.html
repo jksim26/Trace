@@ -117,13 +117,7 @@
   .irow .nm svg{flex:none;width:12px;height:11px;opacity:.75}
   .irow .sz,.irow .dt{font:400 10px/1.5 var(--mono);color:var(--ink60);text-align:right;white-space:nowrap}
 
-  /* the TRACE corner box — fixed so it wraps the droplet, which lives at the
-     widget iframe's own bottom-right (right:26px bottom:24px, 120px wide) */
-  .tracebox{position:fixed;right:14px;bottom:12px;width:146px;height:102px;z-index:3;
-    border-radius:14px;border:1.2px solid var(--rim);background:rgba(255,255,255,.02);
-    box-shadow:var(--rim-glow)}
-
-  /* decorative glass beads resting on the sheet, as in the reference */
+/* decorative glass beads resting on the sheet, as in the reference */
   .bead{position:fixed;z-index:4;pointer-events:none;border-radius:50%;
     background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.95) 0%,rgba(228,240,255,.55) 38%,rgba(170,200,245,.35) 72%,rgba(150,185,240,.5) 100%);
     box-shadow:inset -2px -3px 6px rgba(90,130,200,.35),inset 2px 3px 6px rgba(255,255,255,.8),
@@ -176,8 +170,6 @@
       </div>
     </div>
   </div>
-  <div class="tracebox" aria-hidden="true"></div>
-
   <!-- glass beads resting on / drifting off the sheet's right pane, as in the reference -->
   <span class="bead" style="right:19.5%;top:2.5%;width:34px;height:34px"></span>
   <span class="bead" style="right:17.2%;top:11%;width:15px;height:15px"></span>

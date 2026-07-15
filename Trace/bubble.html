@@ -42,11 +42,9 @@
     #101318}
 
 
-  .stage{position:fixed;right:26px;bottom:24px;z-index:2;touch-action:none}
-  .stage.dragging{transition:none !important}
-  .stage.dragging .drop,.stage.dragging .hdr{cursor:grabbing}
+  .stage{position:fixed;z-index:2;width:0;height:0}
 
-  /* the small bubbles that float up when the main drop is tapped */
+  /* the small bubbles that float up when a drop is tapped/dragged */
   .motes{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
   .mote{position:absolute;border-radius:50%;opacity:0;
     background:radial-gradient(circle at 35% 30%,#FFFFFF 0%,#DCE9FD 42%,#8FB4F8 100%);
@@ -59,15 +57,21 @@
     100%{opacity:0;transform:translate(var(--dx,0px),var(--dy,-420px)) scale(1)}
   }
 
-  /* ── the liquid-glass drop (idle) ───────────────────────────────────────── */
-  .drop{position:relative;width:120px;cursor:grab;transition:opacity .4s ease,transform .4s ease;
-    filter:drop-shadow(0 6px 14px rgba(20,30,55,.35))}
-  .drop svg{width:120px;height:76px;display:block;overflow:visible}
-  .drop .label{margin-top:2px;text-align:center;font:600 8px/1 var(--mono);letter-spacing:.26em;color:rgba(150,162,185,.85)}
-  .drop .badge{position:absolute;top:2px;right:8px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;
+  /* ── the liquid-glass drops (idle) — two independent bubbles, one big one
+     small, painted together by a single shared overlay SVG (#liquid) so a
+     capillary neck bridges them while close and the small one can fully
+     merge into the big one. These elements are just the drag/tap
+     hit-targets + label/badge; #liquid paints the actual glass body. ────── */
+  .liquid-overlay{position:fixed;inset:0;z-index:2;pointer-events:none}
+  .bub{position:fixed;cursor:grab;touch-action:none;transition:opacity .4s ease}
+  .bub.dragging{cursor:grabbing;transition:none}
+  .bub .label{position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);white-space:nowrap;
+    text-align:center;font:600 8px/1 var(--mono);letter-spacing:.26em;color:rgba(150,162,185,.85)}
+  .bub .badge{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;
     background:#B04A3E;color:#fff;font:600 9px/16px var(--mono);text-align:center;
     box-shadow:0 2px 5px rgba(120,60,55,.4)}
-  body.open .drop{opacity:0;transform:translateY(8px) scale(.9);pointer-events:none}
+  body.open .bub{opacity:0;pointer-events:none}
+  .bub.merged{display:none}
 
   /* ── the glass sheet ────────────────────────────────────────────────────── */
   .sheet{position:absolute;right:0;bottom:104px;width:330px;transform-origin:bottom right;
@@ -166,6 +170,7 @@
 
 
   <div class="motes" id="motes"></div>
+  <svg class="liquid-overlay" id="liquid" aria-hidden="true"></svg>
 
   <div class="stage" id="stage">
     <div class="sheet hidden" id="sheet">
@@ -209,91 +214,70 @@
         </div>
       </div>
     </div>
-
-    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Open Trace" title="Trace (drag to move)">
-      <span class="badge hide" id="badge">1</span>
-      <svg data-drop="a" viewBox="0 0 190 120" aria-hidden="true"></svg>
-      <div class="label">TRACE</div>
-    </div>
   </div>
 
+  <div class="bub big" id="bubBig" tabindex="0" role="button" aria-label="Open Trace" title="Trace (drag to move; drop the small bubble on it to merge)">
+    <span class="badge hide" id="badge">1</span>
+    <div class="label">TRACE</div>
+  </div>
+  <div class="bub small" id="bubSmall" tabindex="0" aria-label="Trace satellite bubble" title="Drag onto the big bubble to merge"></div>
+
 <script>
-  /* ── liquid-glass drop: two drops in one plane joined by a live capillary
-     neck that stretches, pinches off and re-merges. Ported from the design's
-     own component (metaball neck math + per-frame render). ─────────────────── */
+  /* ── liquid-glass bubbles: two independently draggable drops (one big, one
+     small) sharing a single overlay SVG (#liquid) that paints a live
+     capillary neck between them while they're close, and lets the small one
+     fully merge into the big one when it's dropped there. The HTML .bub
+     elements are only drag/tap hit-targets + the label/badge; #liquid is the
+     sole source of the visible glass body, read from their live x/y/r each
+     frame — ported from the design's own metaball neck math. ─────────────── */
   (function(){
-    var NS="http://www.w3.org/2000/svg", drops=null, raf=0;
+    var NS="http://www.w3.org/2000/svg";
     function mk(tag,attrs,parent){var el=document.createElementNS(NS,tag);for(var k in attrs)el.setAttribute(k,attrs[k]);parent.appendChild(el);return el;}
-    function initDrops(){
-      var hosts=[].slice.call(document.querySelectorAll("svg[data-drop]"));
-      if(!hosts.length)return;
-      drops=hosts.map(function(svg,i){
-        if(svg.__drop)return svg.__drop;
-        var id="dcp"+i;
-        var defs=mk("defs",{},svg), clip=mk("clipPath",{id:id},defs), clipPath=mk("path",{},clip);
-        var shadow=mk("path",{transform:"translate(2.5,5)",fill:"rgba(70,100,170,.17)",filter:"url(#dBlur3)"},svg);
-        var body=mk("path",{fill:"url(#dBody)"},svg);
-        var g=mk("g",{"clip-path":"url(#"+id+")"},svg);
-        var band=mk("path",{fill:"none",stroke:"rgba(120,155,225,.45)","stroke-width":"9",filter:"url(#dBlur6)"},g);
-        var band2=mk("path",{transform:"translate(0,2)",fill:"none",stroke:"rgba(96,132,205,.5)","stroke-width":"3",filter:"url(#dBlur3)"},g);
-        var sheen1=mk("ellipse",{fill:"#FFFFFF",opacity:".45",filter:"url(#dBlur3)"},g);
-        var sheen2=mk("ellipse",{fill:"#FFFFFF",opacity:".5",filter:"url(#dBlur1)"},g);
-        var caustic=mk("ellipse",{fill:"#FFFFFF",opacity:".22",filter:"url(#dBlur3)"},g);
-        var spec=mk("ellipse",{fill:"#FFFFFF",opacity:".9",filter:"url(#dBlur1)"},g);
-        var edge=mk("path",{fill:"none",stroke:"rgba(105,140,210,.5)","stroke-width":"1"},svg);
-        var rim=mk("path",{fill:"none",stroke:"url(#dRim)","stroke-width":"1.4"},svg);
-        svg.__drop={phase:i*2.1,clipPath:clipPath,shadow:shadow,body:body,band:band,band2:band2,sheen1:sheen1,sheen2:sheen2,caustic:caustic,spec:spec,edge:edge,rim:rim};
-        return svg.__drop;
-      });
-      updateDrops(4.2);
-      if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-      var tick=function(now){updateDrops(now/1000);raf=requestAnimationFrame(tick);};raf=requestAnimationFrame(tick);
-    }
+
+    var svg=$("liquid");
+    var vdefs=mk("defs",{},svg), clip=mk("clipPath",{id:"liquidClip"},vdefs), clipPath=mk("path",{},clip);
+    var shadow=mk("path",{transform:"translate(2.5,5)",fill:"rgba(70,100,170,.17)",filter:"url(#dBlur3)"},svg);
+    var body=mk("path",{fill:"url(#dBody)"},svg);
+    var g=mk("g",{"clip-path":"url(#liquidClip)"},svg);
+    var band=mk("path",{fill:"none",stroke:"rgba(120,155,225,.45)","stroke-width":"9",filter:"url(#dBlur6)"},g);
+    var band2=mk("path",{transform:"translate(0,2)",fill:"none",stroke:"rgba(96,132,205,.5)","stroke-width":"3",filter:"url(#dBlur3)"},g);
+    var sheen1=mk("ellipse",{fill:"#FFFFFF",opacity:".45",filter:"url(#dBlur3)"},g);
+    var sheen2=mk("ellipse",{fill:"#FFFFFF",opacity:".5",filter:"url(#dBlur1)"},g);
+    var caustic=mk("ellipse",{fill:"#FFFFFF",opacity:".22",filter:"url(#dBlur3)"},g);
+    var spec=mk("ellipse",{fill:"#FFFFFF",opacity:".9",filter:"url(#dBlur1)"},g);
+    var edge=mk("path",{fill:"none",stroke:"rgba(105,140,210,.5)","stroke-width":"1"},svg);
+    var rim=mk("path",{fill:"none",stroke:"url(#dRim)","stroke-width":"1.4"},svg);
+
+    var reduced=false;
+    try{reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+
+    var big={el:$("bubBig"),r:48,x:0,y:0};
+    var small={el:$("bubSmall"),r:21,x:0,y:0,merged:false};
+
     function easeOutCubic(x){return 1-Math.pow(1-x,3);}
     function lerp(a,b,e){return a+(b-a)*e;}
     function clampNum(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
 
-    function updateDrops(t){
-      if(!drops)return;
-      var keys=["clipPath","shadow","body","band","band2","edge","rim"];
-      for(var j=0;j<drops.length;j++){
-        var d=drops[j], p=d.phase;
-        var r1=45+1.6*Math.sin(t*0.5+p), r2=16.5+1.1*Math.sin(t*0.7+p+1.7);
-        var c1=[117+2*Math.sin(t*0.33+p),61+1.4*Math.sin(t*0.47+p+0.8)];
-        var wander=12*Math.sin(t*0.21+p+0.6);
-        var c2=[36-0.35*wander,62+2.2*Math.sin(t*0.41+p+2)];
-        // a finger pulling the tail: the whole drop leans into the pull (the
-        // big body follows at a fraction of the pull so it visibly reacts
-        // too, the tail follows in full so a stretched neck still shows
-        // between them), and swells, then (on release) eases back to ambient
-        // wander over ~380ms — the metaball/twoCircles functions below
-        // already know how to pinch off into two separate drops once pulled
-        // far enough, so a hard yank tears the WHOLE drop apart, body and
-        // tail both, exactly like a real bead of liquid would.
-        if(d.pull){
-          var pl=d.pull, e=1;
-          if(pl.releasing){
-            e=easeOutCubic(clampNum((t*1000-pl.relStart)/pl.relMs,0,1));
-            if(e>=1)d.pull=null;
-          }
-          var mixDX=pl.releasing?lerp(pl.dx,0,e):pl.dx;
-          var mixDY=pl.releasing?lerp(pl.dy,0,e):pl.dy;
-          var mixGrow=pl.releasing?lerp(pl.grow,0,e):pl.grow;
-          var BODY_FOLLOW=0.34; // the body leans in at a third of the tail's travel
-          c1=[c1[0]+mixDX*BODY_FOLLOW,c1[1]+mixDY*BODY_FOLLOW];
-          c2=[c2[0]+mixDX,c2[1]+mixDY];
-          r2=r2+mixGrow;
-          r1=r1+Math.min(mixGrow*0.34,10);
-        }
-        var path=metaball(r1,r2,c1,c2)||twoCircles(r1,r2,c1,c2);
-        for(var k=0;k<keys.length;k++)d[keys[k]].setAttribute("d",path);
-        var set=function(el,cx,cy,rx,ry,rot){el.setAttribute("cx",cx.toFixed(1));el.setAttribute("cy",cy.toFixed(1));el.setAttribute("rx",rx.toFixed(1));el.setAttribute("ry",ry.toFixed(1));el.setAttribute("transform","rotate("+rot+" "+cx.toFixed(1)+" "+cy.toFixed(1)+")");};
-        set(d.sheen1,c1[0]-r1*0.06,c1[1]-r1*0.66,r1*0.55,r1*0.085,-7);
-        set(d.spec,c1[0]-r1*0.3,c1[1]-r1*0.74,r1*0.16,r1*0.045,-14);
-        set(d.sheen2,c2[0],c2[1]-r2*0.55,r2*0.5,r2*0.13,-12);
-        set(d.caustic,c1[0]+r1*0.05,c1[1]+r1*0.74,r1*0.42,r1*0.06,4);
-      }
+    function resizeSvg(){svg.setAttribute("width",window.innerWidth);svg.setAttribute("height",window.innerHeight);}
+    function place(b){
+      b.el.style.width=b.el.style.height=(b.r*2)+"px";
+      b.el.style.left=(b.x-b.r)+"px"; b.el.style.top=(b.y-b.r)+"px";
     }
+    function clampToViewport(b){
+      b.x=clampNum(b.x,b.r,Math.max(b.r,window.innerWidth-b.r));
+      b.y=clampNum(b.y,b.r,Math.max(b.r,window.innerHeight-b.r));
+    }
+    function followBig(){ // the sheet opens relative to wherever the big bubble currently sits
+      var stage=$("stage");
+      stage.style.left=(big.x+big.r)+"px"; stage.style.top=(big.y+big.r)+"px";
+    }
+    function initPositions(){ // same corner the single drop used to occupy, small tucked at its lower-left
+      big.x=window.innerWidth-26-big.r; big.y=window.innerHeight-24-big.r;
+      small.x=big.x-58; small.y=big.y+8;
+      clampToViewport(big); clampToViewport(small);
+      place(big); place(small); followBig();
+    }
+
     function metaball(r1,r2,c1,c2){
       var dx=c2[0]-c1[0],dy=c2[1]-c1[1],dist=Math.sqrt(dx*dx+dy*dy),maxDist=r1+r2*2.5,v=0.5,handle=2.4;
       if(dist<0.01||dist>maxDist||dist<=Math.abs(r1-r2)+0.5)return null;
@@ -315,143 +299,114 @@
       var C=function(c,r){return "M"+(c[0]-r).toFixed(2)+","+c[1].toFixed(2)+" a"+r.toFixed(2)+","+r.toFixed(2)+" 0 1,0 "+(2*r).toFixed(2)+",0 a"+r.toFixed(2)+","+r.toFixed(2)+" 0 1,0 "+(-2*r).toFixed(2)+",0 Z";};
       return C(c1,r1)+" "+C(c2,r2);
     }
-    if(document.readyState!=="loading")initDrops();else document.addEventListener("DOMContentLoaded",initDrops);
-
-    // Bridge for the drag handler below: it knows pointer coordinates, this
-    // IIFE owns the blob's render state — neither needs to know the other's
-    // internals beyond this pair of calls.
-    window.__dropPull=function(svg,dx,dy,grow){
-      if(!svg||!svg.__drop)return;
-      svg.__drop.pull={dx:dx,dy:dy,grow:grow,releasing:false};
-    };
-    window.__dropRelease=function(svg){
-      if(!svg||!svg.__drop||!svg.__drop.pull)return;
-      svg.__drop.pull.releasing=true;
-      svg.__drop.pull.relStart=performance.now();
-      svg.__drop.pull.relMs=380;
-    };
-  })();
-
-  /* ── drag-to-reposition, press-and-pull-to-stretch, and the click-spawned
-     bubble burst ────────────────────────────────────────────────────────────
-     Three gestures share one pointerdown on the idle drop:
-       • a tap opens the sheet (and spawns the mote burst)
-       • an IMMEDIATE drag (moving before the hold threshold) repositions the
-         whole widget, exactly as before
-       • a PRESS-AND-HOLD then drag instead stretches the liquid-glass drop
-         itself — the tail chases your pointer and swells, snapping back on
-         release. The sheet's header (once open) only ever repositions; there
-         is no blob there to stretch.
-     Which of the two drags you get is decided the instant you cross the
-     movement threshold, based on how long you'd already been holding still.
-     Dragging never crosses out of the box the host page gives it. ───────── */
-  (function(){
-    var stage=document.getElementById("stage"), dropEl=document.getElementById("drop"), reduced=false;
-    var dropSvg=document.querySelector(".drop svg[data-drop]");
-    try{reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
-    var dragging=false, mode=null, startX=0, startY=0, origLeft=0, origTop=0, activeId=null, handle=null, downTime=0;
-    var THRESH=6, HOLD_MS=260;
-
-    function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
-    function toAbsolute(){
-      var r=stage.getBoundingClientRect();
-      stage.style.left=r.left+"px"; stage.style.top=r.top+"px";
-      stage.style.right="auto"; stage.style.bottom="auto";
-    }
-    function settle(){ // keep the widget on-screen if the host viewport resizes
-      if(stage.style.left===""||stage.style.left==null)return;
-      var r=stage.getBoundingClientRect();
-      stage.style.left=clamp(r.left,0,window.innerWidth-r.width)+"px";
-      stage.style.top=clamp(r.top,0,window.innerHeight-r.height)+"px";
-    }
-    function updatePull(dx,dy){
-      if(reduced||!dropSvg||!window.__dropPull)return;
-      var r=dropSvg.getBoundingClientRect();
-      if(!r.width||!r.height)return;
-      // damped: the SVG's own box is small on screen, so a 1:1 pixel->local
-      // mapping would separate the drop almost as soon as you touched it —
-      // SENS gives the "still connected, visibly stretching" zone some room
-      // before a harder pull actually pulls it apart.
-      var SENS=0.32;
-      var ldx=dx*(190/r.width)*SENS, ldy=dy*(120/r.height)*SENS;
-      var grow=Math.min(0.55*Math.hypot(ldx,ldy),16);
-      window.__dropPull(dropSvg,ldx,ldy,grow);
-    }
-    function releasePull(){
-      if(window.__dropRelease)window.__dropRelease(dropSvg);
+    function singleCircle(c,r){
+      return "M"+(c[0]-r).toFixed(2)+","+c[1].toFixed(2)+" a"+r.toFixed(2)+","+r.toFixed(2)+" 0 1,0 "+(2*r).toFixed(2)+",0 a"+r.toFixed(2)+","+r.toFixed(2)+" 0 1,0 "+(-2*r).toFixed(2)+",0 Z";
     }
 
-    // dragging the whole widget across the screen sheds a trail of small
-    // beads along the path, like a wet glass dragged across a counter —
-    // reuses the same .mote material as the tap-open burst, just spawned
-    // one at a time, throttled to the widget's current position.
-    var lastTrailAt=0;
-    function spawnTrailDrop(){
-      if(reduced)return;
-      var now=performance.now();
-      if(now-lastTrailAt<55)return;
-      lastTrailAt=now;
-      var host=$("motes"), r=dropEl.getBoundingClientRect();
-      var el=document.createElement("div"); el.className="mote";
-      var size=5+Math.random()*9;
-      el.style.width=size+"px"; el.style.height=size+"px";
-      el.style.left=(r.left+r.width*0.5+(Math.random()*26-13)-size/2)+"px";
-      el.style.top=(r.top+r.height*0.4+(Math.random()*18-9)-size/2)+"px";
-      el.style.setProperty("--dx",Math.round(Math.random()*18-9)+"px");
-      el.style.setProperty("--dy",-Math.round(24+Math.random()*30)+"px");
-      el.style.setProperty("--dur",(0.55+Math.random()*0.35).toFixed(2)+"s");
-      host.appendChild(el);
-      setTimeout(function(){el.remove();},950);
+    function render(now){
+      var t=now/1000, bob=reduced?0:1.5*Math.sin(t*1.4);
+      var r1=big.r+bob*0.5, c1=[big.x,big.y], path;
+      var set=function(el,cx,cy,rx,ry,rot){el.setAttribute("cx",cx.toFixed(1));el.setAttribute("cy",cy.toFixed(1));el.setAttribute("rx",rx.toFixed(1));el.setAttribute("ry",ry.toFixed(1));el.setAttribute("transform","rotate("+rot+" "+cx.toFixed(1)+" "+cy.toFixed(1)+")");};
+      if(small.merged){
+        path=singleCircle(c1,r1);
+        sheen2.style.display="none";
+      }else{
+        var r2=Math.max(0.01,small.r+(reduced?0:0.4*Math.sin(t*1.7+1.1))), c2=[small.x,small.y];
+        var dist=Math.hypot(c2[0]-c1[0],c2[1]-c1[1]);
+        if(dist>r1+r2*2.5)path=twoCircles(r1,r2,c1,c2);
+        else if(dist<=Math.abs(r1-r2)+0.5)path=singleCircle(c1,Math.max(r1,r2));
+        else path=metaball(r1,r2,c1,c2)||twoCircles(r1,r2,c1,c2);
+        sheen2.style.display="";
+        set(sheen2,c2[0],c2[1]-r2*0.55,r2*0.5,r2*0.13,-12);
+      }
+      var keys=[clipPath,shadow,body,band,band2,edge,rim];
+      for(var k=0;k<keys.length;k++)keys[k].setAttribute("d",path);
+      set(sheen1,c1[0]-r1*0.06,c1[1]-r1*0.66,r1*0.55,r1*0.085,-7);
+      set(spec,c1[0]-r1*0.3,c1[1]-r1*0.74,r1*0.16,r1*0.045,-14);
+      set(caustic,c1[0]+r1*0.05,c1[1]+r1*0.74,r1*0.42,r1*0.06,4);
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    // ── merge: the small bubble is absorbed into the big one (volume adds,
+    // roughly, via a quadrature sum) with a short easing tween; the render
+    // loop above already knows how to draw every stage of that approach
+    // (separate → necked → engulfed), so this only has to move the numbers.
+    function mergeBubbles(){
+      var b0=big.r, s0=small.r, sx0=small.x, sy0=small.y;
+      var targetR=Math.sqrt(b0*b0+s0*s0*1.15);
+      var t0=performance.now(), dur=460;
+      (function step(now){
+        var e=easeOutCubic(clampNum((now-t0)/dur,0,1));
+        big.r=lerp(b0,targetR,e);
+        small.r=lerp(s0,0,e);
+        small.x=lerp(sx0,big.x,e); small.y=lerp(sy0,big.y,e);
+        place(big); followBig();
+        if(e<1)requestAnimationFrame(step);
+        else{small.merged=true; small.el.classList.add("merged"); spawnBubbles();}
+      })(t0);
     }
 
-    function onDown(e){
-      if(e.target.closest("select,.x,input,.send,.chip"))return;
-      handle=e.currentTarget;
-      dragging=true; mode=null; activeId=e.pointerId; downTime=performance.now();
-      var r=stage.getBoundingClientRect();
-      startX=e.clientX; startY=e.clientY; origLeft=r.left; origTop=r.top;
-      try{handle.setPointerCapture(activeId);}catch(err){}
+    // ── drag: a plain tap on the big bubble opens the sheet; a real drag on
+    // either bubble repositions just that one; dropping the small bubble
+    // deep inside the big one triggers the merge above. Dragging the sheet's
+    // header (once open) moves the big bubble (and the sheet with it), same
+    // as it always has. ──────────────────────────────────────────────────
+    var THRESH=4, active=null;
+    function beginDrag(b,viaHeader,e){
+      if(small.merged&&b===small)return;
+      active={b:b,id:e.pointerId,startX:e.clientX,startY:e.clientY,origX:b.x,origY:b.y,moved:false,viaHeader:viaHeader};
+      b.el.classList.add("dragging");
+      try{e.currentTarget.setPointerCapture(e.pointerId);}catch(err){}
     }
     function onMove(e){
-      if(!dragging||e.pointerId!==activeId)return;
-      var dx=e.clientX-startX, dy=e.clientY-startY;
-      if(mode===null){
-        if(Math.hypot(dx,dy)<=THRESH)return;
-        if(handle===dropEl && (performance.now()-downTime)>=HOLD_MS)mode="stretch";
-        else{mode="reposition"; toAbsolute();}
-        stage.classList.add("dragging");
-      }
-      if(mode==="reposition"){
-        var r=stage.getBoundingClientRect();
-        stage.style.left=clamp(origLeft+dx,0,window.innerWidth-r.width)+"px";
-        stage.style.top=clamp(origTop+dy,0,window.innerHeight-r.height)+"px";
-        spawnTrailDrop();
-      }else{
-        updatePull(dx,dy);
-      }
+      if(!active||e.pointerId!==active.id)return;
+      var dx=e.clientX-active.startX, dy=e.clientY-active.startY;
+      if(!active.moved&&Math.hypot(dx,dy)>THRESH)active.moved=true;
+      var b=active.b;
+      b.x=active.origX+dx; b.y=active.origY+dy;
+      clampToViewport(b); place(b);
+      if(b===big)followBig();
     }
     function onUp(e){
-      if(!dragging||e.pointerId!==activeId)return;
-      dragging=false; stage.classList.remove("dragging");
-      try{handle.releasePointerCapture(activeId);}catch(err){}
-      if(mode==="stretch")releasePull();
-      else if(mode===null && handle===dropEl){spawnBubbles();toggleSheet();}
-      mode=null;
+      if(!active||e.pointerId!==active.id)return;
+      var b=active.b, moved=active.moved, viaHeader=active.viaHeader;
+      b.el.classList.remove("dragging");
+      try{e.currentTarget.releasePointerCapture(e.pointerId);}catch(err){}
+      active=null;
+      if(!moved){
+        if(b===big&&!viaHeader){spawnBubbles();toggleSheet();}
+        return;
+      }
+      if(!small.merged){
+        var dist=Math.hypot(small.x-big.x,small.y-big.y);
+        if(dist<big.r*0.85)mergeBubbles();
+      }
     }
-    [dropEl,document.querySelector(".hdr")].forEach(function(el){
-      el.addEventListener("pointerdown",onDown);
+    function attach(el,b,viaHeader){
+      el.addEventListener("pointerdown",function(e){
+        if(e.target.closest("select,.x,input,.send,.chip"))return;
+        beginDrag(b,viaHeader,e);
+      });
       el.addEventListener("pointermove",onMove);
       el.addEventListener("pointerup",onUp);
       el.addEventListener("pointercancel",onUp);
-    });
-    dropEl.addEventListener("keydown",function(e){
+    }
+    attach(big.el,big,false);
+    attach(small.el,small,false);
+    attach(document.querySelector(".hdr"),big,true);
+    big.el.addEventListener("keydown",function(e){
       if(e.key==="Enter"||e.key===" "){e.preventDefault();spawnBubbles();toggleSheet();}
     });
-    window.addEventListener("resize",settle);
+    window.addEventListener("resize",function(){
+      resizeSvg(); clampToViewport(big); clampToViewport(small); place(big); place(small); followBig();
+    });
+
+    resizeSvg(); initPositions();
 
     window.spawnBubbles=function(){
       if(reduced)return;
-      var host=$("motes"), r=$("drop").getBoundingClientRect();
+      var host=$("motes"), r=big.el.getBoundingClientRect();
       var n=6+Math.floor(Math.random()*4);
       for(var i=0;i<n;i++){
         var el=document.createElement("div"); el.className="mote";
