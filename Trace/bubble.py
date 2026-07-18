@@ -27,7 +27,7 @@ from ambient import match_title
 from court import get_court_records
 from recall import _content_words
 from rulepack import load_rules
-from scenarios import PROJECTS, build_store
+from scenarios import PROJECTS, open_store
 from store import get_all_decisions
 
 
@@ -122,8 +122,10 @@ _STORES: dict = {}
 
 
 def _store_for(project: str):
+    # The PERSISTENT per-project store (kb/<project>/trace.db) — the same file
+    # the vault watcher writes, so a note ingested there shows up in this chat.
     if project not in _STORES:
-        _STORES[project] = build_store(project)
+        _STORES[project] = open_store(project)
     return _STORES[project]
 
 

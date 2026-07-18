@@ -196,3 +196,100 @@ def test_allow_never_claims_a_supersession_it_did_not_perform():
     assert "SUPERSEDES" not in render_verdict(v)
     v.superseded = "D-001"
     assert "SUPERSEDES: D-001" in render_verdict(v)
+
+
+# ── multi-conflict proposals: EVERY charge is heard, none dropped ────────────
+
+def _alert(new, breaks, premise, citation="LLM premise check (Qwen)"):
+    from invalidate import Alert
+    return Alert(new, rule_id="LLM-PREMISE", rationale=f"breaks {breaks.id}",
+                 citation=citation, blast_radius=[], breaks=breaks,
+                 broken_premise=premise, source="llm")
+
+
+def _store_with_two_premised_decisions():
+    conn = connect(":memory:")
+    init_db(conn)
+    add_decision(conn, Decision(  # D-001
+        statement="Chiller plant sized to 400 kVA",
+        discipline="mep", assumptions=["site power budget is 400 kVA"],
+        recorded_at="2026-01-14T00:00Z"))
+    add_decision(conn, Decision(  # D-002
+        statement="Rooftop PV array sized within the roof reserve",
+        discipline="mep", assumptions=["roof dead-load reserve is free for panels"],
+        recorded_at="2026-01-15T00:00Z"))
+    return conn
+
+
+def test_court_hears_every_charge_and_persists_a_record_per_conflict():
+    # A proposal that breaks TWO prior decisions' premises: both charges are
+    # deliberated and both land on the record — not just alerts[0].
+    conn = _store_with_two_premised_decisions()
+    cap = Captured(Decision(statement="Add a rooftop plant deck with new chillers",
+                            discipline="mep"), {})
+    d1, d2 = get_decision(conn, "D-001"), get_decision(conn, "D-002")
+    alerts = [_alert(cap.decision, d1, d1.assumptions[0]),
+              _alert(cap.decision, d2, d2.assumptions[0])]
+    client = _scripted_client([
+        "proposer 1", "guardian 1",
+        json.dumps({"verdict": "REJECT", "rationale": "exceeds the 400 kVA budget"}),
+        "proposer 2", "guardian 2",
+        json.dumps({"verdict": "ALLOW", "rationale": "reserve recalculated"}),
+    ])
+    v = convene(conn, cap, client=client, alerts=alerts)
+    assert v.verdict == "REJECT"                      # any sustained charge rejects
+    assert v.breaks == "D-001" and [c.breaks for c in v.also] == ["D-002"]
+    records = get_court_records(conn)
+    assert [r["breaks_id"] for r in records] == ["D-001", "D-002"]   # both on record
+    assert [r["verdict"] for r in records] == ["REJECT", "ALLOW"]    # per-charge rulings
+    assert get_decision(conn, cap.decision.id).status == "rejected"
+    # No conflicting decision was displaced by a rejected proposal.
+    assert {d.id for d in get_valid_decisions(conn)} == {"D-001", "D-002"}
+
+
+def test_allow_on_all_charges_supersedes_every_broken_decision():
+    # The judge ALLOWs both charges: the adopted proposal displaces BOTH prior
+    # decisions — the second conflict is no longer silently left in force.
+    conn = _store_with_two_premised_decisions()
+    cap = Captured(Decision(statement="Combined energy plant replaces the chiller "
+                                      "sizing and the PV layout", discipline="mep"), {})
+    d1, d2 = get_decision(conn, "D-001"), get_decision(conn, "D-002")
+    alerts = [_alert(cap.decision, d1, d1.assumptions[0]),
+              _alert(cap.decision, d2, d2.assumptions[0])]
+    client = _scripted_client([
+        "proposer 1", "guardian 1",
+        json.dumps({"verdict": "ALLOW", "rationale": "supply upgrade committed"}),
+        "proposer 2", "guardian 2",
+        json.dumps({"verdict": "ALLOW", "rationale": "reserve recalculated"}),
+    ])
+    v = convene(conn, cap, client=client, alerts=alerts)
+    assert v.verdict == "ALLOW"
+    new = get_decision(conn, cap.decision.id)
+    assert new.status == "valid"
+    for old_id in ("D-001", "D-002"):
+        old = get_decision(conn, old_id)
+        assert old.status == "superseded" and old.superseded_by == new.id
+    assert [d.id for d in get_valid_decisions(conn)] == [new.id]
+    rendered = render_verdict(v)
+    assert "SUPERSEDES: D-001" in rendered and "ALSO SUPERSEDES: D-002" in rendered
+
+
+def test_two_charges_breaking_the_same_decision_supersede_it_once():
+    # Two alerts can point at the SAME prior decision; on ALLOW it must be
+    # linked once, not fail on 'already superseded'.
+    conn = _store_with_two_premised_decisions()
+    cap = Captured(Decision(statement="Re-size the chiller plant", discipline="mep"), {})
+    d1 = get_decision(conn, "D-001")
+    alerts = [_alert(cap.decision, d1, d1.assumptions[0]),
+              _alert(cap.decision, d1, d1.assumptions[0], citation="second reading")]
+    client = _scripted_client([
+        "proposer 1", "guardian 1",
+        json.dumps({"verdict": "ALLOW", "rationale": "premise replaced"}),
+        "proposer 2", "guardian 2",
+        json.dumps({"verdict": "ALLOW", "rationale": "same premise, same outcome"}),
+    ])
+    v = convene(conn, cap, client=client, alerts=alerts)
+    assert v.verdict == "ALLOW"
+    assert v.superseded == "D-001"
+    assert [c.superseded for c in v.also] == [None]   # linked once, claimed once
+    assert get_decision(conn, "D-001").superseded_by == cap.decision.id

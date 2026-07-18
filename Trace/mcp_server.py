@@ -34,15 +34,16 @@ from typing import Optional
 import rulepack
 import store
 from court import get_court_records
-from scenarios import PROJECTS, build_store
+from scenarios import PROJECTS, open_store
 
 # The second Singapore code-authority pack (BCA Periodic Façade Inspection) —
 # proof that rule-packs are pluggable per authority, same engine.
 _BCA_RULES = Path(rulepack.__file__).with_name("rules") / "sg-bca"
 
-# One built store per project, cached. Each is a fresh in-memory bi-temporal
-# store whose audit chain is populated as the scenario is built — deterministic,
-# so verify_audit_chain is meaningful the moment it is read.
+# One connection per project, cached — to the PERSISTENT store
+# (kb/<project>/trace.db), the same file the vault watcher and the bubble
+# write/read, so every MCP answer reflects the shared record, not a private
+# in-memory copy. Seeded with the demo scenario on first open.
 _STORES: dict = {}
 
 
@@ -50,7 +51,7 @@ def _store(project: str):
     if project not in PROJECTS:
         raise KeyError(project)
     if project not in _STORES:
-        _STORES[project] = build_store(project)
+        _STORES[project] = open_store(project)
     return _STORES[project]
 
 

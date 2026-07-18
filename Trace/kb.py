@@ -110,8 +110,8 @@ def _decision_note(d: Decision, project: str, supersedes: Optional[str]) -> str:
     return "\n".join(body) + "\n"
 
 
-def _court_note(r: dict, project: str) -> str:
-    name = f"COURT-{r['proposal_id']}"
+def _court_note(r: dict, project: str, name: Optional[str] = None) -> str:
+    name = name or f"COURT-{r['proposal_id']}"
     fm = _fm([
         ("id", name),
         ("project", project),
@@ -193,9 +193,12 @@ def export_vault(conn, project: str, root: Optional[Path] = None, title: str = "
 
     cdir = base / "court"
     _clear_projections(cdir)
+    seen: dict[str, int] = {}  # a multi-conflict proposal has one record per charge
     for r in get_court_records(conn):
-        p = cdir / f"COURT-{r['proposal_id']}.md"
-        p.write_text(_court_note(r, project), encoding="utf-8")
+        n = seen[r["proposal_id"]] = seen.get(r["proposal_id"], 0) + 1
+        name = f"COURT-{r['proposal_id']}" + (f"-{n}" if n > 1 else "")
+        p = cdir / f"{name}.md"
+        p.write_text(_court_note(r, project, name), encoding="utf-8")
         written.append(p)
 
     edir = base / "episodes"

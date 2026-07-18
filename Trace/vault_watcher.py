@@ -108,17 +108,19 @@ def watch(project: str, conn=None, root: Optional[Path] = None, client=None,
           poll: float = POLL_SECONDS, max_polls: Optional[int] = None) -> None:
     """The polling loop. `max_polls` bounds the loop for tests; None = forever."""
     import os
-    from scenarios import PROJECTS, build_store, project_rules
+    from scenarios import PROJECTS, open_store, project_rules
     if project not in PROJECTS:
         raise SystemExit(f"unknown project '{project}'; one of {list(PROJECTS)}")
     meta = PROJECTS[project]
-    conn = conn or build_store(project)
+    root = Path(root) if root else KB_ROOT
+    # The PERSISTENT store, next to the inbox — the same trace.db the bubble
+    # and the MCP server read, so an ingested note reaches every surface.
+    conn = conn or open_store(project, root=root)
     rules = project_rules(project)
     if client is None and os.getenv("DASHSCOPE_API_KEY"):
         # One shared client so capture AND the LLM premise half both run live.
         from capture import _client
         client = _client()
-    root = Path(root) if root else KB_ROOT
     inbox = root / project / "inbox"
     inbox.mkdir(parents=True, exist_ok=True)
     export_vault(conn, project, root, title=meta["title"])

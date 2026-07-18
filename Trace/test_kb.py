@@ -237,3 +237,27 @@ def test_pearl_vista_ingest_is_gated_by_the_bca_pack():
     assert out["verdicts"]                               # the court convened
     from store import get_decision as _get
     assert _get(conn, out["captured"][0]["id"]).status == "rejected"
+
+
+def test_export_gives_each_charge_of_a_multi_conflict_proposal_its_own_note(tmp_path):
+    # A proposal judged on TWO conflicts has two court records; each must get
+    # its own note (suffixed), never the second silently overwriting the first.
+    from capture import Captured
+    from court import Verdict, _persist
+    conn = _fresh()
+    add_decision(conn, Decision(statement="Prior A", assumptions=["a"]))          # D-001
+    add_decision(conn, Decision(statement="Prior B", assumptions=["b"]))          # D-002
+    add_decision(conn, Decision(statement="The proposal", status="proposed"))     # D-003
+    cap = Captured(Decision(statement="The proposal", id="D-003"))
+    _persist(conn, cap, Verdict(True, "REJECT", breaks="D-001", citation="c1",
+                                for_argument="f1", against_argument="a1", rationale="r1"))
+    _persist(conn, cap, Verdict(True, "REJECT", breaks="D-002", citation="c2",
+                                for_argument="f2", against_argument="a2", rationale="r2"))
+    export_vault(conn, "demo", tmp_path)
+    cdir = tmp_path / "demo" / "court"
+    first = (cdir / "COURT-D-003.md").read_text(encoding="utf-8")
+    second = (cdir / "COURT-D-003-2.md").read_text(encoding="utf-8")
+    assert "[[D-001]]" in first and "[[D-002]]" in second     # each charge's own link
+    assert 'id: "COURT-D-003-2"' in second                    # wikilink-resolvable id
+    export_vault(conn, "demo", tmp_path)                      # regeneration replaces,
+    assert len(list(cdir.glob("COURT-D-003*.md"))) == 2       # never accumulates

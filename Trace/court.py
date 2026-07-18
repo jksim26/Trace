@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -49,6 +49,7 @@ class Verdict:
     against_argument: str = ""
     rationale: str = ""
     superseded: Optional[str] = None  # the id an ALLOW actually displaced (set only when linked)
+    also: list = field(default_factory=list)  # the OTHER charges heard (multi-conflict proposals)
 
 
 _PROPOSER = ("You are recording the contractor's position. In ONE sentence, restate the proposal's STATED "
@@ -131,25 +132,32 @@ def _chain_tail(conn, decision_id: str):
     return d
 
 
-def _apply(conn, captured, v: Verdict) -> None:
-    """Make the verdict true on the record. The verdict is persisted FIRST —
-    the audit chain must show the ruling before the state transition it
-    authorizes — then REJECT marks the proposal rejected; ALLOW adopts it and,
-    if it displaces a conflicting in-force decision, supersedes that decision
-    (resolved to its chain tail) with it."""
-    _persist(conn, captured, v)
+def _apply(conn, captured, charges: list[Verdict], final: Optional[str] = None) -> None:
+    """Make the verdict true on the record. Every charge's ruling is persisted
+    FIRST — the audit chain must show the rulings before the state transition
+    they authorize — then the proposal's single fate lands on its row: REJECT
+    marks it rejected; ALLOW adopts it and supersedes EVERY in-force decision
+    the charges displaced (each resolved to its chain tail, deduped)."""
+    final = final or charges[0].verdict
+    for v in charges:
+        _persist(conn, captured, v)
     pid = captured.decision.id
-    if v.verdict == "REJECT":
+    if final == "REJECT":
         reject_decision(conn, pid)
         return
     adopted = adopt_decision(conn, pid)
-    if v.breaks:
-        # The alert's `breaks` may point mid-chain (a future-effective
+    linked: set[str] = set()
+    for v in charges:
+        if not v.breaks:
+            continue
+        # The charge's `breaks` may point mid-chain (a future-effective
         # supersession keeps an old version in force): link the chain tail,
         # and only claim a supersession that actually happened.
         target = _chain_tail(conn, v.breaks)
-        if target is not None and target.status == "valid" and target.id != adopted.id:
+        if (target is not None and target.status == "valid"
+                and target.id != adopted.id and target.id not in linked):
             link_supersession(conn, target.id, adopted.id)
+            linked.add(target.id)
             v.superseded = target.id
 
 
@@ -171,35 +179,45 @@ def convene(conn, captured, client=None, model: str = MODEL, context: Optional[d
         alerts = check_invalidation(conn, captured, client=client, context=context, rules=rules)
     if not alerts:
         v = Verdict(False, "ALLOW", rationale="No prior premise is broken.")
-        _apply(conn, captured, v)
+        _apply(conn, captured, [v])
         return v
 
-    alert = alerts[0]
-    case = _case(captured, alert)
-    proposer = _role(client, model, _PROPOSER, case)
-    guardian = _role(client, model, _GUARDIAN, case)
-    deliberation = f"{case}\n\nPROPOSER ARGUES: {proposer}\nGUARDIAN ARGUES: {guardian}"
+    # EVERY conflict is heard — a proposal that breaks several prior decisions'
+    # premises gets one full deliberation (and one persisted court record) per
+    # charge, not just the first.
+    charges: list[Verdict] = []
+    for alert in alerts:
+        case = _case(captured, alert)
+        proposer = _role(client, model, _PROPOSER, case)
+        guardian = _role(client, model, _GUARDIAN, case)
+        deliberation = f"{case}\n\nPROPOSER ARGUES: {proposer}\nGUARDIAN ARGUES: {guardian}"
 
-    if alert.source == "rule":
-        # Deterministic law: the rule-pack gates the verdict; the LLM writes the
-        # defensible reasoning. This half can never mis-rule on camera.
-        verdict, rationale = "REJECT", _role(client, model, _JUDGE_RULE, deliberation)
-    else:
-        # Probabilistic evidence: the Judge genuinely decides. An unparseable
-        # ruling falls back to REJECT — with live evidence that a premise broke,
-        # the conservative fate for a QP's record is to hold the proposal.
-        ruling = _parse_judgment(_role(client, model, _JUDGE_OPEN, deliberation))
-        verdict = ruling.get("verdict") if ruling.get("verdict") in ("REJECT", "ALLOW") else "REJECT"
-        rationale = ruling.get("rationale") or guardian
+        if alert.source == "rule":
+            # Deterministic law: the rule-pack gates the verdict; the LLM writes the
+            # defensible reasoning. This half can never mis-rule on camera.
+            verdict, rationale = "REJECT", _role(client, model, _JUDGE_RULE, deliberation)
+        else:
+            # Probabilistic evidence: the Judge genuinely decides. An unparseable
+            # ruling falls back to REJECT — with live evidence that a premise broke,
+            # the conservative fate for a QP's record is to hold the proposal.
+            ruling = _parse_judgment(_role(client, model, _JUDGE_OPEN, deliberation))
+            verdict = ruling.get("verdict") if ruling.get("verdict") in ("REJECT", "ALLOW") else "REJECT"
+            rationale = ruling.get("rationale") or guardian
 
-    v = Verdict(
-        conflict=True, verdict=verdict,
-        breaks=alert.breaks.id if alert.breaks else None,
-        citation=alert.citation, for_argument=proposer,
-        against_argument=guardian, rationale=rationale,
-    )
-    _apply(conn, captured, v)
-    return v
+        charges.append(Verdict(
+            conflict=True, verdict=verdict,
+            breaks=alert.breaks.id if alert.breaks else None,
+            citation=alert.citation, for_argument=proposer,
+            against_argument=guardian, rationale=rationale,
+        ))
+
+    # One proposal, one fate: ANY sustained charge rejects it; ALLOW requires
+    # every charge to be ruled ALLOW. The returned verdict is the deciding
+    # charge, carrying the other charges in `also`.
+    primary = next((c for c in charges if c.verdict == "REJECT"), charges[0])
+    primary.also = [c for c in charges if c is not primary]
+    _apply(conn, captured, charges, final=primary.verdict)
+    return primary
 
 
 def render_verdict(v: Verdict) -> str:
@@ -213,4 +231,9 @@ def render_verdict(v: Verdict) -> str:
         lines.append(f"SUPERSEDES: {v.superseded}  ·  {v.citation}")
     elif v.breaks:
         lines.append(f"BREAKS: {v.breaks}  ·  {v.citation}")
+    for c in v.also:  # the other charges heard on the same proposal
+        if c.superseded:
+            lines.append(f"ALSO SUPERSEDES: {c.superseded}  ·  {c.citation}")
+        elif c.breaks:
+            lines.append(f"ALSO BREAKS: {c.breaks}  ·  {c.citation}")
     return "\n".join(lines)

@@ -21,11 +21,14 @@ bubble's one-brain chat, MCP clients, and court records.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
+from typing import Optional
 
 import rulepack
 from capture import Captured
 from court import Verdict, _persist
+from kb import KB_ROOT
 from store import (
     Decision, add_decision, connect, init_db, reject_decision,
     set_project_code, supersede_decision,
@@ -267,6 +270,9 @@ PROJECTS = {
 
 
 def build_store(project_key: str):
+    """A fresh, fully-seeded IN-MEMORY store — the deterministic demo fixture
+    tests build against. Live surfaces (bubble, MCP server, vault watcher)
+    share the persistent on-disk store instead: open_store()."""
     conn = connect(":memory:")
     init_db(conn)
     # The code must be pinned BEFORE the first write: ids are minted from it and
@@ -274,3 +280,28 @@ def build_store(project_key: str):
     set_project_code(conn, PROJECTS[project_key]["code"])
     PROJECTS[project_key]["build"](conn)
     return conn
+
+
+def open_store(project_key: str, root: Optional[Path] = None):
+    """Open the project's PERSISTENT store — kb/<project>/trace.db, next to the
+    inbox it feeds. Every surface (bubble chat, MCP server, vault watcher)
+    opens this one file, so a note ingested by the watcher is immediately
+    visible to the chat and to MCP clients, and nothing is lost on restart.
+
+    Seeded with the demo scenario on first open — built in a temp file and
+    atomically renamed into place, so a crash mid-seed never leaves a
+    half-seeded store behind. `root` (or $TRACE_DB_DIR) overrides the kb/
+    location, e.g. for tests. Raises KeyError for an unknown project."""
+    meta = PROJECTS[project_key]
+    root = Path(root) if root else Path(os.environ.get("TRACE_DB_DIR") or KB_ROOT)
+    db = root / project_key / "trace.db"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    if not db.exists() or db.stat().st_size == 0:
+        seed = db.with_name(f"trace.seed-{os.getpid()}.db")
+        conn = connect(str(seed))
+        init_db(conn)
+        set_project_code(conn, meta["code"])
+        meta["build"](conn)
+        conn.close()  # checkpoints WAL, so the rename moves the complete store
+        os.replace(seed, db)
+    return connect(str(db))

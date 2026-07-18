@@ -43,6 +43,11 @@ def connect(db_path: str = ":memory:") -> sqlite3.Connection:
     conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL + busy_timeout: the vault watcher and the bubble open the SAME
+    # on-disk store from different processes — writers must not block readers,
+    # and a brief lock must wait, not raise. Both are no-ops for ':memory:'.
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 
