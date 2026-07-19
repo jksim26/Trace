@@ -74,9 +74,11 @@ def test_court_records_are_part_of_the_llm_context(monkeypatch):
     assert "COURT RECORD" in ctx and "Periodic Façade Inspection" in ctx
 
 
-def test_greeting_gets_a_pointer_not_an_abstention():
-    # "hi" must not hit the decision store (nor the LLM — no monkeypatch needed:
-    # if this path tried to build a client it would raise without a key).
+def test_greeting_gets_a_pointer_not_an_abstention(monkeypatch):
+    # "hi" must not hit the decision store nor the LLM. The key is removed for
+    # this test: on a machine that HAS one (e.g. the deployed box), ask() would
+    # otherwise make a real Qwen call and answer with a live greeting.
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
     out = json.loads(bubble.Api().ask("hi"))
     assert "why the non-combustible facade" in out["answer"]
     assert out["cited"] == []

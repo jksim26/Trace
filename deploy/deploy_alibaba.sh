@@ -28,7 +28,10 @@ python3 -m venv "$REPO_DIR/.venv"
 "$REPO_DIR/.venv/bin/pip" install --quiet -r "$APP_DIR/requirements.txt"
 
 echo "==> running the offline test suite as a deployment gate"
-(cd "$APP_DIR" && "$REPO_DIR/.venv/bin/python" -m pytest -q)
+# Empty DASHSCOPE_API_KEY so the gate is genuinely offline even though the box
+# carries a real key in Trace/.env (load_dotenv never overrides an existing
+# variable) — otherwise the suite makes real Qwen calls and can flake.
+(cd "$APP_DIR" && DASHSCOPE_API_KEY="" "$REPO_DIR/.venv/bin/python" -m pytest -q)
 
 cat > /etc/systemd/system/$SERVICE.service <<EOF
 [Unit]

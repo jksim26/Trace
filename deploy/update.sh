@@ -26,7 +26,12 @@ echo "==> syncing dependencies"
 "$REPO_DIR/.venv/bin/pip" install --quiet -r "$APP_DIR/requirements.txt"
 
 echo "==> running the offline test suite as an update gate"
-(cd "$APP_DIR" && "$REPO_DIR/.venv/bin/python" -m pytest -q)
+# DASHSCOPE_API_KEY is emptied for the gate: the box has a real key in
+# Trace/.env, and with it present the "offline" suite silently makes real
+# Qwen calls — slow, costs quota, and nondeterministic (an LLM greeting once
+# failed the greeting test here). Empty beats unset: load_dotenv never
+# overrides an existing variable, so the .env key stays out of the run.
+(cd "$APP_DIR" && DASHSCOPE_API_KEY="" "$REPO_DIR/.venv/bin/python" -m pytest -q)
 
 echo "==> restarting $SERVICE"
 systemctl restart "$SERVICE"
