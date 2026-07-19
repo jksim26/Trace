@@ -34,6 +34,8 @@ about decisions over time**.
 - [[Desktop Watcher]] — the real Windows foreground-window watcher.
 - [[Workspace Demo]] — the browser-based simulated workspace.
 - [[Ambient Bubble]] — the live local web app, one agent, one memory.
+- [[Knowledge Base Vault]] — the whole store rendered as an Obsidian-native markdown vault.
+- [[Vault Watcher]] — drop a meeting note in `inbox/`, the full pipeline runs automatically.
 
 ## Cross-cutting concepts
 
